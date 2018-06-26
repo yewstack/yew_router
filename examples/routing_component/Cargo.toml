@@ -1,0 +1,8 @@
+[package]
+name = "routing_component"
+version = "0.1.0"
+authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
+
+[dependencies]
+yew = { git = "https://github.com/DenisKolodin/yew", rev = "a5213c57430b2f18539aeb25939bdc8c5c348157" }
+yew_router = {path = "../.."}
