@@ -6,5 +6,5 @@ but it should be perfectly usable as a routing library for Yew.
 You can use it in your project by adding it to your dependencies like so:
 ```toml
 [dependencies]
-yew = { git = "https://github.com/hgzimmerman/YewRouter" }
+yew_router = { git = "https://github.com/hgzimmerman/YewRouter" }
 ```
