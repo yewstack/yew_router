@@ -3,7 +3,6 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
-#[macro_use]
 extern crate yew;
 extern crate stdweb;
 

@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate yew;
+#[macro_use]
 extern crate yew_router;
 
 mod b_component;
@@ -78,7 +79,7 @@ impl Renderable<Model> for Model {
         // This would come in handy in preventing access to admin panels for unauthorized users
         // or providing different components for users who aren't logged in.
         let props: yew_router::Props = yew_router::Props {
-            routes: vec![BModel::RESOLVER],
+            routes: routes![BModel],
             routing_failed_page: Some(DefaultPage(routing_failed_page))
         };
 
