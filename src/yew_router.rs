@@ -13,6 +13,8 @@ pub enum Msg {
     HandleRoute(Route<()>)
 }
 
+
+
 #[derive(Clone, PartialEq, Default)]
 pub struct Props {
     pub routes: Vec<ChildResolver>,
@@ -111,6 +113,7 @@ pub trait Routable: Component + Renderable<Self> {
     /// Try to construct the props used for creating a Component from route info.
     fn tune_props_from_route(route: &Route<()>) -> Option<<Self as Component>::Properties>;
 
+    // TODO, this is really only a convenience function, it might better be included in a separate trait.
     fn encode_info_in_route(&self, _route: &mut Route<()>) {
     }
     /// This is a wrapped function pointer to a function that will create a component.
@@ -129,3 +132,10 @@ fn resolve_child<T: Routable>(route: &Route<()>) -> Option<VNode<YewRouter>> {
     return None
 }
 
+/// Turns the provided component type name into its route resolver.
+#[macro_export]
+macro_rules! routes {
+    ( $( $x:tt ),* ) => {
+        vec![$(<($x)>::RESOLVER )*]
+    };
+}
