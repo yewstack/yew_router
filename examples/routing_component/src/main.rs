@@ -9,6 +9,7 @@ use yew::prelude::*;
 use yew_router::router::{self, Route};
 use yew_router::{YewRouter, Routable, DefaultPage};
 use b_component::BModel;
+use yew_router::components::router_button::RouterButton;
 
 
 fn main() {
@@ -18,17 +19,12 @@ fn main() {
 }
 
 
-pub enum Child {
-    A,
-    B,
-}
 
 pub struct Model {
-    router: Box<Bridge<router::Router<()>>>
+//    router: Box<Bridge<router::Router<()>>>
 }
 
 pub enum Msg {
-    NavigateTo(Child),
     NoOp
 }
 
@@ -36,37 +32,20 @@ impl Component for Model {
     type Message = Msg;
     type Properties = ();
 
-    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(_: Self::Properties, _link: ComponentLink<Self>) -> Self {
 
         // This component wont handle changes to the route, although it could if it wanted to.
-        let callback = link.send_back(|_route: Route<()>| Msg::NoOp);
-        let router = router::Router::bridge(callback);
+//        let callback = link.send_back(|_route: Route<()>| Msg::NoOp);
+//        let router = router::Router::bridge(callback);
 
 
         Model {
-            router
+//            router
         }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::NavigateTo(child) => {
-
-                let path_segments = match child {
-                    Child::A => vec!["a".into()],
-                    Child::B => vec!["b".into()],
-                };
-
-                let route = router::Route {
-                    path_segments,
-                    query: None,
-                    fragment: None,
-                    state: (),
-                };
-
-                self.router.send(router::Request::ChangeRoute(route));
-                false
-            }
             Msg::NoOp => false
         }
     }
@@ -83,11 +62,27 @@ impl Renderable<Model> for Model {
             routing_failed_page: Some(DefaultPage(routing_failed_page))
         };
 
+        let a_route = router::Route {
+            path_segments: vec!["a".into()],
+            query: None,
+            fragment: None,
+            state: (),
+        };
+
+        let b_route = router::Route {
+            path_segments: vec!["b".into()],
+            query: None,
+            fragment: None,
+            state: (),
+        };
+
         html! {
             <div>
                 <nav class="menu",>
-                    <button onclick=|_| Msg::NavigateTo(Child::A),>{ "Go to A" }</button>
-                    <button onclick=|_| Msg::NavigateTo(Child::B),>{ "Go to B" }</button>
+                    <RouterButton: text=String::from("Go to A"), route=a_route, />
+                    <RouterButton: text=String::from("Go to B"), route=b_route, />
+//                    <button onclick=|_| Msg::NavigateTo(Child::A),>{ "Go to A" }</button>
+//                    <button onclick=|_| Msg::NavigateTo(Child::B),>{ "Go to B" }</button>
                 </nav>
                 <div>
                     <YewRouter: with props, />

@@ -14,7 +14,7 @@ use serde::Deserialize;
 
 use std::fmt::Debug;
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize) ]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize) ]
 pub struct Route<T> {
     pub path_segments: Vec<String>,
     pub query: Option<String>,
