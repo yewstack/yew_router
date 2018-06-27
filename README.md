@@ -8,3 +8,8 @@ You can use it in your project by adding it to your dependencies like so:
 [dependencies]
 yew_router = { git = "https://github.com/hgzimmerman/YewRouter" }
 ```
+
+
+-----
+
+If you have any questions, suggestions, or want to contribute, please open an Issue or PR and I'll try to get back to you in a timely manner.
