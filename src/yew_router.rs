@@ -17,22 +17,22 @@ pub enum Msg {
 
 #[derive(Clone, PartialEq, Default)]
 pub struct Props {
-    pub routes: Vec<ChildResolver>,
+    pub routes: Vec<ComponentConstructorAttempter>,
     pub routing_failed_page: Option<DefaultPage>
 }
 
 pub struct YewRouter {
     router: Box<Bridge<Router<()>>>,
     route: Option<Route<()>>,
-    routes: Vec<ChildResolver>,
+    routes: Vec<ComponentConstructorAttempter>,
     routing_failed_page: Option<DefaultPage>
 }
 
 #[derive(Clone)]
-pub struct ChildResolver(fn(route: &Route<()>) -> Option<VNode<YewRouter>>);
+pub struct ComponentConstructorAttempter(fn(route: &Route<()>) -> Option<VNode<YewRouter>>);
 
-impl PartialEq for ChildResolver {
-    fn eq(&self, other: &ChildResolver) -> bool {
+impl PartialEq for ComponentConstructorAttempter {
+    fn eq(&self, other: &ComponentConstructorAttempter) -> bool {
         // compare pointers // TODO investigate if this works?
         self.0 as *const () == other.0 as *const ()
     }
@@ -58,10 +58,6 @@ impl Component for YewRouter {
         let router = Router::bridge(callback);
 
         // TODO Not sure if this is technically correct. This should be sent _after_ the component has been created.
-        // I think the `Component` trait should have a hook called `on_mount()`
-        // that is called after the component has been attached to the vdom.
-        // It seems like this only works because the JS engine decides to activate the
-        // router worker logic after the mounting has finished.
         router.send(RouterRequest::GetCurrentRoute);
 
         YewRouter {
@@ -111,19 +107,19 @@ impl Renderable<YewRouter> for YewRouter {
 /// A trait that allows a component to be routed by a Yew router.
 pub trait Routable: Component + Renderable<Self> {
     /// Try to construct the props used for creating a Component from route info.
-    fn tune_props_from_route(route: &Route<()>) -> Option<<Self as Component>::Properties>;
+    /// If None is returned, the router won't create the component.
+    /// If Some(_) is returned, the router will create the component using the props
+    /// and will stop trying to create other components.
+    fn resolve_props(route: &Route<()>) -> Option<<Self as Component>::Properties>;
 
-    // TODO, this is really only a convenience function, it might better be included in a separate trait.
-    fn encode_info_in_route(&self, _route: &mut Route<()>) {
-    }
-    /// This is a wrapped function pointer to a function that will create a component.
-    const RESOLVER: ChildResolver = ChildResolver(resolve_child::<Self>);
+    /// This is a wrapped function pointer to a function that will try to create a component if the route matches.
+    const ROUTING_CONSTRUCTOR_ATTEMPTER: ComponentConstructorAttempter = ComponentConstructorAttempter(try_construct_component_from_route::<Self>);
 }
 
 /// For a component that allows its props to be constructed from the Route,
 /// this function will instansiate the component within the context of the YewRouter.
-fn resolve_child<T: Routable>(route: &Route<()>) -> Option<VNode<YewRouter>> {
-    if let Some(props) = T::tune_props_from_route(route) {
+fn try_construct_component_from_route<T: Routable>(route: &Route<()>) -> Option<VNode<YewRouter>> {
+    if let Some(props) = T::resolve_props(route) {
         let mut comp = VComp::lazy::<T>().1;
         comp.set_props(props);
         return Some(VNode::VComp(comp))
@@ -132,10 +128,10 @@ fn resolve_child<T: Routable>(route: &Route<()>) -> Option<VNode<YewRouter>> {
     return None
 }
 
-/// Turns the provided component type name into its route resolver.
+/// Turns the provided component type name into a wrapped function that will create the component.
 #[macro_export]
 macro_rules! routes {
     ( $( $x:tt ),* ) => {
-        vec![$(<($x)>::RESOLVER )*]
+        vec![$(<($x)>::ROUTING_CONSTRUCTOR_ATTEMPTER )*]
     };
 }

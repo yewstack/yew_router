@@ -144,7 +144,7 @@ impl Routable for BModel {
     //
     // The syntax could be extended to not care about prior paths like so:
     // #[route("/*/<sub_path>#<number>")]
-    fn tune_props_from_route(route: &router::Route<()>) -> Option<Self::Properties> {
+    fn resolve_props(route: &router::Route<()>) -> Option<Self::Properties> {
         if let Some(first_segment) = route.path_segments.get(0) {
             if "b" == first_segment.as_str() {
                 let mut props = Props {
@@ -161,19 +161,19 @@ impl Routable for BModel {
                     .and_then(|x: String| usize::from_str_radix(&x, 10).ok());
                 Some(props)
             } else {
-                None
+                None // This will only render if the first path segment is "b"
             }
         } else {
             None
         }
     }
 
-    fn encode_info_in_route(&self, route: &mut Route<()>) {
-        if let Some(ref sub_path) = self.sub_path {
-            route.path_segments[1] = sub_path.clone()
-        };
-        route.fragment = self.number.map(|x: usize | x.to_string());
-    }
+//    fn encode_info_in_route(&self, route: &mut Route<()>) {
+//        if let Some(ref sub_path) = self.sub_path {
+//            route.path_segments[1] = sub_path.clone()
+//        };
+//        route.fragment = self.number.map(|x: usize | x.to_string());
+//    }
 }
 
 impl BModel {
