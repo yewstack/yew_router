@@ -22,7 +22,86 @@ pub struct Route<T> {
     pub state: T
 }
 
+<<<<<<< Updated upstream
 impl<T> Route<T>
+=======
+impl <T> RouteBase<T> where T: Default {
+    /// A leading slash is allowed, but will be ignored
+    pub fn parse(string: &str) -> RouteBase<T> {
+        let mut path_segments = vec![];
+        let mut query = None;
+        let mut fragment = None;
+
+        let mut active_segment = String::new();
+
+        #[derive(Clone, Copy)]
+        enum RouteStateMachine {
+            GettingPath,
+            GettingQuery,
+            GettingFragment
+        }
+
+        let mut state = RouteStateMachine::GettingPath;
+
+        // sanitize string
+        let string = string.trim_left_matches('/');
+
+        // parse the route
+        for char in string.chars() {
+            match state {
+                RouteStateMachine::GettingPath => {
+                    match char {
+                        '?' => state = {
+                            path_segments.push(active_segment.clone());
+                            active_segment = String::new();
+                            RouteStateMachine::GettingQuery
+                        },
+                        '#' => state = {
+                            path_segments.push(active_segment.clone());
+                            active_segment = String::new();
+                            RouteStateMachine::GettingFragment
+                        },
+                        '/' => {
+                            path_segments.push(active_segment.clone());
+                            active_segment = String::new()
+                        },
+                        any => active_segment.push(any)
+                    }
+                }
+                RouteStateMachine::GettingQuery => {
+                    match char {
+                        '#' => state = {
+                            query = Some(active_segment.clone());
+                            active_segment = String::new();
+                            RouteStateMachine::GettingFragment
+                        },
+                        any => active_segment.push(any)
+                    }
+                }
+                RouteStateMachine::GettingFragment => {
+                    active_segment.push(char)
+                }
+            }
+        }
+
+        match state {
+            RouteStateMachine::GettingPath => path_segments.push(active_segment.clone()),
+            RouteStateMachine::GettingQuery =>    query = Some(active_segment.clone()),
+            RouteStateMachine::GettingFragment => fragment = Some(active_segment.clone())
+        }
+
+        RouteBase {
+            path_segments,
+            query,
+            fragment,
+            state: T::default()
+        }
+
+    }
+}
+
+impl<T> RouteBase<T>
+>>>>>>> Stashed changes
     where T: JsSerialize + Clone + TryFrom<Value> + Default +'static
 {
     pub fn to_route_string(&self) -> String {

@@ -27,7 +27,7 @@ pub struct RouteService<T> {
 
 
 impl <T> RouteService<T>
-    where T: JsSerialize + Clone + TryFrom<Value> + 'static
+    where T: JsSerialize + Clone + Default + TryFrom<Value> + 'static
 {
     /// Creates the route service.
     pub fn new() -> RouteService<T> {
@@ -47,15 +47,13 @@ impl <T> RouteService<T>
         self.event_listener = Some(window().add_event_listener(
             move |event: PopStateEvent| {
                 let state_value: Value = event.state();
+                let state: T = T::try_from(state_value).unwrap_or_default();
 
-                if let Ok(state) = T::try_from(state_value) {
-                    let location: Location = window().location().unwrap();
-                    let route: String = Self::get_route_from_location(&location);
+                // Can't use the existing location, because this is a callback, and can't move it in here.
+                let location: Location = window().location().unwrap();
+                let route: String = Self::get_route_from_location(&location);
 
-                    callback.emit((route.clone(), state.clone()))
-                } else {
-                    eprintln!("Nothing farther back in history, not calling routing callback.");
-                }
+                callback.emit((route.clone(), state))
             },
         ));
     }
