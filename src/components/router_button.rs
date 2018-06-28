@@ -2,12 +2,7 @@ use yew::prelude::*;
 use route::RouteBase;
 use router_agent::{RouterAgentBase, RouterRequest};
 
-
-#[derive(Default, Clone, Debug, PartialEq)]
-pub struct Props {
-    pub route: RouteBase<()>,
-    pub text: String
-}
+use super::Props;
 
 pub enum Msg {
     NoOp,
@@ -17,7 +12,9 @@ pub enum Msg {
 pub struct RouterButton {
     router: Box<Bridge<RouterAgentBase<()>>>,
     route: RouteBase<()>,
-    text: String
+    text: String,
+    disabled: bool,
+    class: String
 }
 
 
@@ -33,7 +30,9 @@ impl Component for RouterButton {
         RouterButton {
             router,
             route: props.route,
-            text: props.text
+            text: props.text,
+            disabled: props.disabled,
+            class: props.class
         }
     }
 
@@ -49,6 +48,8 @@ impl Component for RouterButton {
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         self.route = props.route;
         self.text = props.text;
+        self.disabled = props.disabled;
+        self.class = props.class;
         true
     }
 }
@@ -56,7 +57,13 @@ impl Component for RouterButton {
 impl Renderable<RouterButton> for RouterButton {
     fn view(&self) -> Html<RouterButton> {
         html! {
-            <button onclick=|_| Msg::Clicked, >{&self.text}</button>
+            <button
+                class=&self.class,
+                onclick=|_| Msg::Clicked,
+                disabled=self.disabled,
+            >
+                {&self.text}
+            </button>
         }
     }
 }

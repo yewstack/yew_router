@@ -2,12 +2,8 @@ use yew::prelude::*;
 use route::RouteBase;
 use router_agent::{RouterAgentBase, RouterRequest};
 
+use super::Props;
 
-#[derive(Default, Clone, Debug, PartialEq)]
-pub struct Props {
-    pub route: RouteBase<()>,
-    pub text: String
-}
 
 pub enum Msg {
     NoOp,
@@ -17,7 +13,9 @@ pub enum Msg {
 pub struct RouterLink {
     router: Box<Bridge<RouterAgentBase<()>>>,
     route: RouteBase<()>,
-    text: String
+    text: String,
+    disabled: bool,
+    class: String
 }
 
 
@@ -33,7 +31,9 @@ impl Component for RouterLink {
         RouterLink {
             router,
             route: props.route,
-            text: props.text
+            text: props.text,
+            disabled: props.disabled,
+            class: props.class
         }
     }
 
@@ -49,14 +49,27 @@ impl Component for RouterLink {
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         self.route = props.route;
         self.text = props.text;
+        self.disabled = props.disabled;
+        self.class = props.class;
         true
     }
 }
 
 impl Renderable<RouterLink> for RouterLink {
     fn view(&self) -> Html<RouterLink> {
+        let mut target = self.route.to_route_string();
+        if !target.contains("#") {
+            target = format!("{}#",target);
+        }
         html! {
-            <a onclick=|_| Msg::Clicked, >{&self.text}</a>
+            <a
+                class=&self.class,
+                onclick=|_| Msg::Clicked,
+                disabled=self.disabled,
+                href=target,
+            >
+                {&self.text}
+            </a>
         }
     }
 }

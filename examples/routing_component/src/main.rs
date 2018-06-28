@@ -10,6 +10,7 @@ mod c_component;
 use yew::prelude::*;
 use yew_router::prelude::*;
 use yew_router::components::RouterButton;
+use yew_router::components::RouterLink;
 
 //use yew_router::{YewRouter, Route,  RoutableBase, DefaultPage};
 
@@ -69,7 +70,7 @@ impl Renderable<Model> for Model {
             <div>
                 <nav class="menu",>
                     <RouterButton: text=String::from("Go to A"), route=Route::parse("/a"), />
-                    <RouterButton: text=String::from("Go to B"), route=Route::parse("/b"), />
+                    <RouterLink: text=String::from("Go to B"), route=Route::parse("/b"), />
                     <RouterButton: text=String::from("Go to A/C"), route=Route::parse("/a/c"), />
                 </nav>
                 <div>
