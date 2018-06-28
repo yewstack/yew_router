@@ -1,11 +1,11 @@
 use yew::prelude::*;
-use router::Route;
+use router::RouteBase;
 use router::{Router, Request};
 
 
 #[derive(Default, Clone, Debug, PartialEq)]
 pub struct Props {
-    pub route: Route<()>,
+    pub route: RouteBase<()>,
     pub text: String
 }
 
@@ -16,7 +16,7 @@ pub enum Msg {
 
 pub struct RouterLink {
     router: Box<Bridge<Router<()>>>,
-    route: Route<()>,
+    route: RouteBase<()>,
     text: String
 }
 
@@ -27,7 +27,7 @@ impl Component for RouterLink {
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
 
-        let callback = link.send_back(|_route: Route<()>| Msg::NoOp);
+        let callback = link.send_back(|_route: RouteBase<()>| Msg::NoOp);
         let router = Router::bridge(callback);
 
         RouterLink {

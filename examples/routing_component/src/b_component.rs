@@ -24,7 +24,7 @@ pub enum Msg {
     Increment,
     Decrement,
     UpdateSubpath(String),
-    HandleRoute(Route<()>)
+    HandleRoute(Route)
 }
 
 
@@ -34,7 +34,7 @@ impl Component for BModel {
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
 
-        let callback = link.send_back(|route: Route<()>| Msg::HandleRoute(route));
+        let callback = link.send_back(|route: Route| Msg::HandleRoute(route));
         let router = router::Router::bridge(callback);
 
         router.send(router::Request::GetCurrentRoute);
@@ -144,8 +144,8 @@ impl Routable for BModel {
     //
     // The syntax could be extended to not care about prior paths like so:
     // #[route("/*/<sub_path>#<number>")]
-    fn resolve_props(route: &router::Route<()>) -> Option<Self::Properties> {
-        if let Some(first_segment) = route.path_segments.get(0) {
+    fn resolve_props(route: &router::Route) -> Option<Self::Properties> {
+        let first_segment = route.path_segments.get(0).unwrap();
             if "b" == first_segment.as_str() {
                 let mut props = Props {
                     number: None,
@@ -163,17 +163,11 @@ impl Routable for BModel {
             } else {
                 None // This will only render if the first path segment is "b"
             }
-        } else {
-            None
-        }
     }
 
-//    fn encode_info_in_route(&self, route: &mut Route<()>) {
-//        if let Some(ref sub_path) = self.sub_path {
-//            route.path_segments[1] = sub_path.clone()
-//        };
-//        route.fragment = self.number.map(|x: usize | x.to_string());
-//    }
+    fn will_try_to_route(route: &router::Route) -> bool {
+        route.path_segments.get(0).is_some()
+    }
 }
 
 impl BModel {

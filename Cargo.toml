@@ -9,4 +9,5 @@ web_logger = "0.1"
 serde = "1.0"
 serde_derive = "1.0"
 yew = { git = "https://github.com/DenisKolodin/yew", rev = "a5213c57430b2f18539aeb25939bdc8c5c348157" }
+yew_patterns = {git = "https://github.com/hgzimmerman/yew_patterns", rev ="63caa9553863382e136ac7b9638c9768422cdd52"}
 stdweb = "0.4"

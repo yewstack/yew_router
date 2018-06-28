@@ -4,11 +4,14 @@ extern crate yew;
 extern crate yew_router;
 
 mod b_component;
+mod a_component;
+mod c_component;
 
 use yew::prelude::*;
 use yew_router::router::{self, Route};
-use yew_router::{YewRouter, Routable, DefaultPage};
+use yew_router::{YewRouter, RoutableBase, DefaultPage};
 use b_component::BModel;
+use a_component::AModel;
 use yew_router::components::router_button::RouterButton;
 
 
@@ -58,12 +61,18 @@ impl Renderable<Model> for Model {
         // This would come in handy in preventing access to admin panels for unauthorized users
         // or providing different components for users who aren't logged in.
         let props: yew_router::Props = yew_router::Props {
-            routes: routes![BModel],
-            routing_failed_page: Some(DefaultPage(routing_failed_page))
+            routes: routes![AModel, BModel],
+            page_not_found: Some(DefaultPage(routing_failed_page))
         };
 
         let a_route = router::Route {
             path_segments: vec!["a".into()],
+            query: None,
+            fragment: None,
+            state: (),
+        };
+        let a_c_route = router::Route {
+            path_segments: vec!["a".into(), "c".into()],
             query: None,
             fragment: None,
             state: (),
@@ -81,6 +90,7 @@ impl Renderable<Model> for Model {
                 <nav class="menu",>
                     <RouterButton: text=String::from("Go to A"), route=a_route, />
                     <RouterButton: text=String::from("Go to B"), route=b_route, />
+                    <RouterButton: text=String::from("Go to A/C"), route=a_c_route, />
 //                    <button onclick=|_| Msg::NavigateTo(Child::A),>{ "Go to A" }</button>
 //                    <button onclick=|_| Msg::NavigateTo(Child::B),>{ "Go to B" }</button>
                 </nav>
@@ -92,9 +102,11 @@ impl Renderable<Model> for Model {
     }
 }
 
-fn routing_failed_page(route: &Route<()>) -> Html<YewRouter> {
+fn routing_failed_page(route: &Route) -> Html<YewRouter> {
     html! {
         <>
+            {"This is the default 404 page"}
+            <br/>
             {format!("Could not route: '{}'", route.to_route_string())}
         </>
     }

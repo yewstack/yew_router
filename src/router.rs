@@ -14,24 +14,67 @@ use serde::Deserialize;
 
 use std::fmt::Debug;
 
+pub type Route = RouteBase<()>;
+
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize) ]
-pub struct Route<T> {
+pub struct RouteBase<T> {
     pub path_segments: Vec<String>,
     pub query: Option<String>,
     pub fragment: Option<String>,
     pub state: T
 }
 
-<<<<<<< Updated upstream
-impl<T> Route<T>
-=======
-impl <T> RouteBase<T> where T: Default {
-    /// A leading slash is allowed, but will be ignored
+impl<T> RouteBase<T>
+    where T: JsSerialize + Clone + TryFrom<Value> + Default +'static
+{
+    pub fn to_route_string(&self) -> String {
+        let path = self.path_segments.join("/");
+        let mut path = format!("/{}", path); // add the leading '/'
+        if let Some(ref query) = self.query {
+            path = format!("{}?{}", path, query);
+        }
+        if let Some(ref fragment) = self.fragment {
+            path = format!("{}#{}", path, fragment)
+        }
+        path
+    }
+
+    pub fn current_route(route_service: &RouteService<T>) -> Self
+    {
+        let path = route_service.get_path(); // guaranteed to always start with a '/'
+        let mut path_segments: Vec<String> = path.split("/").map(String::from).collect();
+        path_segments.remove(0); // remove empty string that is split from the first '/'
+
+        let mut query: String = route_service.get_query(); // The first character will be a '?'
+        let query: Option<String> = if query.len() > 1 {
+            query.remove(0);
+            Some(query)
+        } else {
+            None
+        };
+
+        let mut fragment: String = route_service.get_fragment(); // The first character will be a '#'
+        let fragment: Option<String> = if fragment.len() > 1 {
+            fragment.remove(0);
+            Some(fragment)
+        } else {
+            None
+        };
+
+
+        RouteBase {
+            path_segments,
+            query,
+            fragment,
+            state: T::default()
+        }
+    }
+
+
     pub fn parse(string: &str) -> RouteBase<T> {
         let mut path_segments = vec![];
         let mut query = None;
         let mut fragment = None;
-
         let mut active_segment = String::new();
 
         #[derive(Clone, Copy)]
@@ -100,54 +143,6 @@ impl <T> RouteBase<T> where T: Default {
     }
 }
 
-impl<T> RouteBase<T>
->>>>>>> Stashed changes
-    where T: JsSerialize + Clone + TryFrom<Value> + Default +'static
-{
-    pub fn to_route_string(&self) -> String {
-        let path = self.path_segments.join("/");
-        let mut path = format!("/{}", path); // add the leading '/'
-        if let Some(ref query) = self.query {
-            path = format!("{}?{}", path, query);
-        }
-        if let Some(ref fragment) = self.fragment {
-            path = format!("{}#{}", path, fragment)
-        }
-        path
-    }
-
-    pub fn current_route(route_service: &RouteService<T>) -> Self
-    {
-        let path = route_service.get_path(); // guaranteed to always start with a '/'
-        let mut path_segments: Vec<String> = path.split("/").map(String::from).collect();
-        path_segments.remove(0); // remove empty string that is split from the first '/'
-
-        let mut query: String = route_service.get_query(); // The first character will be a '?'
-        let query: Option<String> = if query.len() > 1 {
-            query.remove(0);
-            Some(query)
-        } else {
-            None
-        };
-
-        let mut fragment: String = route_service.get_fragment(); // The first character will be a '#'
-        let fragment: Option<String> = if fragment.len() > 1 {
-            fragment.remove(0);
-            Some(fragment)
-        } else {
-            None
-        };
-
-
-        Route {
-            path_segments,
-            query,
-            fragment,
-            state: T::default()
-        }
-    }
-}
-
 pub enum Msg<T>
     where T: JsSerialize + Clone + Debug + TryFrom<Value> + 'static
 {
@@ -156,16 +151,16 @@ pub enum Msg<T>
 
 
 
-impl <T> Transferable for Route<T>
+impl <T> Transferable for RouteBase<T>
     where for <'de> T: Serialize + Deserialize<'de>
 {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Request<T> {
     /// Changes the route using a RouteInfo struct and alerts connected components to the route change.
-    ChangeRoute(Route<T>),
+    ChangeRoute(RouteBase<T>),
     /// Changes the route using a RouteInfo struct, but does not alert connected components to the route change.
-    ChangeRouteNoBroadcast(Route<T>),
+    ChangeRouteNoBroadcast(RouteBase<T>),
     /// Gets the current route.
     GetCurrentRoute
 }
@@ -174,7 +169,7 @@ impl <T> Transferable for Request <T>
     where for <'de> T: Serialize + Deserialize<'de>
 {}
 
-/// The Router worker holds on to the RouteService singleton and mediates access to it.
+/// The Router agent holds on to the RouteService singleton and mediates access to it.
 pub struct Router<T>
     where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static
 {
@@ -192,7 +187,7 @@ impl<T> Agent for Router<T>
     type Reach = Context;
     type Message = Msg<T>;
     type Input = Request<T>;
-    type Output = Route<T>;
+    type Output = RouteBase<T>;
 
     fn create(link: AgentLink<Self>) -> Self {
         let callback = link.send_back(|route_changed: (String, T)| Msg::BrowserNavigationRouteChanged(route_changed));
@@ -210,7 +205,7 @@ impl<T> Agent for Router<T>
         match msg {
             Msg::BrowserNavigationRouteChanged((_route_string, state)) => {
                 info!("Browser navigated");
-                let mut route = Route::current_route(&self.route_service);
+                let mut route = RouteBase::current_route(&self.route_service);
                 route.state = state;
                 for sub in self.subscribers.iter() {
                     self.link.response(*sub, route.clone());
@@ -231,7 +226,7 @@ impl<T> Agent for Router<T>
                 // set the route
                 self.route_service.set_route(&route_string, route.state);
                 // get the new route. This will contain a default state object
-                let route = Route::current_route(&self.route_service);
+                let route = RouteBase::current_route(&self.route_service);
                 // broadcast it to all listening components
                 for sub in self.subscribers.iter() {
                     self.link.response(*sub, route.clone());
@@ -242,7 +237,7 @@ impl<T> Agent for Router<T>
                 self.route_service.set_route(&route_string, route.state);
             }
             Request::GetCurrentRoute => {
-                let route = Route::current_route(&self.route_service);
+                let route = RouteBase::current_route(&self.route_service);
                 self.link.response(who, route.clone());
             }
         }
