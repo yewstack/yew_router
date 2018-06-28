@@ -41,11 +41,14 @@ impl <T> Transferable for RouterRequest<T>
     where for <'de> T: Serialize + Deserialize<'de>
 {}
 
+
+pub type RouterAgent = RouterAgentBase<()>;
+
 /// The Router agent holds on to the RouteService singleton and mediates access to it.
-pub struct Router<T>
+pub struct RouterAgentBase<T>
     where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static
 {
-    link: AgentLink<Router<T>>,
+    link: AgentLink<RouterAgentBase<T>>,
     route_service: RouteService<T>,
     /// A list of all entities connected to the router.
     /// When a route changes, either initiated by the browser or by the app,
@@ -53,7 +56,7 @@ pub struct Router<T>
     subscribers: HashSet<HandlerId>,
 }
 
-impl<T> Agent for Router<T>
+impl<T> Agent for RouterAgentBase<T>
     where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static
 {
     type Reach = Context;
@@ -66,7 +69,7 @@ impl<T> Agent for Router<T>
         let mut route_service = RouteService::new();
         route_service.register_callback(callback);
 
-        Router {
+        RouterAgentBase {
             link,
             route_service,
             subscribers: HashSet::new(),

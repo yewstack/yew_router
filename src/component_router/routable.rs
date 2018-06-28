@@ -13,7 +13,7 @@ use serde::Serialize;
 use serde::Deserialize;
 
 
-use component_routers::yew_router::YewRouterBase;
+use component_router::yew_router::YewRouterBase;
 
 
 pub trait Routable: Component + Renderable<Self> {

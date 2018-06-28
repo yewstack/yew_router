@@ -6,7 +6,7 @@ use std::usize;
 pub struct BModel {
     number: Option<usize>,
     sub_path: Option<String>,
-    router: Box<Bridge<Router<()>>>
+    router: Box<Bridge<RouterAgent>>
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -31,7 +31,7 @@ impl Component for BModel {
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
 
         let callback = link.send_back(|route: Route| Msg::HandleRoute(route));
-        let router = Router::bridge(callback);
+        let router = RouterAgent::bridge(callback);
 
         router.send(RouterRequest::GetCurrentRoute);
 

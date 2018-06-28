@@ -1,10 +1,10 @@
 //! Component that performs routing.
 
 use yew::prelude::*;
-use router::Router;
+use router_agent::RouterAgentBase;
 use route::RouteBase;
 use yew::html::Component;
-use router::RouterRequest as RouterRequest;
+use router_agent::RouterRequest as RouterRequest;
 
 use yew::virtual_dom::VNode;
 use yew::virtual_dom::VList;
@@ -13,9 +13,7 @@ use yew::agent::Transferable;
 
 use yew_patterns::{Sender, Receiver};
 
-use component_routers::routable::ComponentConstructorAttempter;
-//use component_routers::ComponentWillTryToRoute;
-use component_routers::routable::ComponentResolverPackage;
+use component_router::routable::{ComponentConstructorAttempter, ComponentResolverPackage};
 use stdweb::JsSerialize;
 use std::fmt::Debug;
 use stdweb::unstable::TryFrom;
@@ -86,7 +84,7 @@ pub struct YewRouterBase<T>
     /// Link for creating senders and receivers.
     link: ComponentLink<YewRouterBase<T>>,
     /// Bridge to the Router Agent. This will supply the YewRouter with messages related to the route.
-    router: Box<Bridge<Router<T>>>,
+    router: Box<Bridge<RouterAgentBase<T>>>,
     /// The current route.
     route: RouteBase<T>,
     /// The role of the YewRouter. If the YewRouter is constructed with a `page_not_found`,
@@ -136,7 +134,7 @@ impl <T> Component for YewRouterBase<T>
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
 
         let callback = link.send_back(|route: RouteBase<T>| Msg::SetRoute(route));
-        let router = Router::bridge(callback);
+        let router = RouterAgentBase::bridge(callback);
         // TODO Not sure if this is technically correct. This should be sent _after_ the component has been created.
         router.send(RouterRequest::GetCurrentRoute);
 
