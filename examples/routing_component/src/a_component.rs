@@ -1,6 +1,5 @@
 
-use router;
-use router::Route;
+use yew_router::Route;
 use yew::prelude::*;
 
 use yew_router::Routable;
@@ -72,7 +71,7 @@ impl Routable for AModel {
     //
     // The syntax could be extended to not care about prior paths like so:
     // #[route("/*/<sub_path>#<number>")]
-    fn resolve_props(route: &router::Route) -> Option<Self::Properties> {
+    fn resolve_props(route: &Route) -> Option<Self::Properties> {
         let first_segment = route.path_segments.get(0).unwrap();
         if "a" == first_segment.as_str() {
             Some(Props)
@@ -81,7 +80,7 @@ impl Routable for AModel {
         }
     }
 
-    fn will_try_to_route(route: &router::Route) -> bool {
+    fn will_try_to_route(route: &Route) -> bool {
         route.path_segments.get(0).is_some()
     }
 

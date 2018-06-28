@@ -18,3 +18,7 @@ pub mod components;
 mod component_routers;
 pub use component_routers::*;
 pub use router::Router;
+pub mod route;
+pub use route::Route;
+
+

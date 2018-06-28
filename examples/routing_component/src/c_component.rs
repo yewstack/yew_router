@@ -1,5 +1,5 @@
 
-use router;
+use yew_router::Route;
 use yew::prelude::*;
 
 use yew_router::Routable;
@@ -45,7 +45,7 @@ impl Renderable<CModel> for CModel {
 
 impl Routable for CModel {
 
-    fn resolve_props(route: &router::Route) -> Option<Self::Properties> {
+    fn resolve_props(route: &Route) -> Option<Self::Properties> {
         let second_segment = route.path_segments.get(1).unwrap();
         if "c" == second_segment.as_str() {
             Some(Props)
@@ -53,7 +53,7 @@ impl Routable for CModel {
             None
         }
     }
-    fn will_try_to_route(route: &router::Route) -> bool {
+    fn will_try_to_route(route: &Route) -> bool {
         route.path_segments.get(1).is_some()
     }
 }

@@ -8,8 +8,7 @@ mod a_component;
 mod c_component;
 
 use yew::prelude::*;
-use yew_router::router::{self, Route};
-use yew_router::{YewRouter, RoutableBase, DefaultPage};
+use yew_router::{YewRouter, Route,  RoutableBase, DefaultPage};
 use b_component::BModel;
 use a_component::AModel;
 use yew_router::components::router_button::RouterButton;
@@ -24,7 +23,6 @@ fn main() {
 
 
 pub struct Model {
-//    router: Box<Bridge<router::Router<()>>>
 }
 
 pub enum Msg {
@@ -60,42 +58,19 @@ impl Renderable<Model> for Model {
         // app state by not including some routes in this variable.
         // This would come in handy in preventing access to admin panels for unauthorized users
         // or providing different components for users who aren't logged in.
-        let props: yew_router::Props = yew_router::Props {
+        let router_props: yew_router::Props = yew_router::Props {
             routes: routes![AModel, BModel],
             page_not_found: Some(DefaultPage(routing_failed_page))
         };
-
-        let a_route = router::Route {
-            path_segments: vec!["a".into()],
-            query: None,
-            fragment: None,
-            state: (),
-        };
-        let a_c_route = router::Route {
-            path_segments: vec!["a".into(), "c".into()],
-            query: None,
-            fragment: None,
-            state: (),
-        };
-
-        let b_route = router::Route {
-            path_segments: vec!["b".into()],
-            query: None,
-            fragment: None,
-            state: (),
-        };
-
         html! {
             <div>
                 <nav class="menu",>
-                    <RouterButton: text=String::from("Go to A"), route=a_route, />
-                    <RouterButton: text=String::from("Go to B"), route=b_route, />
-                    <RouterButton: text=String::from("Go to A/C"), route=a_c_route, />
-//                    <button onclick=|_| Msg::NavigateTo(Child::A),>{ "Go to A" }</button>
-//                    <button onclick=|_| Msg::NavigateTo(Child::B),>{ "Go to B" }</button>
+                    <RouterButton: text=String::from("Go to A"), route=Route::parse("/a"), />
+                    <RouterButton: text=String::from("Go to B"), route=Route::parse("/b"), />
+                    <RouterButton: text=String::from("Go to A/C"), route=Route::parse("/a/c"), />
                 </nav>
                 <div>
-                    <YewRouter: with props, />
+                    <YewRouter: with router_props, />
                 </div>
             </div>
         }

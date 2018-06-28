@@ -8,140 +8,11 @@ use std::collections::HashSet;
 use stdweb::Value;
 use stdweb::JsSerialize;
 use stdweb::unstable::TryFrom;
-
 use serde::Serialize;
 use serde::Deserialize;
-
 use std::fmt::Debug;
 
-pub type Route = RouteBase<()>;
-
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize) ]
-pub struct RouteBase<T> {
-    pub path_segments: Vec<String>,
-    pub query: Option<String>,
-    pub fragment: Option<String>,
-    pub state: T
-}
-
-impl<T> RouteBase<T>
-    where T: JsSerialize + Clone + TryFrom<Value> + Default +'static
-{
-    pub fn to_route_string(&self) -> String {
-        let path = self.path_segments.join("/");
-        let mut path = format!("/{}", path); // add the leading '/'
-        if let Some(ref query) = self.query {
-            path = format!("{}?{}", path, query);
-        }
-        if let Some(ref fragment) = self.fragment {
-            path = format!("{}#{}", path, fragment)
-        }
-        path
-    }
-
-    pub fn current_route(route_service: &RouteService<T>) -> Self
-    {
-        let path = route_service.get_path(); // guaranteed to always start with a '/'
-        let mut path_segments: Vec<String> = path.split("/").map(String::from).collect();
-        path_segments.remove(0); // remove empty string that is split from the first '/'
-
-        let mut query: String = route_service.get_query(); // The first character will be a '?'
-        let query: Option<String> = if query.len() > 1 {
-            query.remove(0);
-            Some(query)
-        } else {
-            None
-        };
-
-        let mut fragment: String = route_service.get_fragment(); // The first character will be a '#'
-        let fragment: Option<String> = if fragment.len() > 1 {
-            fragment.remove(0);
-            Some(fragment)
-        } else {
-            None
-        };
-
-
-        RouteBase {
-            path_segments,
-            query,
-            fragment,
-            state: T::default()
-        }
-    }
-
-
-    pub fn parse(string: &str) -> RouteBase<T> {
-        let mut path_segments = vec![];
-        let mut query = None;
-        let mut fragment = None;
-        let mut active_segment = String::new();
-
-        #[derive(Clone, Copy)]
-        enum RouteStateMachine {
-            GettingPath,
-            GettingQuery,
-            GettingFragment
-        }
-
-        let mut state = RouteStateMachine::GettingPath;
-
-        // sanitize string
-        let string = string.trim_left_matches('/');
-
-        // parse the route
-        for char in string.chars() {
-            match state {
-                RouteStateMachine::GettingPath => {
-                    match char {
-                        '?' => state = {
-                            path_segments.push(active_segment.clone());
-                            active_segment = String::new();
-                            RouteStateMachine::GettingQuery
-                        },
-                        '#' => state = {
-                            path_segments.push(active_segment.clone());
-                            active_segment = String::new();
-                            RouteStateMachine::GettingFragment
-                        },
-                        '/' => {
-                            path_segments.push(active_segment.clone());
-                            active_segment = String::new()
-                        },
-                        any => active_segment.push(any)
-                    }
-                }
-                RouteStateMachine::GettingQuery => {
-                    match char {
-                        '#' => state = {
-                            query = Some(active_segment.clone());
-                            active_segment = String::new();
-                            RouteStateMachine::GettingFragment
-                        },
-                        any => active_segment.push(any)
-                    }
-                }
-                RouteStateMachine::GettingFragment => {
-                    active_segment.push(char)
-                }
-            }
-        }
-
-        match state {
-            RouteStateMachine::GettingPath => path_segments.push(active_segment.clone()),
-            RouteStateMachine::GettingQuery =>    query = Some(active_segment.clone()),
-            RouteStateMachine::GettingFragment => fragment = Some(active_segment.clone())
-        }
-
-        RouteBase {
-            path_segments,
-            query,
-            fragment,
-            state: T::default()
-        }
-
-    }
-}
+use route::RouteBase;
 
 pub enum Msg<T>
     where T: JsSerialize + Clone + Debug + TryFrom<Value> + 'static
@@ -151,9 +22,6 @@ pub enum Msg<T>
 
 
 
-impl <T> Transferable for RouteBase<T>
-    where for <'de> T: Serialize + Deserialize<'de>
-{}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Request<T> {
@@ -219,7 +87,6 @@ impl<T> Agent for Router<T>
     }
 
     fn handle(&mut self, msg: Self::Input, who: HandlerId) {
-        info!("Request: {:?}", msg);
         match msg {
             Request::ChangeRoute(route) => {
                 let route_string: String = route.to_route_string();

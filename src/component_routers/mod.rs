@@ -4,7 +4,7 @@ use yew::prelude::*;
 use yew::virtual_dom::VNode;
 use yew::virtual_dom::VComp;
 
-use router::RouteBase;
+use route::RouteBase;
 
 pub use self::yew_router::{YewRouterBase, YewRouter, DefaultPage, PropsBase, Props};
 use stdweb::JsSerialize;

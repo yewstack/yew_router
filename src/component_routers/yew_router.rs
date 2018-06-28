@@ -1,7 +1,8 @@
 //! Component that performs routing.
 
 use yew::prelude::*;
-use router::{RouteBase, Router};
+use router::Router;
+use route::RouteBase;
 use yew::html::Component;
 use router::Request as RouterRequest;
 
