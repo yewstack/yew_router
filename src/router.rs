@@ -24,7 +24,7 @@ pub enum Msg<T>
 
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum Request<T> {
+pub enum RouterRequest<T> {
     /// Changes the route using a RouteInfo struct and alerts connected components to the route change.
     ChangeRoute(RouteBase<T>),
     /// Changes the route using a RouteInfo struct, but does not alert connected components to the route change.
@@ -33,7 +33,7 @@ pub enum Request<T> {
     GetCurrentRoute
 }
 
-impl <T> Transferable for Request <T>
+impl <T> Transferable for RouterRequest<T>
     where for <'de> T: Serialize + Deserialize<'de>
 {}
 
@@ -54,7 +54,7 @@ impl<T> Agent for Router<T>
 {
     type Reach = Context;
     type Message = Msg<T>;
-    type Input = Request<T>;
+    type Input = RouterRequest<T>;
     type Output = RouteBase<T>;
 
     fn create(link: AgentLink<Self>) -> Self {
@@ -88,7 +88,7 @@ impl<T> Agent for Router<T>
 
     fn handle(&mut self, msg: Self::Input, who: HandlerId) {
         match msg {
-            Request::ChangeRoute(route) => {
+            RouterRequest::ChangeRoute(route) => {
                 let route_string: String = route.to_route_string();
                 // set the route
                 self.route_service.set_route(&route_string, route.state);
@@ -99,11 +99,11 @@ impl<T> Agent for Router<T>
                     self.link.response(*sub, route.clone());
                 }
             }
-            Request::ChangeRouteNoBroadcast(route) => {
+            RouterRequest::ChangeRouteNoBroadcast(route) => {
                 let route_string: String = route.to_route_string();
                 self.route_service.set_route(&route_string, route.state);
             }
-            Request::GetCurrentRoute => {
+            RouterRequest::GetCurrentRoute => {
                 let route = RouteBase::current_route(&self.route_service);
                 self.link.response(who, route.clone());
             }

@@ -1,15 +1,12 @@
-use yew_router::router;
-use yew_router::Route;
 use yew::prelude::*;
+use yew_router::prelude::*;
 use std::usize;
-
-use yew_router::Routable;
 
 
 pub struct BModel {
     number: Option<usize>,
     sub_path: Option<String>,
-    router: Box<Bridge<router::Router<()>>>
+    router: Box<Bridge<Router<()>>>
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -34,9 +31,9 @@ impl Component for BModel {
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
 
         let callback = link.send_back(|route: Route| Msg::HandleRoute(route));
-        let router = router::Router::bridge(callback);
+        let router = Router::bridge(callback);
 
-        router.send(router::Request::GetCurrentRoute);
+        router.send(RouterRequest::GetCurrentRoute);
 
         BModel {
             number: props.number,
@@ -72,7 +69,7 @@ impl Component for BModel {
                 // because the changes made here only affect the current component,
                 // so mutation might as well be contained to the core component update loop
                 // instead of being sent through the router.
-                self.router.send(router::Request::ChangeRouteNoBroadcast(route));
+                self.router.send(RouterRequest::ChangeRouteNoBroadcast(route));
                 true
             }
             Msg::HandleRoute(route) => {

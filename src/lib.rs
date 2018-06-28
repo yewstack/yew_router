@@ -17,8 +17,15 @@ pub mod components;
 //pub mod yew_router;
 mod component_routers;
 pub use component_routers::*;
-pub use router::Router;
+//pub use router::{Router, RouterRequest};
 pub mod route;
 pub use route::Route;
+
+
+pub mod prelude {
+    pub use super::component_routers::{YewRouter, Props, DefaultPage, RoutableBase, Routable};
+    pub use super::route::Route;
+    pub use super::router::{Router, RouterRequest};
+}
 
 

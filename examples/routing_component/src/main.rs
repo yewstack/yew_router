@@ -8,10 +8,13 @@ mod a_component;
 mod c_component;
 
 use yew::prelude::*;
-use yew_router::{YewRouter, Route,  RoutableBase, DefaultPage};
+use yew_router::prelude::*;
+use yew_router::components::RouterButton;
+
+//use yew_router::{YewRouter, Route,  RoutableBase, DefaultPage};
+
 use b_component::BModel;
 use a_component::AModel;
-use yew_router::components::router_button::RouterButton;
 
 
 fn main() {

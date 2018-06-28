@@ -1,6 +1,6 @@
 use yew::prelude::*;
 use route::RouteBase;
-use router::{Router, Request};
+use router::{Router, RouterRequest};
 
 
 #[derive(Default, Clone, Debug, PartialEq)]
@@ -41,7 +41,7 @@ impl Component for RouterButton {
         match msg {
             Msg::NoOp => false,
             Msg::Clicked => {
-                self.router.send(Request::ChangeRoute(self.route.clone()));
+                self.router.send(RouterRequest::ChangeRoute(self.route.clone()));
                 false
             }
         }

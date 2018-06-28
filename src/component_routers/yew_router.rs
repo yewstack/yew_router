@@ -4,7 +4,7 @@ use yew::prelude::*;
 use router::Router;
 use route::RouteBase;
 use yew::html::Component;
-use router::Request as RouterRequest;
+use router::RouterRequest as RouterRequest;
 
 use yew::virtual_dom::VNode;
 use yew::virtual_dom::VList;
@@ -13,9 +13,9 @@ use yew::agent::Transferable;
 
 use yew_patterns::{Sender, Receiver};
 
-use component_routers::ComponentConstructorAttempter;
+use component_routers::routable::ComponentConstructorAttempter;
 //use component_routers::ComponentWillTryToRoute;
-use component_routers::ComponentResolverPackage;
+use component_routers::routable::ComponentResolverPackage;
 use stdweb::JsSerialize;
 use std::fmt::Debug;
 use stdweb::unstable::TryFrom;
@@ -318,17 +318,4 @@ impl <T> Renderable<YewRouterBase<T>> for YewRouterBase<T>
 }
 
 
-/// Turns the provided component type name into wrapped functions that will create the component.
-#[macro_export]
-macro_rules! routes {
-    ( $( $x:tt ), * ) => {
-        {
-            let mut temp_vec = Vec::new();
-            $(
-                let v = $x::RESOLVER;
-                temp_vec.push(v);
-            )*
-            temp_vec
-        }
-    };
-}
+

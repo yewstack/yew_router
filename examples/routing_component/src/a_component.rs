@@ -1,13 +1,8 @@
 
-use yew_router::Route;
 use yew::prelude::*;
-
-use yew_router::Routable;
-use yew_router::YewRouter;
+use yew_router::prelude::*;
 use yew_router::components::router_button::RouterButton;
 use c_component::CModel;
-
-use yew_router::RoutableBase;
 
 
 pub struct AModel {
