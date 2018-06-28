@@ -57,14 +57,16 @@ impl Component for RouterLink {
 
 impl Renderable<RouterLink> for RouterLink {
     fn view(&self) -> Html<RouterLink> {
-        let mut target = self.route.to_route_string();
-        if !target.contains("#") {
-            target = format!("{}#",target);
-        }
+        use stdweb::web::event::IEvent;
+        let target = self.route.to_route_string();
+
         html! {
             <a
                 class=&self.class,
-                onclick=|_| Msg::Clicked,
+                onclick=|event | {
+                    event.prevent_default();
+                    Msg::Clicked
+                },
                 disabled=self.disabled,
                 href=target,
             >

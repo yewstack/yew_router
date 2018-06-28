@@ -148,7 +148,7 @@ impl <T> Component for YewRouterBase<T>
                 error_occurred: false
             }
         } else {
-            let callback = link.send_back(|_| Msg::NoOp);
+            let callback = link.send_back(|_| Msg::NoOp); // TODO, I would like to find a way to remove this callback here, as it is never called.
             RouterRole::SimpleRouter(Sender::new(callback))
         };
 
