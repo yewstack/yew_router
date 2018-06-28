@@ -3,7 +3,7 @@ use stdweb::JsSerialize;
 use stdweb::unstable::TryFrom;
 use serde::Serialize;
 use serde::Deserialize;
-use routing::RouteService;
+use routing_service::RouteService;
 
 use yew::agent::Transferable;
 

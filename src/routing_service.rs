@@ -72,6 +72,17 @@ impl <T> RouteService<T>
         );
     }
 
+    /// Replaces the route with another one removing the most recent history event and
+    /// creating another history event in its place.
+    pub fn replace_route(&mut self, route: &str, state: T) {
+        let _ = self.history.replace_state(
+            state,
+            "",
+            Some(route)
+        );
+    }
+
+    #[inline]
     fn get_route_from_location(location: &Location) -> String {
         let path = location.pathname().unwrap();
         let query = location.search().unwrap();

@@ -1,5 +1,5 @@
 //! Routing service
-use routing::RouteService;
+use routing_service::RouteService;
 
 use yew::prelude::worker::*;
 
@@ -25,9 +25,13 @@ pub enum Msg<T>
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum RouterRequest<T> {
-    /// Changes the route using a RouteInfo struct and alerts connected components to the route change.
+    /// Replaces the most recent Route with a new one and alerts connected components to the route change.
+    ReplaceRoute(RouteBase<T>),
+    /// Replaces the most recent Route with a new one, but does not alert connected components to the route change.
+    ReplaceRouteNoBroadcast(RouteBase<T>),
+    /// Changes the route using a Route struct and alerts connected components to the route change.
     ChangeRoute(RouteBase<T>),
-    /// Changes the route using a RouteInfo struct, but does not alert connected components to the route change.
+    /// Changes the route using a Route struct, but does not alert connected components to the route change.
     ChangeRouteNoBroadcast(RouteBase<T>),
     /// Gets the current route.
     GetCurrentRoute
@@ -88,6 +92,18 @@ impl<T> Agent for Router<T>
 
     fn handle(&mut self, msg: Self::Input, who: HandlerId) {
         match msg {
+            RouterRequest::ReplaceRoute(route) => {
+                let route_string: String = route.to_route_string();
+                self.route_service.replace_route(&route_string, route.state);
+                let route = RouteBase::current_route(&self.route_service);
+                for sub in self.subscribers.iter() {
+                    self.link.response(*sub, route.clone());
+                }
+            }
+            RouterRequest::ReplaceRouteNoBroadcast(route) => {
+                let route_string: String = route.to_route_string();
+                self.route_service.replace_route(&route_string, route.state);
+            }
             RouterRequest::ChangeRoute(route) => {
                 let route_string: String = route.to_route_string();
                 // set the route

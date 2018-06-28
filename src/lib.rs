@@ -12,7 +12,7 @@ extern crate stdweb;
 
 
 pub mod router;
-mod routing;
+mod routing_service;
 pub mod components;
 //pub mod yew_router;
 mod component_routers;
