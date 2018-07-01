@@ -14,12 +14,6 @@ use yew::agent::Transferable;
 use yew_patterns::{Sender, Receiver};
 
 use component_router::routable::{ComponentConstructorAttempter, ComponentResolverPackage};
-use stdweb::JsSerialize;
-use std::fmt::Debug;
-use stdweb::unstable::TryFrom;
-use stdweb::Value;
-use serde::Serialize;
-use serde::Deserialize;
 use component_router::YewRouterState;
 use component_router::routable::ComponentWillRoute;
 
@@ -46,13 +40,14 @@ pub struct RoutingFailedMsg;
 
 impl Transferable for RoutingFailedMsg {}
 
-/// The role of the router.
+/// The role of the yew router.
 enum RouterRole<T>
     where for<'de> T: YewRouterState<'de>
 {
     /// If a router has a simple router role, it won't display an error message when it fails
     /// in routing one of its children.
-    /// Instead, it will tell a PageNotFoundRouter via a RoutingFailedMsg channel to display its error page
+    /// Instead, it will tell a PageNotFoundRouter via a RoutingFailedMsg channel to display its error page.
+    /// It will just show nothing if a PageNotFoundRouter doesn't exist above it.
     SimpleRouter(Sender<RoutingFailedMsg>),
     /// This router is configured to display a default page when a routing error occurs.
     /// Any SimpleRouter that encounters a routing error will alert this router type when it should
@@ -110,7 +105,7 @@ impl <T> PartialEq for DefaultPage<T>
     where for<'de> T: YewRouterState<'de>
 {
     fn eq(&self, other: &DefaultPage<T>) -> bool {
-        // compare pointers // TODO investigate if this works?
+        // compare pointers
         self.0 as *const () == other.0 as *const ()
     }
 }
@@ -119,7 +114,7 @@ impl <T> Default for DefaultPage<T>
 {
     fn default() -> Self {
         fn default_page_impl<U>(_route: &RouteBase<U>) -> VNode<YewRouterBase<U>>
-            where for <'de> U: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static + PartialEq
+            where for <'de> U: YewRouterState<'de>
         {
             VNode::VList(VList::new())
         }
@@ -300,20 +295,7 @@ impl <T> Renderable<YewRouterBase<T>> for YewRouterBase<T>
     where for<'de> T: YewRouterState<'de>
 {
     fn view(&self) -> Html<YewRouterBase<T>> {
-
         self.resolve_child()
-//        let inner: VNode<YewRouter> = self.resolve_child();
-//        html!{
-//            <div>
-//                <div>
-//                    {"ROUTER:"}
-//                </div>
-//                <div>
-////                    {format!("active: {:?};  route: {:?}", self.resolver.is_some(), self.route,)}
-//                </div>
-//                {inner}
-//            </div>
-//        }
     }
 }
 
