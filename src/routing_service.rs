@@ -7,11 +7,10 @@ use stdweb::Value;
 use stdweb::web::EventListenerHandle;
 use stdweb::web::event::PopStateEvent;
 use stdweb::web::IEventTarget;
-use stdweb::JsSerialize;
-use stdweb::unstable::TryFrom;
 use yew::callback::Callback;
 
 use std::marker::PhantomData;
+use route::RouteState;
 
 
 /// A service that facilitates manipulation of the browser's URL bar and responding to browser
@@ -27,7 +26,7 @@ pub struct RouteService<T> {
 
 
 impl <T> RouteService<T>
-    where T: JsSerialize + Clone + Default + TryFrom<Value> + 'static
+    where T: RouteState
 {
     /// Creates the route service.
     pub fn new() -> RouteService<T> {

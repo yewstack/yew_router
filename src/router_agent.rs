@@ -5,17 +5,22 @@ use yew::prelude::worker::*;
 
 use std::collections::HashSet;
 
-use stdweb::Value;
-use stdweb::JsSerialize;
-use stdweb::unstable::TryFrom;
 use serde::Serialize;
 use serde::Deserialize;
 use std::fmt::Debug;
 
 use route::RouteBase;
+use route::RouteState;
+
+
+/// Any state that can be used in the router agent must meet the criteria of this trait.
+pub trait RouterState<'de>: RouteState + Serialize + Deserialize<'de> + Debug {}
+impl <'de, T> RouterState<'de> for T
+    where T: RouteState + Serialize + Deserialize<'de> + Debug
+{}
 
 pub enum Msg<T>
-    where T: JsSerialize + Clone + Debug + TryFrom<Value> + 'static
+    where T: RouteState
 {
     BrowserNavigationRouteChanged((String, T)),
 }
@@ -46,7 +51,7 @@ pub type RouterAgent = RouterAgentBase<()>;
 
 /// The Router agent holds on to the RouteService singleton and mediates access to it.
 pub struct RouterAgentBase<T>
-    where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static
+    where for<'de> T: RouterState<'de>
 {
     link: AgentLink<RouterAgentBase<T>>,
     route_service: RouteService<T>,
@@ -57,7 +62,7 @@ pub struct RouterAgentBase<T>
 }
 
 impl<T> Agent for RouterAgentBase<T>
-    where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static
+    where for<'de> T: RouterState<'de>
 {
     type Reach = Context;
     type Message = Msg<T>;

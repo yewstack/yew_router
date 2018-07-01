@@ -9,7 +9,13 @@ use yew::agent::Transferable;
 
 pub type Route = RouteBase<()>;
 
-/// The representation of a route, segmented into different sections for easy access
+/// Any state that can be stored by the History API must meet the criteria of this trait.
+pub trait RouteState: Clone + Default + JsSerialize + TryFrom<Value> + 'static {}
+impl <T> RouteState for T
+    where T: Clone + Default + JsSerialize + TryFrom<Value> + 'static
+{}
+
+/// The representation of a route, segmented into different sections for easy access.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize) ]
 pub struct RouteBase<T> {
     pub path_segments: Vec<String>,
@@ -19,8 +25,9 @@ pub struct RouteBase<T> {
 }
 
 impl<T> RouteBase<T>
-    where T: JsSerialize + Clone + TryFrom<Value> + Default +'static
+    where T: RouteState
 {
+    /// Converts the Route to a string that is used to set the URL.
     pub fn to_route_string(&self) -> String {
         let path = self.path_segments.join("/");
         let mut path = format!("/{}", path); // add the leading '/'
@@ -137,7 +144,7 @@ impl<T> RouteBase<T>
 }
 
 impl <T> From<String> for RouteBase<T>
-    where T: JsSerialize + Clone + TryFrom<Value> + Default +'static
+    where T: RouteState
 {
     fn from(string: String) -> RouteBase<T> {
         RouteBase::parse(string)

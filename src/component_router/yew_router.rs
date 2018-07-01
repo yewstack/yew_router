@@ -20,6 +20,8 @@ use stdweb::unstable::TryFrom;
 use stdweb::Value;
 use serde::Serialize;
 use serde::Deserialize;
+use component_router::YewRouterState;
+use component_router::routable::ComponentWillRoute;
 
 
 /// Convenience alias for YewRouterBase.
@@ -31,7 +33,7 @@ pub type Props = PropsBase<()>;
 
 
 pub enum Msg<T>
-    where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static + PartialEq
+    where for<'de> T: YewRouterState<'de>
 {
     SetRoute(RouteBase<T>),
 //    SendRoutingFailure,
@@ -46,7 +48,7 @@ impl Transferable for RoutingFailedMsg {}
 
 /// The role of the router.
 enum RouterRole<T>
-    where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static + PartialEq
+    where for<'de> T: YewRouterState<'de>
 {
     /// If a router has a simple router role, it won't display an error message when it fails
     /// in routing one of its children.
@@ -68,7 +70,7 @@ enum RouterRole<T>
 /// Properties of the router
 #[derive(Clone, PartialEq, Default)]
 pub struct PropsBase<T>
-    where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static + PartialEq
+    where for<'de> T: YewRouterState<'de>
 {
     /// A collection of functions that will facilitate route resolution and component construction.
     /// The easiest way to create this is to run the `routes![]` macro like so:
@@ -79,7 +81,7 @@ pub struct PropsBase<T>
 }
 
 pub struct YewRouterBase<T>
-    where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static + PartialEq
+    where for<'de> T: YewRouterState<'de>
 {
     /// Link for creating senders and receivers.
     link: ComponentLink<YewRouterBase<T>>,
@@ -101,11 +103,11 @@ pub struct YewRouterBase<T>
 
 #[derive(Clone)]
 pub struct DefaultPage<T>(pub fn(route: &RouteBase<T>) -> VNode<YewRouterBase<T>>)
-    where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static + PartialEq
+    where for<'de> T: YewRouterState<'de>
 ;
 
 impl <T> PartialEq for DefaultPage<T>
-    where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static + PartialEq
+    where for<'de> T: YewRouterState<'de>
 {
     fn eq(&self, other: &DefaultPage<T>) -> bool {
         // compare pointers // TODO investigate if this works?
@@ -113,7 +115,7 @@ impl <T> PartialEq for DefaultPage<T>
     }
 }
 impl <T> Default for DefaultPage<T>
-    where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static + PartialEq
+    where for<'de> T: YewRouterState<'de>
 {
     fn default() -> Self {
         fn default_page_impl<U>(_route: &RouteBase<U>) -> VNode<YewRouterBase<U>>
@@ -126,7 +128,7 @@ impl <T> Default for DefaultPage<T>
 }
 
 impl <T> Component for YewRouterBase<T>
-    where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static + PartialEq
+    where for<'de> T: YewRouterState<'de>
 {
     type Message = Msg<T>;
     type Properties = PropsBase<T>;
@@ -223,7 +225,7 @@ impl <T> Component for YewRouterBase<T>
 }
 
 impl <T> YewRouterBase<T>
-    where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static + PartialEq
+    where for<'de> T: YewRouterState<'de>
 {
 
     /// Determines which child component to render based on the current route
@@ -264,11 +266,11 @@ impl <T> YewRouterBase<T>
     /// If the routing is going to fail, send a message to any listening router so that it may
     /// display the failed route page.
     fn should_routing_error(&self) -> bool {
-        let routes_to_attempt: Vec<&ComponentConstructorAttempter<T>> = self.routes
+        let routes_to_attempt: Vec<&ComponentWillRoute<T>> = self.routes
             .iter()
             .filter_map(|resolver| {
                 if (resolver.will_try_to_route.0)(&self.route) {
-                    Some(&resolver.constructor_attempter)
+                    Some(&resolver.will_route)
                 } else {
                     None
                 }
@@ -280,11 +282,11 @@ impl <T> YewRouterBase<T>
             return false
         }
 
-        // TODO for performance reasons, constructing the whole child component and then not mounting it is slow
-        // TODO, instead just construct the Option<Props> then coerce to a bool
-        // If the component is going to try to route, but ends up failing, then you should error
+        // If the component is going to try to route, but ends up failing, then you should error.
+        // This loop will check to see if the router _shouldn't_ error by trying to construct the
+        // props for possible components.
         for attempter in routes_to_attempt {
-            if let Some(_child) = (attempter.0)(&self.route) {
+            if (attempter.0)(&self.route) {
                 return false
             }
         }
@@ -295,7 +297,7 @@ impl <T> YewRouterBase<T>
 
 
 impl <T> Renderable<YewRouterBase<T>> for YewRouterBase<T>
-    where for <'de> T: JsSerialize + Clone + Debug + TryFrom<Value> + Default + Serialize + Deserialize<'de> + 'static + PartialEq
+    where for<'de> T: YewRouterState<'de>
 {
     fn view(&self) -> Html<YewRouterBase<T>> {
 

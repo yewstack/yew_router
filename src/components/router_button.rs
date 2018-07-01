@@ -3,11 +3,8 @@ use route::RouteBase;
 use router_agent::{RouterAgentBase, RouterRequest};
 
 use super::Props;
+use super::Msg;
 
-pub enum Msg {
-    NoOp,
-    Clicked
-}
 
 pub struct RouterButton {
     router: Box<Bridge<RouterAgentBase<()>>>,

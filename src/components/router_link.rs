@@ -3,13 +3,12 @@ use route::RouteBase;
 use router_agent::{RouterAgentBase, RouterRequest};
 
 use super::Props;
+use super::Msg;
 
 
-pub enum Msg {
-    NoOp,
-    Clicked
-}
 
+/// An anchor tag Component that when clicked, will navigate to the provided route.
+/// The Route's `to_route_string()` will be displayed as the href.
 pub struct RouterLink {
     router: Box<Bridge<RouterAgentBase<()>>>,
     route: RouteBase<()>,
@@ -46,6 +45,7 @@ impl Component for RouterLink {
             }
         }
     }
+
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         self.route = props.route;
         self.text = props.text;
