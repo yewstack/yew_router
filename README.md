@@ -8,7 +8,8 @@ You can use it in your project by adding it to your dependencies like so:
 [dependencies]
 yew_router = { git = "https://github.com/hgzimmerman/YewRouter" }
 ```
-
+-----
+The API surface will be changing in the near future as I experiment with ways to acomplish the goal of creating an easy to use router.
 
 -----
 
