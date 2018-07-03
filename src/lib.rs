@@ -36,7 +36,7 @@ pub mod prelude {
     #[cfg(feature = "router_agent")]
     pub use super::route::Route;
     #[cfg(feature = "router_agent")]
-    pub use super::router_agent::{RouterAgent, RouterRequest};
+    pub use super::router_agent::{RouterAgent, RouterRequest, Router};
 }
 
 

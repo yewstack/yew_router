@@ -11,6 +11,7 @@ use std::fmt::Debug;
 
 use route::RouteBase;
 use route::RouteState;
+use yew::callback::Callback;
 
 
 /// Any state that can be used in the router agent must meet the criteria of this trait.
@@ -45,6 +46,12 @@ pub enum RouterRequest<T> {
 impl <T> Transferable for RouterRequest<T>
     where for <'de> T: Serialize + Deserialize<'de>
 {}
+
+/// A simplified routerBase that assumes that no state is stored.
+pub type Router = RouterBase<()>;
+/// A simplified interface to the router agent
+pub struct RouterBase<T>(Box<Bridge<RouterAgentBase<T>>>)
+    where for<'de> T: RouterState<'de>;
 
 
 pub type RouterAgent = RouterAgentBase<()>;
@@ -135,5 +142,18 @@ impl<T> Agent for RouterAgentBase<T>
     }
     fn disconnected(&mut self, id: HandlerId) {
         self.subscribers.remove(&id);
+    }
+}
+
+impl <T> RouterBase<T>
+    where for<'de> T: RouterState<'de>
+{
+    pub fn new(callback: Callback<RouteBase<T>>) -> Self {
+        let router_agent = RouterAgentBase::bridge(callback);
+        RouterBase(router_agent)
+    }
+
+    pub fn send(&mut self, request: RouterRequest<T>) {
+        self.0.send(request)
     }
 }
