@@ -153,7 +153,53 @@ impl <T> RouterBase<T>
         RouterBase(router_agent)
     }
 
+    /// Experimental, may be removed
+    ///
+    /// Directly spawn a new Router
+    pub fn spawn(callback: Callback<RouteBase<T>>) -> Self {
+        use yew::agent::Discoverer;
+        let router_agent = Context::spawn_or_join(callback);
+        RouterBase(router_agent)
+    }
+
     pub fn send(&mut self, request: RouterRequest<T>) {
         self.0.send(request)
     }
+}
+
+
+/// A sender for the Router that doesn't send messages back to the component that connects to it.
+///
+/// This may be subject to change
+pub struct RouterSenderAgentBase<T>
+    where for<'de> T: RouterState<'de>
+{
+    router_agent: Box<Bridge<RouterAgentBase<T>>>
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Void;
+impl Transferable for Void {}
+
+impl<T> Agent for RouterSenderAgentBase<T>
+    where for<'de> T: RouterState<'de>
+{
+    type Reach = Context;
+    type Message = ();
+    type Input = RouterRequest<T>;
+    type Output = Void;
+
+    fn create(link: AgentLink<Self>) -> Self {
+        RouterSenderAgentBase {
+            router_agent: RouterAgentBase::bridge(link.send_back(|_| ()))
+        }
+    }
+
+    fn update(&mut self, _msg: Self::Message) {
+    }
+
+    fn handle(&mut self, msg: Self::Input, _who: HandlerId) {
+        self.router_agent.send(msg);
+    }
+
 }
