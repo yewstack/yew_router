@@ -168,6 +168,7 @@ impl <T> RouterBase<T>
 }
 
 
+
 /// A sender for the Router that doesn't send messages back to the component that connects to it.
 ///
 /// This may be subject to change
@@ -202,4 +203,20 @@ impl<T> Agent for RouterSenderAgentBase<T>
         self.router_agent.send(msg);
     }
 
+}
+/// A simplified interface to the router agent
+pub struct RouterSenderBase<T>(Box<Bridge<RouterSenderAgentBase<T>>>)
+    where for<'de> T: RouterState<'de>;
+
+impl <T> RouterSenderBase<T>
+    where for<'de> T: RouterState<'de>
+{
+    pub fn new(callback: Callback<Void>) -> Self {
+        let router_agent = RouterSenderAgentBase::bridge(callback);
+        RouterSenderBase(router_agent)
+    }
+
+    pub fn send(&mut self, request: RouterRequest<T>) {
+        self.0.send(request)
+    }
 }
