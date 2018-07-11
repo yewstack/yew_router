@@ -34,7 +34,7 @@ pub mod prelude {
     pub use super::component_router::{YewRouter, Props, DefaultPage, RoutableBase, Routable};
 
     #[cfg(feature = "router_agent")]
-    pub use super::route::Route;
+    pub use super::route::{Route, RouteBase};
     #[cfg(feature = "router_agent")]
     pub use super::router_agent::{RouterAgent, RouterRequest, Router};
 }
