@@ -24,6 +24,7 @@ pub struct RouteBase<T> {
     pub state: T
 }
 
+
 impl<T> RouteBase<T>
     where T: RouteState
 {
@@ -155,3 +156,22 @@ impl <T> From<String> for RouteBase<T>
 impl <T> Transferable for RouteBase<T>
     where for <'de> T: Serialize + Deserialize<'de>
 {}
+
+
+/// A simple wrapper around format! that makes it easier to create `Route` structs.
+#[macro_export]
+macro_rules! route {
+    ($($tts:tt)*) => {
+        RouteBase::parse(format!($($tts)*))
+    }
+}
+
+#[test]
+fn route_macro() {
+    let route = route!("/hello/world");
+    assert_eq!(route, Route::parse("hello/world"));
+
+    let world = "world";
+    let route = route!("hello/{}", world);
+    assert_eq!(route, Route::parse("hello/world"));
+}
