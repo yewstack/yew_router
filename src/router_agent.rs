@@ -40,7 +40,10 @@ pub enum RouterRequest<T> {
     /// Changes the route using a Route struct, but does not alert connected components to the route change.
     ChangeRouteNoBroadcast(RouteBase<T>),
     /// Gets the current route.
-    GetCurrentRoute
+    GetCurrentRoute,
+    /// Removes the entity from the Router Agent
+    // TODO this is a temporary message because yew currently doesn't call the destructor, so it must be manually engaged
+    Disconnect
 }
 
 impl <T> Transferable for RouterRequest<T>
@@ -138,6 +141,9 @@ impl<T> Agent for RouterAgentBase<T>
                 let route = RouteBase::current_route(&self.route_service);
                 self.link.response(who, route.clone());
             }
+            RouterRequest::Disconnect => {
+                self.subscribers.remove(&who);
+            }
         }
     }
     fn disconnected(&mut self, id: HandlerId) {
@@ -204,6 +210,9 @@ impl<T> Agent for RouterSenderAgentBase<T>
     }
 
 }
+
+pub type RouterSender = RouterSenderBase<()>;
+
 /// A simplified interface to the router agent
 pub struct RouterSenderBase<T>(Box<Bridge<RouterSenderAgentBase<T>>>)
     where for<'de> T: RouterState<'de>;

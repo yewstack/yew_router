@@ -217,6 +217,10 @@ impl <T> Component for YewRouterBase<T>
         self.routes = props.routes;
         true
     }
+
+    fn destroy(&mut self) {
+        self.router.send(RouterRequest::Disconnect)
+    }
 }
 
 impl <T> YewRouterBase<T>
