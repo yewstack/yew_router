@@ -45,7 +45,7 @@ impl<T> RouteBase<T>
     pub fn current_route(route_service: &RouteService<T>) -> Self
     {
         let path = route_service.get_path(); // guaranteed to always start with a '/'
-        let mut path_segments: Vec<String> = path.split("/").map(String::from).collect();
+        let mut path_segments: Vec<String> = path.split('/').map(String::from).collect();
         path_segments.remove(0); // remove empty string that is split from the first '/'
 
         let mut query: String = route_service.get_query(); // The first character will be a '?'
@@ -81,14 +81,14 @@ impl<T> RouteBase<T>
         let mut fragment = None;
         let mut active_segment = String::new();
 
-        #[derive(Clone, Copy)]
-        enum RouteStateMachine {
-            GettingPath,
-            GettingQuery,
-            GettingFragment
+        #[derive(Clone, Copy, Debug)]
+        enum RouteParsingState {
+            Path,
+            Query,
+            Fragment
         }
 
-        let mut state = RouteStateMachine::GettingPath;
+        let mut state = RouteParsingState::Path;
 
         // sanitize string
         let string = string.trim_left_matches('/');
@@ -96,17 +96,17 @@ impl<T> RouteBase<T>
         // parse the route
         for character in string.chars() {
             match state {
-                RouteStateMachine::GettingPath => {
+                RouteParsingState::Path => {
                     match character {
                         '?' => state = {
                             path_segments.push(active_segment.clone());
                             active_segment = String::new();
-                            RouteStateMachine::GettingQuery
+                            RouteParsingState::Query
                         },
                         '#' => state = {
                             path_segments.push(active_segment.clone());
                             active_segment = String::new();
-                            RouteStateMachine::GettingFragment
+                            RouteParsingState::Fragment
                         },
                         '/' => {
                             path_segments.push(active_segment.clone());
@@ -115,24 +115,24 @@ impl<T> RouteBase<T>
                         any => active_segment.push(any)
                     }
                 }
-                RouteStateMachine::GettingQuery => {
+                RouteParsingState::Query => {
                     match character {
                         '#' => state = {
                             query = Some(active_segment.clone());
                             active_segment = String::new();
-                            RouteStateMachine::GettingFragment
+                            RouteParsingState::Fragment
                         },
                         any => active_segment.push(any)
                     }
                 }
-                RouteStateMachine::GettingFragment => active_segment.push(character)
+                RouteParsingState::Fragment => active_segment.push(character)
             }
         }
 
         match state {
-            RouteStateMachine::GettingPath => path_segments.push(active_segment.clone()),
-            RouteStateMachine::GettingQuery =>    query = Some(active_segment.clone()),
-            RouteStateMachine::GettingFragment => fragment = Some(active_segment.clone())
+            RouteParsingState::Path => path_segments.push(active_segment.clone()),
+            RouteParsingState::Query =>    query = Some(active_segment.clone()),
+            RouteParsingState::Fragment => fragment = Some(active_segment.clone())
         }
 
         RouteBase {

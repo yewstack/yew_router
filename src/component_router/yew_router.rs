@@ -130,7 +130,7 @@ impl <T> Component for YewRouterBase<T>
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
 
-        let callback = link.send_back(|route: RouteBase<T>| Msg::SetRoute(route));
+        let callback = link.send_back(Msg::SetRoute);
         let router = RouterAgentBase::bridge(callback);
         // TODO Not sure if this is technically correct. This should be sent _after_ the component has been created.
         router.send(RouterRequest::GetCurrentRoute);
@@ -174,10 +174,8 @@ impl <T> Component for YewRouterBase<T>
                             *error_occurred = true;
                         }
                     }
-                } else {
-                    if let RouterRole::PageNotFoundRouter {ref mut error_occurred, ..} = self.role {
-                        *error_occurred = false
-                    }
+                } else if let RouterRole::PageNotFoundRouter {ref mut error_occurred, ..} = self.role {
+                    *error_occurred = false
                 }
                 true
             }
@@ -277,7 +275,7 @@ impl <T> YewRouterBase<T>
             .collect();
 
         // If this is empty, then it shouldn't error, because the router being empty itself isn't a problem.
-        if routes_to_attempt.len() == 0 {
+        if routes_to_attempt.is_empty() {
             return false
         }
 

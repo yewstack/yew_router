@@ -80,7 +80,7 @@ impl<T> Agent for RouterAgentBase<T>
     type Output = RouteBase<T>;
 
     fn create(link: AgentLink<Self>) -> Self {
-        let callback = link.send_back(|route_changed: (String, T)| Msg::BrowserNavigationRouteChanged(route_changed));
+        let callback = link.send_back(Msg::BrowserNavigationRouteChanged);
         let mut route_service = RouteService::new();
         route_service.register_callback(callback);
 
@@ -97,7 +97,7 @@ impl<T> Agent for RouterAgentBase<T>
                 info!("Browser navigated");
                 let mut route = RouteBase::current_route(&self.route_service);
                 route.state = state;
-                for sub in self.subscribers.iter() {
+                for sub in &self.subscribers {
                     self.link.response(*sub, route.clone());
                 }
             }
@@ -114,7 +114,7 @@ impl<T> Agent for RouterAgentBase<T>
                 let route_string: String = route.to_route_string();
                 self.route_service.replace_route(&route_string, route.state);
                 let route = RouteBase::current_route(&self.route_service);
-                for sub in self.subscribers.iter() {
+                for sub in &self.subscribers {
                     self.link.response(*sub, route.clone());
                 }
             }
@@ -129,7 +129,7 @@ impl<T> Agent for RouterAgentBase<T>
                 // get the new route. This will contain a default state object
                 let route = RouteBase::current_route(&self.route_service);
                 // broadcast it to all listening components
-                for sub in self.subscribers.iter() {
+                for sub in &self.subscribers {
                     self.link.response(*sub, route.clone());
                 }
             }

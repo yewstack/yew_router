@@ -24,6 +24,11 @@ pub struct RouteService<T> {
     phantom_data: PhantomData<T>
 }
 
+impl <T> Default for RouteService<T> where T: RouteState {
+    fn default() -> Self {
+        RouteService::<T>::new()
+    }
+}
 
 impl <T> RouteService<T>
     where T: RouteState
