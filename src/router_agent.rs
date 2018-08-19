@@ -149,7 +149,7 @@ impl<T> Agent for RouterAgentBase<T>
     fn disconnected(&mut self, id: HandlerId) {
         info!("request to disconnect; num subs: {}", self.subscribers.len());
         self.subscribers.remove(&id);
-        info!("disconnect processed ; num subs: {}", self.subscribers.len());
+        info!("disconnect processed ; num subs: {}", self.subscribers.len()); // the latter value should be -1
     }
 }
 

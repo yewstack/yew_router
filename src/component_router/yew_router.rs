@@ -216,6 +216,7 @@ impl <T> Component for YewRouterBase<T>
     }
 
     fn destroy(&mut self) {
+        info!("YewRouterComponent destroyed");
         self.router.send(RouterRequest::Disconnect)
     }
 }
