@@ -142,12 +142,14 @@ impl<T> Agent for RouterAgentBase<T>
                 self.link.response(who, route.clone());
             }
             RouterRequest::Disconnect => {
-                self.subscribers.remove(&who);
+                self.disconnected(who);
             }
         }
     }
     fn disconnected(&mut self, id: HandlerId) {
+        info!("request to disconnect; num subs: {}", self.subscribers.len());
         self.subscribers.remove(&id);
+        info!("disconnect processed ; num subs: {}", self.subscribers.len());
     }
 }
 

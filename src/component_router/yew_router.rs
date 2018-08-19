@@ -208,7 +208,6 @@ impl <T> Component for YewRouterBase<T>
                     let callback = self.link.send_back(|_| Msg::NoOp);
                     self.role = RouterRole::SimpleRouter(Sender::new(callback))
                 }
-
             }
         }
 
