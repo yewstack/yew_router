@@ -150,6 +150,7 @@ impl<T> Agent for RouterAgentBase<T>
         info!("request to disconnect; num subs: {}", self.subscribers.len());
         self.subscribers.remove(&id);
         info!("disconnect processed ; num subs: {}", self.subscribers.len()); // the latter value should be -1
+        // if it doesn't then the handlerIds are different for each request
     }
 }
 
