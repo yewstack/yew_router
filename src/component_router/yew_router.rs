@@ -131,7 +131,7 @@ impl <T> Component for YewRouterBase<T>
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
 
         let callback = link.send_back(Msg::SetRoute);
-        let router = RouterAgentBase::bridge(callback);
+        let mut router = RouterAgentBase::bridge(callback);
         // TODO Not sure if this is technically correct. This should be sent _after_ the component has been created.
         router.send(RouterRequest::GetCurrentRoute);
 
@@ -167,7 +167,7 @@ impl <T> Component for YewRouterBase<T>
                     match self.role {
                         // If the router isn't configured to display a 404 page,
                         // send a message to a router that is configured to display a 404 page.
-                        RouterRole::SimpleRouter(ref sender) => sender.send(RoutingFailedMsg),
+                        RouterRole::SimpleRouter(ref mut sender) => sender.send(RoutingFailedMsg),
                         // If the router is configured to display a 404 page,
                         // just set the flag to display the 404 page.
                         RouterRole::PageNotFoundRouter{ref mut error_occurred, ..} => {
