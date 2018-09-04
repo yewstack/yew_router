@@ -9,8 +9,10 @@ You can use it in your project by adding it to your dependencies like so:
 yew_router = { git = "https://github.com/hgzimmerman/YewRouter" }
 ```
 -----
+### Small Disclaimer
 The API surface will be changing in the near future as I experiment with ways to acomplish the goal of creating an easy to use router.
 
 -----
+### Contributions/Requests
 
-If you have any questions, suggestions, or want to contribute, please open an Issue or PR and I'll try to get back to you in a timely manner.
+If you have any questions, suggestions, or want to contribute, please open an Issue or PR and I'll try to get back to you in a timely manner. If you need the version of Yew bumped in this project to the most recent `master` to maintain compatability, _please_ let me know.
