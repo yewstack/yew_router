@@ -1,4 +1,3 @@
-#![feature(never_type)]
 #[macro_use]
 extern crate log;
 #[macro_use]
