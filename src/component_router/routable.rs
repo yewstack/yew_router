@@ -78,9 +78,11 @@ fn try_construct_component_from_route<T, R >(route: &RouteBase<T>) -> Option<VNo
           R: RoutableBase<T>
 {
     R::resolve_props(route).map(|props| {
-        let mut comp = VComp::lazy::<R>().1; // Creates a component
-        comp.set_props(props); // The properties of the component _must_ be set
-        VNode::VComp(comp)
+//        let mut comp = VComp::lazy::<R>().1; // Creates a component
+        let scope_holder = unimplemented!();
+        VComp::<R>::new(props, scope_holder);
+//        comp.set_props(props); // The properties of the component _must_ be set
+//        VNode::VComp(comp)
     })
 }
 

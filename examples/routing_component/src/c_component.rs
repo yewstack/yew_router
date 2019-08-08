@@ -1,12 +1,13 @@
 
 use yew::prelude::*;
 use yew_router::prelude::*;
-
+use std::convert::TryFrom;
+use yew::Properties;
 
 pub struct CModel;
 
-#[derive(Clone, Debug, PartialEq, Default)]
-pub struct Props;
+#[derive(PartialEq, Properties)]
+pub struct Props{}
 
 pub enum Msg {
 }
@@ -41,18 +42,30 @@ impl Renderable<CModel> for CModel {
     }
 }
 
-impl Routable for CModel {
-
-    fn resolve_props(route: &Route) -> Option<Self::Properties> {
-        let second_segment = route.path_segments.get(1).unwrap();
+impl TryFrom<Route> for Props {
+    type Error = ();
+    fn try_from(route: Route) -> Result<Self, Self::Error> {
+        let second_segment = route.path_segments.get(1).ok_or_else(|| ())?;
         if "c" == second_segment.as_str() {
-            Some(Props)
+            Ok(Props{})
         } else {
-            None
+            Err(())
         }
     }
-    fn will_try_to_route(route: &Route) -> bool {
-        route.path_segments.get(1).is_some()
-    }
 }
+
+//impl Routable for CModel {
+//
+//    fn resolve_props(route: &Route) -> Option<Self::Properties> {
+//        let second_segment = route.path_segments.get(1).unwrap();
+//        if "c" == second_segment.as_str() {
+//            Some(Props)
+//        } else {
+//            None
+//        }
+//    }
+//    fn will_try_to_route(route: &Route) -> bool {
+//        route.path_segments.get(1).is_some()
+//    }
+//}
 

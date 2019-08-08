@@ -10,7 +10,7 @@ use super::Msg;
 /// An anchor tag Component that when clicked, will navigate to the provided route.
 /// The Route's `to_route_string()` will be displayed as the href.
 pub struct RouterLink {
-    router: Box<Bridge<RouterAgentBase<()>>>,
+    router: Box<dyn Bridge<RouterAgentBase<()>>>,
     route: RouteBase<()>,
     text: String,
     disabled: bool,
@@ -22,7 +22,7 @@ impl Component for RouterLink {
     type Message = Msg;
     type Properties = Props;
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
 
         let callback = link.send_back(|_route: RouteBase<()>| Msg::NoOp);
         let router = RouterAgentBase::bridge(callback);

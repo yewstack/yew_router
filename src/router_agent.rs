@@ -53,7 +53,7 @@ impl <T> Transferable for RouterRequest<T>
 /// A simplified routerBase that assumes that no state is stored.
 pub type Router = RouterBase<()>;
 /// A simplified interface to the router agent
-pub struct RouterBase<T>(Box<Bridge<RouterAgentBase<T>>>)
+pub struct RouterBase<T>(Box<dyn Bridge<RouterAgentBase<T>>>)
     where for<'de> T: RouterState<'de>;
 
 
@@ -184,7 +184,7 @@ impl <T> RouterBase<T>
 pub struct RouterSenderAgentBase<T>
     where for<'de> T: RouterState<'de>
 {
-    router_agent: Box<Bridge<RouterAgentBase<T>>>
+    router_agent: Box<dyn Bridge<RouterAgentBase<T>>>
 }
 
 #[derive(Serialize, Deserialize)]
@@ -217,7 +217,7 @@ impl<T> Agent for RouterSenderAgentBase<T>
 pub type RouterSender = RouterSenderBase<()>;
 
 /// A simplified interface to the router agent
-pub struct RouterSenderBase<T>(Box<Bridge<RouterSenderAgentBase<T>>>)
+pub struct RouterSenderBase<T>(Box<dyn Bridge<RouterSenderAgentBase<T>>>)
     where for<'de> T: RouterState<'de>;
 
 impl <T> RouterSenderBase<T>

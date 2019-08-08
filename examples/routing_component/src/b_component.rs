@@ -1,17 +1,21 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 use std::usize;
+use std::convert::TryFrom;
+use yew::Properties;
 
 
 pub struct BModel {
     number: Option<usize>,
     sub_path: Option<String>,
-    router: Box<Bridge<RouterAgent>>
+    router: Box<dyn Bridge<RouterAgent>>
 }
 
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(PartialEq, Properties)]
 pub struct Props {
-    number: Option<usize>,
+    #[props(required)]
+    number: Option<usize>, // TODO remove these options
+    #[props(required)]
     sub_path: Option<String>
 }
 
@@ -28,10 +32,10 @@ impl Component for BModel {
     type Message = Msg;
     type Properties = Props;
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
 
         let callback = link.send_back(|route: Route| Msg::HandleRoute(route));
-        let router = RouterAgent::bridge(callback);
+        let mut router = RouterAgent::bridge(callback);
 
         router.send(RouterRequest::GetCurrentRoute);
 
@@ -133,36 +137,61 @@ impl Renderable<BModel> for BModel {
     }
 }
 
-impl Routable for BModel {
-    // Once proc macros land, it wouldn't be too difficult to set up a macro that does all of the below that looks like
-    // #[route("/b/<sub_path>#<number>")]
-    // That will implement this trait for the Component.
-    //
-    // The syntax could be extended to not care about prior paths like so:
-    // #[route("/*/<sub_path>#<number>")]
-    fn resolve_props(route: &Route) -> Option<Self::Properties> {
-        let first_segment = route.path_segments.get(0).unwrap();
-            if "b" == first_segment.as_str() {
-                let mut props = Props {
-                    number: None,
-                    sub_path: None,
-                };
-                props.sub_path = route
-                    .path_segments
-                    .get(1)
-                    .cloned();
-                props.number = route
-                    .clone()
-                    .fragment
-                    .and_then(|x: String| usize::from_str_radix(&x, 10).ok());
-                Some(props)
-            } else {
-                None // This will only render if the first path segment is "b"
-            }
-    }
+//impl Routable for BModel {
+//    // Once proc macros land, it wouldn't be too difficult to set up a macro that does all of the below that looks like
+//    // #[route("/b/<sub_path>#<number>")]
+//    // That will implement this trait for the Component.
+//    //
+//    // The syntax could be extended to not care about prior paths like so:
+//    // #[route("/*/<sub_path>#<number>")]
+//    fn resolve_props(route: &Route) -> Option<Self::Properties> {
+//        let first_segment = route.path_segments.get(0).unwrap();
+//            if "b" == first_segment.as_str() {
+//                let mut props = Props {
+//                    number: None,
+//                    sub_path: None,
+//                };
+//                props.sub_path = route
+//                    .path_segments
+//                    .get(1)
+//                    .cloned();
+//                props.number = route
+//                    .clone()
+//                    .fragment
+//                    .and_then(|x: String| usize::from_str_radix(&x, 10).ok());
+//                Some(props)
+//            } else {
+//                None // This will only render if the first path segment is "b"
+//            }
+//    }
+//
+//    fn will_try_to_route(route: &Route) -> bool {
+//        route.path_segments.get(0).is_some()
+//    }
+//}
 
-    fn will_try_to_route(route: &Route) -> bool {
-        route.path_segments.get(0).is_some()
+impl TryFrom<Route> for Props {
+
+    type Error = ();
+    fn try_from(route: Route) -> Result<Self, Self::Error> {
+        let first_segment = route.path_segments.get(0).ok_or_else(|| ())?;
+        if "b" == first_segment.as_str() {
+            let mut props = Props {
+                number: None,
+                sub_path: None,
+            };
+            props.sub_path = route
+                .path_segments
+                .get(1)
+                .cloned();
+            props.number = route
+                .clone()
+                .fragment
+                .and_then(|x: String| usize::from_str_radix(&x, 10).ok());
+            Ok(props)
+        } else {
+            Err(())// This will only render if the first path segment is "b"
+        }
     }
 }
 

@@ -1,6 +1,4 @@
-#[macro_use]
 extern crate yew;
-#[macro_use]
 extern crate yew_router;
 
 mod b_component;
@@ -9,8 +7,12 @@ mod c_component;
 
 use yew::prelude::*;
 use yew_router::prelude::*;
+use yew_router::Router;
+use yew_router::Props as RouterProps;
 use yew_router::components::RouterButton;
 use yew_router::components::RouterLink;
+use yew_router::RouterOption;
+use std::convert::TryFrom;
 
 //use yew_router::{YewRouter, Route,  RoutableBase, DefaultPage};
 
@@ -62,9 +64,11 @@ impl Renderable<Model> for Model {
         // app state by not including some routes in this variable.
         // This would come in handy in preventing access to admin panels for unauthorized users
         // or providing different components for users who aren't logged in.
-        let router_props: yew_router::Props = yew_router::Props {
-            routes: routes![AModel, BModel],
-            page_not_found: Some(DefaultPage(routing_failed_page))
+        let router_props = RouterProps {
+            route_options: vec![
+                RouterOption::new::<AModel, _>(|route| a_component::Props::try_from(route).ok()),
+                RouterOption::new::<BModel, _>(|route| b_component::Props::try_from(route).ok())
+            ]
         };
         html! {
             <div>
@@ -74,19 +78,10 @@ impl Renderable<Model> for Model {
                     <RouterButton: text=String::from("Go to A/C"), route=Route::parse("/a/c"), />
                 </nav>
                 <div>
-                    <YewRouter: with router_props, />
+                    <Router<()>: with router_props, />
                 </div>
             </div>
         }
     }
 }
 
-fn routing_failed_page(route: &Route) -> Html<YewRouter> {
-    html! {
-        <>
-            {"This is the default 404 page"}
-            <br/>
-            {format!("Could not route: '{}'", route.to_route_string())}
-        </>
-    }
-}

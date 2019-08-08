@@ -6,6 +6,7 @@ use serde::Deserialize;
 use routing_service::RouteService;
 
 use yew::agent::Transferable;
+use yew::Properties;
 
 pub type Route = RouteBase<()>;
 
@@ -16,11 +17,12 @@ impl <T> RouteState for T
 {}
 
 /// The representation of a route, segmented into different sections for easy access.
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize) ]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, Properties) ]
 pub struct RouteBase<T> {
     pub path_segments: Vec<String>,
     pub query: Option<String>,
     pub fragment: Option<String>,
+    #[props(required)]
     pub state: T
 }
 
@@ -91,7 +93,7 @@ impl<T> RouteBase<T>
         let mut state = RouteParsingState::Path;
 
         // sanitize string
-        let string = string.trim_left_matches('/');
+        let string = string.trim_start_matches('/');
 
         // parse the route
         for character in string.chars() {

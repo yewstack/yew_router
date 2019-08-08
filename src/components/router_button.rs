@@ -7,7 +7,7 @@ use super::Msg;
 
 
 pub struct RouterButton {
-    router: Box<Bridge<RouterAgentBase<()>>>,
+    router: Box<dyn Bridge<RouterAgentBase<()>>>,
     route: RouteBase<()>,
     text: String,
     disabled: bool,
@@ -19,7 +19,7 @@ impl Component for RouterButton {
     type Message = Msg;
     type Properties = Props;
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
 
         let callback = link.send_back(|_route: RouteBase<()>| Msg::NoOp);
         let router = RouterAgentBase::bridge(callback);

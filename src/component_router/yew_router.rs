@@ -1,6 +1,7 @@
 //! Component that performs routing.
 
 use yew::prelude::*;
+use yew::Properties;
 use router_agent::RouterAgentBase;
 use route::RouteBase;
 use yew::html::Component;
@@ -63,15 +64,18 @@ enum RouterRole<T>
 }
 
 /// Properties of the router
-#[derive(Clone, PartialEq, Default)]
+#[derive(Clone, PartialEq, Default, Properties)]
 pub struct PropsBase<T>
-    where for<'de> T: YewRouterState<'de>
+    where for<'de>
+    T: YewRouterState<'de>
 {
     /// A collection of functions that will facilitate route resolution and component construction.
     /// The easiest way to create this is to run the `routes![]` macro like so:
     /// `routes![ComponentName1, ComponentName2]`.
+    #[props(required)]
     pub routes: Vec<ComponentResolverPackage<T>>,
     /// The page that will be shown if any router can't resolve its route.
+    #[props(required)]
     pub page_not_found: Option<DefaultPage<T>>
 }
 
@@ -81,7 +85,7 @@ pub struct YewRouterBase<T>
     /// Link for creating senders and receivers.
     link: ComponentLink<YewRouterBase<T>>,
     /// Bridge to the Router Agent. This will supply the YewRouter with messages related to the route.
-    router: Box<Bridge<RouterAgentBase<T>>>,
+    router: Box<dyn Bridge<RouterAgentBase<T>>>,
     /// The current route.
     route: RouteBase<T>,
     /// The role of the YewRouter. If the YewRouter is constructed with a `page_not_found`,
@@ -98,7 +102,8 @@ pub struct YewRouterBase<T>
 
 #[derive(Clone)]
 pub struct DefaultPage<T>(pub fn(route: &RouteBase<T>) -> VNode<YewRouterBase<T>>)
-    where for<'de> T: YewRouterState<'de>
+    where for<'de>
+    T: YewRouterState<'de>
 ;
 
 impl <T> PartialEq for DefaultPage<T>
@@ -128,7 +133,7 @@ impl <T> Component for YewRouterBase<T>
     type Message = Msg<T>;
     type Properties = PropsBase<T>;
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
 
         let callback = link.send_back(Msg::SetRoute);
         let mut router = RouterAgentBase::bridge(callback);
@@ -145,7 +150,7 @@ impl <T> Component for YewRouterBase<T>
                 error_occurred: false
             }
         } else {
-            let callback = link.send_back(|_| Msg::NoOp); // TODO, I would like to find a way to remove this callback here, as it is never called.
+            let callback = link.send_back(|_| Msg::NoOp); // TODO, I would like to find a way to remove this callback here, as it is never called. (Solution: Make sender take an option of the callback, and in this case use None)
             RouterRole::SimpleRouter(Sender::new(callback))
         };
 

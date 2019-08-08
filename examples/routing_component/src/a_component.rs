@@ -3,13 +3,18 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 use yew_router::components::router_button::RouterButton;
 use c_component::CModel;
+use std::convert::TryFrom;
+use yew::Properties;
+use yew_router::Router;
 
+use yew_router::RouterOption;
+use c_component;
 
 pub struct AModel {
 }
 
-#[derive(Clone, Debug, PartialEq, Default)]
-pub struct Props;
+#[derive(PartialEq, Properties)]
+pub struct Props{}
 
 pub enum Msg {
 }
@@ -52,32 +57,49 @@ impl Renderable<AModel> for AModel {
                     />
                 </div>
                 <div>
-                    <YewRouter: routes=routes![CModel], />
+                    <Router<()>: route_options=vec![
+                        RouterOption::new::<CModel, _>(|route| c_component::Props::try_from(route).ok())
+                    ], />
+//                    <YewRouter: routes=routes![CModel], />
                 </div>
             </div>
         }
     }
 }
 
-impl Routable for AModel {
-    // Once proc macros land, it wouldn't be too difficult to set up a macro that does all of the below that looks like
-    // #[route("/a/<sub_path>#<number>")]
-    // That will implement this trait for the Component.
-    //
-    // The syntax could be extended to not care about prior paths like so:
-    // #[route("/*/<sub_path>#<number>")]
-    fn resolve_props(route: &Route) -> Option<Self::Properties> {
-        let first_segment = route.path_segments.get(0).unwrap();
+//impl Routable for AModel {
+//    // Once proc macros land, it wouldn't be too difficult to set up a macro that does all of the below that looks like
+//    // #[route("/a/<sub_path>#<number>")]
+//    // That will implement this trait for the Component.
+//    //
+//    // The syntax could be extended to not care about prior paths like so:
+//    // #[route("/*/<sub_path>#<number>")]
+//    fn resolve_props(route: &Route) -> Option<Self::Properties> {
+//        let first_segment = route.path_segments.get(0).unwrap();
+//        if "a" == first_segment.as_str() {
+//            Some(Props)
+//        } else {
+//            None // This will only render if the first path segment is "a"
+//        }
+//    }
+//
+//    fn will_try_to_route(route: &Route) -> bool {
+//        route.path_segments.get(0).is_some()
+//    }
+//
+//}
+
+
+
+impl TryFrom<Route> for Props {
+    type Error = ();
+    fn try_from(route: Route) -> Result<Self, Self::Error> {
+        let first_segment = route.path_segments.get(0).ok_or_else(|| ())?;
         if "a" == first_segment.as_str() {
-            Some(Props)
+            Ok(Props{})
         } else {
-            None // This will only render if the first path segment is "a"
+            Err(())// This will only render if the first path segment is "a"
         }
-    }
 
-    fn will_try_to_route(route: &Route) -> bool {
-        route.path_segments.get(0).is_some()
     }
-
 }
-

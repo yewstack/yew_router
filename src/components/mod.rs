@@ -7,10 +7,11 @@ pub use self::router_link::RouterLink;
 pub use self::router_button::RouterButton;
 
 use route::RouteBase;
+use yew::Properties;
 
 
 /// Properties for Routing Components
-#[derive(Default, Clone, Debug, PartialEq)]
+#[derive(Properties, Default, Clone, Debug, PartialEq)]
 pub struct Props {
     pub route: RouteBase<()>,
     pub text: String,
