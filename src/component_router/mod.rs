@@ -6,13 +6,12 @@ pub use self::router::{Router, Props, RouterOption};
 
 
 use router_agent::RouterState;
-use yew::Properties;
 
 /// Any state that can be managed by the `YewRouter` must meet the criteria of this trait.
-pub trait YewRouterState<'de>: RouterState<'de> + PartialEq + Properties {}
+pub trait YewRouterState<'de>: RouterState<'de> + PartialEq {}
 
 impl <'de, T> YewRouterState<'de> for T
-    where T: RouterState<'de> + PartialEq + Properties
+    where T: RouterState<'de> + PartialEq
 {}
 
 /// Turns the provided component type name into wrapped functions that will create the component.

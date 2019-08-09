@@ -10,6 +10,7 @@ use stdweb::{JsSerialize, Value};
 use stdweb::unstable::TryFrom as StdwebTryFrom;
 use std::fmt::Debug;
 use yew::Bridged;
+use YewRouterState;
 
 
 pub trait FromPath<T> {
@@ -111,7 +112,8 @@ fn route_one_of<CONTEXT: Component, T: Clone>(route_options: &[RouterOption<T, C
 }
 
 /// Router with state type of T
-pub struct Router<T: Default + PartialEq + Clone + Serialize + for<'de> Deserialize<'de> + JsSerialize + StdwebTryFrom<Value> + Debug + 'static> {
+//pub struct Router<T: Default + PartialEq + Clone + Serialize + for<'de> Deserialize<'de> + JsSerialize + StdwebTryFrom<Value> + Debug + 'static> {
+pub struct Router<T: for<'de> YewRouterState<'de>> {
     route: RouteBase<T>,
     route_options: Vec<RouterOption<T, Router<T>>>,
     _router_agent: Box<dyn Bridge<RouterAgentBase<T>>>,
@@ -122,11 +124,13 @@ pub enum Msg<T> {
 }
 
 #[derive(PartialEq, Properties)]
-pub struct Props<T:  Default + PartialEq + Clone + Serialize + for<'de> Deserialize<'de> + JsSerialize + StdwebTryFrom<Value> + Debug + 'static> {
+//pub struct Props<T:  Default + PartialEq + Clone + Serialize + for<'de> Deserialize<'de> + JsSerialize + StdwebTryFrom<Value> + Debug + 'static> {
+pub struct Props<T: for<'de> YewRouterState<'de>> {
     pub route_options: Vec<RouterOption<T, Router<T>>>
 }
 
-impl <T: Default + PartialEq + Clone + Serialize + for<'de> Deserialize<'de> + JsSerialize + StdwebTryFrom<Value> + Debug + 'static> Component for Router<T> {
+//impl <T: Default + PartialEq + Clone + Serialize + for<'de> Deserialize<'de> + JsSerialize + StdwebTryFrom<Value> + Debug + 'static> Component for Router<T> {
+impl <T: for<'de> YewRouterState<'de>> Component for Router<T> {
     type Message = Msg<T>;
     type Properties = Props<T>;
 
