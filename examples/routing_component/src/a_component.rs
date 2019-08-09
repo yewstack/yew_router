@@ -3,7 +3,6 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 use yew_router::components::router_button::RouterButton;
 use c_component::CModel;
-use std::convert::TryFrom;
 use yew::Properties;
 use yew_router::Router;
 
@@ -58,7 +57,12 @@ impl Renderable<AModel> for AModel {
                 </div>
                 <div>
                     <Router<()>: route_options=vec![
-                        RouterOption::new::<CModel, _>(|route| c_component::Props::try_from(route).ok())
+                        RouterOption::component::<CModel, _>(|route| c_component::Props::from_path(route)),
+                        RouterOption::children(|_| html!{
+                            <div>
+                                {"404 page"}
+                            </div>
+                        })
                     ], />
 //                    <YewRouter: routes=routes![CModel], />
                 </div>
@@ -91,14 +95,15 @@ impl Renderable<AModel> for AModel {
 
 
 
-impl TryFrom<Route> for Props {
-    type Error = ();
-    fn try_from(route: Route) -> Result<Self, Self::Error> {
-        let first_segment = route.path_segments.get(0).ok_or_else(|| ())?;
+use yew_router::router::FromPath;
+impl <T> FromPath<T> for Props {
+
+    fn from_path(route: &RouteBase<T>) -> Option<Self> {
+        let first_segment = route.path_segments.get(0)?;
         if "a" == first_segment.as_str() {
-            Ok(Props{})
+            Some(Props{})
         } else {
-            Err(())// This will only render if the first path segment is "a"
+            None // This will only render if the first path segment is "a"
         }
 
     }

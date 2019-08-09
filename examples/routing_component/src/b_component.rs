@@ -1,7 +1,6 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 use std::usize;
-use std::convert::TryFrom;
 use yew::Properties;
 
 
@@ -169,12 +168,11 @@ impl Renderable<BModel> for BModel {
 //        route.path_segments.get(0).is_some()
 //    }
 //}
+use yew_router::router::FromPath;
+impl <T> FromPath<T> for Props {
 
-impl TryFrom<Route> for Props {
-
-    type Error = ();
-    fn try_from(route: Route) -> Result<Self, Self::Error> {
-        let first_segment = route.path_segments.get(0).ok_or_else(|| ())?;
+    fn from_path(route: &RouteBase<T>) -> Option<Self> {
+        let first_segment = route.path_segments.get(0)?;
         if "b" == first_segment.as_str() {
             let mut props = Props {
                 number: None,
@@ -187,10 +185,11 @@ impl TryFrom<Route> for Props {
             props.number = route
                 .clone()
                 .fragment
-                .and_then(|x: String| usize::from_str_radix(&x, 10).ok());
-            Ok(props)
+                .as_ref()
+                .and_then(|x: &String| usize::from_str_radix(&x, 10).ok());
+            Some(props)
         } else {
-            Err(())// This will only render if the first path segment is "b"
+            None // This will only render if the first path segment is "b"
         }
     }
 }

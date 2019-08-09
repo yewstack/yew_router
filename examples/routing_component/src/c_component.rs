@@ -1,8 +1,8 @@
 
 use yew::prelude::*;
 use yew_router::prelude::*;
-use std::convert::TryFrom;
 use yew::Properties;
+use yew_router::router::FromPath;
 
 pub struct CModel;
 
@@ -42,14 +42,14 @@ impl Renderable<CModel> for CModel {
     }
 }
 
-impl TryFrom<Route> for Props {
-    type Error = ();
-    fn try_from(route: Route) -> Result<Self, Self::Error> {
-        let second_segment = route.path_segments.get(1).ok_or_else(|| ())?;
+impl <T> FromPath<T> for Props {
+
+    fn from_path(route: &RouteBase<T>) -> Option<Self> {
+        let second_segment = route.path_segments.get(1)?;
         if "c" == second_segment.as_str() {
-            Ok(Props{})
+            Some(Props{})
         } else {
-            Err(())
+            None
         }
     }
 }
