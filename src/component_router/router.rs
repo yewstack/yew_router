@@ -3,9 +3,7 @@ use yew::{virtual_dom::{
     VComp,
     vcomp::ScopeHolder
 }, Renderable, html, Html, Component, ComponentLink, ShouldRender, Properties, Bridge};
-use Route;
 use route::RouteBase;
-use std::marker::PhantomData;
 use router_agent::{RouterAgentBase, RouterRequest};
 use serde::{Serialize, Deserialize};
 use stdweb::{JsSerialize, Value};
@@ -67,7 +65,7 @@ fn route_one_of<CONTEXT: Component, T: Clone>(route_options: &[RouterOption<T, C
 pub struct Router<T: Default + PartialEq + Clone + Serialize + for<'de> Deserialize<'de> + JsSerialize + TryFrom<Value> + Debug + 'static> {
     route: RouteBase<T>,
     route_options: Vec<RouterOption<T, Router<T>>>,
-    router_agent: Box<dyn Bridge<RouterAgentBase<T>>>,
+    _router_agent: Box<dyn Bridge<RouterAgentBase<T>>>,
 }
 
 pub enum Msg<T> {
@@ -92,7 +90,7 @@ impl <T: Default + PartialEq + Clone + Serialize + for<'de> Deserialize<'de> + J
         Router {
             route: Default::default(), // This must be updated by immediately requesting a route update from the service bridge.
             route_options: props.route_options,
-            router_agent
+            _router_agent: router_agent
         }
     }
 

@@ -1,11 +1,8 @@
-//pub mod yew_router;
-//mod routable;
-//pub mod router2;
-pub mod router3;
+pub mod router;
 
 //pub use self::yew_router::{YewRouter, DefaultPage, Props};
 //pub use self::routable::{Routable, RoutableBase};
-pub use self::router3::{Router, Props, RouterOption};
+pub use self::router::{Router, Props, RouterOption};
 
 
 use router_agent::RouterState;
