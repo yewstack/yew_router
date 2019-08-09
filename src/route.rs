@@ -6,7 +6,6 @@ use serde::Deserialize;
 use routing_service::RouteService;
 
 use yew::agent::Transferable;
-use yew::Properties;
 
 pub type Route = RouteBase<()>;
 
@@ -17,14 +16,14 @@ impl <T> RouteState for T
 {}
 
 /// The representation of a route, segmented into different sections for easy access.
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, Properties) ]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize) ]
 pub struct RouteBase<T> {
     pub path_segments: Vec<String>,
     pub query: Option<String>,
     pub fragment: Option<String>,
-    #[props(required)]
     pub state: T
 }
+
 
 
 impl<T> RouteBase<T>
