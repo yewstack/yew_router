@@ -6,7 +6,8 @@ use c_component::CModel;
 use yew::Properties;
 use yew_router::Router;
 
-use yew_router::RouterOption;
+use yew_router::route::RouteInfo;
+use yew_router::Route;
 use c_component;
 
 pub struct AModel {
@@ -48,17 +49,17 @@ impl Renderable<AModel> for AModel {
                 <div>
                     <RouterButton:
                         text=String::from("Go to a/c"),
-                        route=Route::parse("/a/c"),
+                        route=RouteInfo::parse("/a/c"),
                     />
                     <RouterButton:
                         text=String::from("Go to a/d (Component does not exist)"),
-                        route=Route::parse("/a/d"),
+                        route=RouteInfo::parse("/a/d"),
                     />
                 </div>
                 <div>
                     <Router<()>: route_options=vec![
-                        RouterOption::component::<CModel, _>(|route| c_component::Props::from_path(route)),
-                        RouterOption::children(|_| html!{
+                        Route::component::<CModel, _>(|route| c_component::Props::from_route_info(route)),
+                        Route::children(|_| html!{
                             <div>
                                 {"404 page"}
                             </div>
@@ -95,10 +96,10 @@ impl Renderable<AModel> for AModel {
 
 
 
-use yew_router::router::FromPath;
-impl <T> FromPath<T> for Props {
+use yew_router::router::FromRouteInfo;
+impl <T> FromRouteInfo<T> for Props {
 
-    fn from_path(route: &RouteBase<T>) -> Option<Self> {
+    fn from_route_info(route: &RouteInfo<T>) -> Option<Self> {
         let first_segment = route.path_segments.get(0)?;
         if "a" == first_segment.as_str() {
             Some(Props{})

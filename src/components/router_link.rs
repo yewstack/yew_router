@@ -1,6 +1,6 @@
 use yew::prelude::*;
-use route::RouteBase;
-use router_agent::{RouterAgentBase, RouterRequest};
+use route::RouteInfo;
+use router_agent::{RouterAgent, RouterRequest};
 
 use super::Props;
 use super::Msg;
@@ -10,8 +10,8 @@ use super::Msg;
 /// An anchor tag Component that when clicked, will navigate to the provided route.
 /// The Route's `to_route_string()` will be displayed as the href.
 pub struct RouterLink {
-    router: Box<dyn Bridge<RouterAgentBase<()>>>,
-    route: RouteBase<()>,
+    router: Box<dyn Bridge<RouterAgent<()>>>,
+    route: RouteInfo<()>,
     text: String,
     disabled: bool,
     class: String
@@ -24,8 +24,8 @@ impl Component for RouterLink {
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
 
-        let callback = link.send_back(|_route: RouteBase<()>| Msg::NoOp);
-        let router = RouterAgentBase::bridge(callback);
+        let callback = link.send_back(|_route: RouteInfo<()>| Msg::NoOp);
+        let router = RouterAgent::bridge(callback);
 
         RouterLink {
             router,

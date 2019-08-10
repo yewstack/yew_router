@@ -11,7 +11,7 @@ use yew_router::prelude::*;
 use yew_router::Router;
 use yew_router::components::RouterButton;
 use yew_router::components::RouterLink;
-use yew_router::RouterOption;
+use yew_router::Route;
 
 
 use b_component::BModel;
@@ -53,16 +53,16 @@ impl Renderable<Model> for Model {
         html! {
             <div>
                 <nav class="menu",>
-                    <RouterButton: text=String::from("Go to A"), route=Route::parse("/a"), />
-                    <RouterLink: text=String::from("Go to B"), route=Route::parse("/b"), />
-                    <RouterButton: text=String::from("Go to A/C"), route=Route::parse("/a/c"), />
+                    <RouterButton: text=String::from("Go to A"), route=RouteInfo::parse("/a"), />
+                    <RouterLink: text=String::from("Go to B"), route=RouteInfo::parse("/b"), />
+                    <RouterButton: text=String::from("Go to A/C"), route=RouteInfo::parse("/a/c"), />
                 </nav>
                 <div>
                     <Router<()>:
                         route_options = vec![
-                            RouterOption::component_from_path::<AModel>(),
-                            RouterOption::component_from_path::<BModel>(),
-                            RouterOption::children(|_| html!{
+                            Route::component_from_route_info::<AModel>(),
+                            Route::component_from_route_info::<BModel>(),
+                            Route::children(|_| html!{
                                 <div>
                                     {"404 page"}
                                 </div>

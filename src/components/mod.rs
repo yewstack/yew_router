@@ -6,14 +6,14 @@ pub mod router_button;
 pub use self::router_link::RouterLink;
 pub use self::router_button::RouterButton;
 
-use route::RouteBase;
+use route::RouteInfo;
 use yew::Properties;
 
 
 /// Properties for Routing Components
 #[derive(Properties, Default, Clone, Debug, PartialEq)]
 pub struct Props {
-    pub route: RouteBase<()>,
+    pub route: RouteInfo<()>,
     pub text: String,
     pub disabled: bool,
     pub class: String

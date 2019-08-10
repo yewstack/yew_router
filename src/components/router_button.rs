@@ -1,14 +1,14 @@
 use yew::prelude::*;
-use route::RouteBase;
-use router_agent::{RouterAgentBase, RouterRequest};
+use route::RouteInfo;
+use router_agent::{RouterAgent, RouterRequest};
 
 use super::Props;
 use super::Msg;
 
 
 pub struct RouterButton {
-    router: Box<dyn Bridge<RouterAgentBase<()>>>,
-    route: RouteBase<()>,
+    router: Box<dyn Bridge<RouterAgent<()>>>,
+    route: RouteInfo<()>,
     text: String,
     disabled: bool,
     class: String
@@ -21,8 +21,8 @@ impl Component for RouterButton {
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
 
-        let callback = link.send_back(|_route: RouteBase<()>| Msg::NoOp);
-        let router = RouterAgentBase::bridge(callback);
+        let callback = link.send_back(|_route: RouteInfo<()>| Msg::NoOp);
+        let router = RouterAgent::bridge(callback);
 
         RouterButton {
             router,

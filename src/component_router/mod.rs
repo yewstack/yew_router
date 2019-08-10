@@ -2,7 +2,7 @@ pub mod router;
 
 //pub use self::yew_router::{YewRouter, DefaultPage, Props};
 //pub use self::routable::{Routable, RoutableBase};
-pub use self::router::{Router, Props, RouterOption};
+pub use self::router::{Router, Props, Route};
 
 
 use router_agent::RouterState;

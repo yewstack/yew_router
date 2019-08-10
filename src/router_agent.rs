@@ -9,7 +9,7 @@ use serde::Serialize;
 use serde::Deserialize;
 use std::fmt::Debug;
 
-use route::RouteBase;
+use route::RouteInfo;
 use route::RouteState;
 use yew::callback::Callback;
 
@@ -32,13 +32,13 @@ pub enum Msg<T>
 #[derive(Serialize, Deserialize, Debug)]
 pub enum RouterRequest<T> {
     /// Replaces the most recent Route with a new one and alerts connected components to the route change.
-    ReplaceRoute(RouteBase<T>),
+    ReplaceRoute(RouteInfo<T>),
     /// Replaces the most recent Route with a new one, but does not alert connected components to the route change.
-    ReplaceRouteNoBroadcast(RouteBase<T>),
+    ReplaceRouteNoBroadcast(RouteInfo<T>),
     /// Changes the route using a Route struct and alerts connected components to the route change.
-    ChangeRoute(RouteBase<T>),
+    ChangeRoute(RouteInfo<T>),
     /// Changes the route using a Route struct, but does not alert connected components to the route change.
-    ChangeRouteNoBroadcast(RouteBase<T>),
+    ChangeRouteNoBroadcast(RouteInfo<T>),
     /// Gets the current route.
     GetCurrentRoute,
     /// Removes the entity from the Router Agent
@@ -53,17 +53,17 @@ impl <T> Transferable for RouterRequest<T>
 /// A simplified routerBase that assumes that no state is stored.
 pub type Router = RouterBase<()>;
 /// A simplified interface to the router agent
-pub struct RouterBase<T>(Box<dyn Bridge<RouterAgentBase<T>>>)
+pub struct RouterBase<T>(Box<dyn Bridge<RouterAgent<T>>>)
     where for<'de> T: RouterState<'de>;
 
 
-pub type RouterAgent = RouterAgentBase<()>;
+pub type SimpleRouterAgent = RouterAgent<()>;
 
 /// The Router agent holds on to the RouteService singleton and mediates access to it.
-pub struct RouterAgentBase<T>
+pub struct RouterAgent<T>
     where for<'de> T: RouterState<'de>
 {
-    link: AgentLink<RouterAgentBase<T>>,
+    link: AgentLink<RouterAgent<T>>,
     route_service: RouteService<T>,
     /// A list of all entities connected to the router.
     /// When a route changes, either initiated by the browser or by the app,
@@ -71,20 +71,20 @@ pub struct RouterAgentBase<T>
     subscribers: HashSet<HandlerId>,
 }
 
-impl<T> Agent for RouterAgentBase<T>
+impl<T> Agent for RouterAgent<T>
     where for<'de> T: RouterState<'de>
 {
     type Reach = Context;
     type Message = Msg<T>;
     type Input = RouterRequest<T>;
-    type Output = RouteBase<T>;
+    type Output = RouteInfo<T>;
 
     fn create(link: AgentLink<Self>) -> Self {
         let callback = link.send_back(Msg::BrowserNavigationRouteChanged);
         let mut route_service = RouteService::new();
         route_service.register_callback(callback);
 
-        RouterAgentBase {
+        RouterAgent {
             link,
             route_service,
             subscribers: HashSet::new(),
@@ -95,7 +95,7 @@ impl<T> Agent for RouterAgentBase<T>
         match msg {
             Msg::BrowserNavigationRouteChanged((_route_string, state)) => {
                 info!("Browser navigated");
-                let mut route = RouteBase::current_route(&self.route_service);
+                let mut route = RouteInfo::current_route(&self.route_service);
                 route.state = state;
                 for sub in &self.subscribers {
                     self.link.response(*sub, route.clone());
@@ -113,7 +113,7 @@ impl<T> Agent for RouterAgentBase<T>
             RouterRequest::ReplaceRoute(route) => {
                 let route_string: String = route.to_route_string();
                 self.route_service.replace_route(&route_string, route.state);
-                let route = RouteBase::current_route(&self.route_service);
+                let route = RouteInfo::current_route(&self.route_service);
                 for sub in &self.subscribers {
                     self.link.response(*sub, route.clone());
                 }
@@ -127,7 +127,7 @@ impl<T> Agent for RouterAgentBase<T>
                 // set the route
                 self.route_service.set_route(&route_string, route.state);
                 // get the new route. This will contain a default state object
-                let route = RouteBase::current_route(&self.route_service);
+                let route = RouteInfo::current_route(&self.route_service);
                 // broadcast it to all listening components
                 for sub in &self.subscribers {
                     self.link.response(*sub, route.clone());
@@ -138,7 +138,7 @@ impl<T> Agent for RouterAgentBase<T>
                 self.route_service.set_route(&route_string, route.state);
             }
             RouterRequest::GetCurrentRoute => {
-                let route = RouteBase::current_route(&self.route_service);
+                let route = RouteInfo::current_route(&self.route_service);
                 self.link.response(who, route.clone());
             }
             RouterRequest::Disconnect => {
@@ -157,15 +157,15 @@ impl<T> Agent for RouterAgentBase<T>
 impl <T> RouterBase<T>
     where for<'de> T: RouterState<'de>
 {
-    pub fn new(callback: Callback<RouteBase<T>>) -> Self {
-        let router_agent = RouterAgentBase::bridge(callback);
+    pub fn new(callback: Callback<RouteInfo<T>>) -> Self {
+        let router_agent = RouterAgent::bridge(callback);
         RouterBase(router_agent)
     }
 
     /// Experimental, may be removed
     ///
     /// Directly spawn a new Router
-    pub fn spawn(callback: Callback<RouteBase<T>>) -> Self {
+    pub fn spawn(callback: Callback<RouteInfo<T>>) -> Self {
         use yew::agent::Discoverer;
         let router_agent = Context::spawn_or_join(callback);
         RouterBase(router_agent)
@@ -184,7 +184,7 @@ impl <T> RouterBase<T>
 pub struct RouterSenderAgentBase<T>
     where for<'de> T: RouterState<'de>
 {
-    router_agent: Box<dyn Bridge<RouterAgentBase<T>>>
+    router_agent: Box<dyn Bridge<RouterAgent<T>>>
 }
 
 #[derive(Serialize, Deserialize)]
@@ -201,7 +201,7 @@ impl<T> Agent for RouterSenderAgentBase<T>
 
     fn create(link: AgentLink<Self>) -> Self {
         RouterSenderAgentBase {
-            router_agent: RouterAgentBase::bridge(link.send_back(|_| ()))
+            router_agent: RouterAgent::bridge(link.send_back(|_| ()))
         }
     }
 

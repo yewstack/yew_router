@@ -2,12 +2,14 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 use std::usize;
 use yew::Properties;
+use yew_router::Route;
+use yew_router::route::RouteInfo;
 
 
 pub struct BModel {
     number: Option<usize>,
     sub_path: Option<String>,
-    router: Box<dyn Bridge<RouterAgent>>
+    router: Box<dyn Bridge<SimpleRouterAgent>>
 }
 
 #[derive(PartialEq, Properties)]
@@ -23,7 +25,7 @@ pub enum Msg {
     Increment,
     Decrement,
     UpdateSubpath(String),
-    HandleRoute(Route)
+    HandleRoute(SimpleRouteInfo)
 }
 
 
@@ -33,8 +35,8 @@ impl Component for BModel {
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
 
-        let callback = link.send_back(|route: Route| Msg::HandleRoute(route));
-        let mut router = RouterAgent::bridge(callback);
+        let callback = link.send_back(|route: SimpleRouteInfo| Msg::HandleRoute(route));
+        let mut router = SimpleRouterAgent::bridge(callback);
 
         router.send(RouterRequest::GetCurrentRoute);
 
@@ -61,7 +63,7 @@ impl Component for BModel {
 
                 let fragment: Option<String> = self.number.map(|x: usize | x.to_string());
 
-                let route = Route {
+                let route = RouteInfo {
                     path_segments,
                     query: None,
                     fragment,
@@ -168,10 +170,10 @@ impl Renderable<BModel> for BModel {
 //        route.path_segments.get(0).is_some()
 //    }
 //}
-use yew_router::router::FromPath;
-impl <T> FromPath<T> for Props {
+use yew_router::router::FromRouteInfo;
+impl <T> FromRouteInfo<T> for Props {
 
-    fn from_path(route: &RouteBase<T>) -> Option<Self> {
+    fn from_route_info(route: &RouteInfo<T>) -> Option<Self> {
         let first_segment = route.path_segments.get(0)?;
         if "b" == first_segment.as_str() {
             let mut props = Props {

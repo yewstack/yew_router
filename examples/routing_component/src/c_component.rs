@@ -2,7 +2,7 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 use yew::Properties;
-use yew_router::router::FromPath;
+use yew_router::router::FromRouteInfo;
 
 pub struct CModel;
 
@@ -42,9 +42,9 @@ impl Renderable<CModel> for CModel {
     }
 }
 
-impl <T> FromPath<T> for Props {
+impl <T> FromRouteInfo<T> for Props {
 
-    fn from_path(route: &RouteBase<T>) -> Option<Self> {
+    fn from_route_info(route: &RouteInfo<T>) -> Option<Self> {
         let second_segment = route.path_segments.get(1)?;
         if "c" == second_segment.as_str() {
             Some(Props{})

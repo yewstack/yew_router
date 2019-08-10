@@ -7,7 +7,7 @@ use routing_service::RouteService;
 
 use yew::agent::Transferable;
 
-pub type Route = RouteBase<()>;
+pub type SimpleRouteInfo = RouteInfo<()>;
 
 /// Any state that can be stored by the History API must meet the criteria of this trait.
 pub trait RouteState: Clone + Default + JsSerialize + TryFrom<Value> + 'static {}
@@ -17,7 +17,7 @@ impl <T> RouteState for T
 
 /// The representation of a route, segmented into different sections for easy access.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize) ]
-pub struct RouteBase<T> {
+pub struct RouteInfo<T> {
     pub path_segments: Vec<String>,
     pub query: Option<String>,
     pub fragment: Option<String>,
@@ -26,7 +26,7 @@ pub struct RouteBase<T> {
 
 
 
-impl<T> RouteBase<T>
+impl<T> RouteInfo<T>
     where T: RouteState
 {
     /// Converts the Route to a string that is used to set the URL.
@@ -66,7 +66,7 @@ impl<T> RouteBase<T>
         };
 
 
-        RouteBase {
+        RouteInfo {
             path_segments,
             query,
             fragment,
@@ -75,7 +75,7 @@ impl<T> RouteBase<T>
     }
 
     /// Parse the string into a Route.
-    pub fn parse<U: AsRef<str>>(string: U) -> RouteBase<T> {
+    pub fn parse<U: AsRef<str>>(string: U) -> RouteInfo<T> {
         let string: &str = string.as_ref();
         let mut path_segments = vec![];
         let mut query = None;
@@ -136,7 +136,7 @@ impl<T> RouteBase<T>
             RouteParsingState::Fragment => fragment = Some(active_segment.clone())
         }
 
-        RouteBase {
+        RouteInfo {
             path_segments,
             query,
             fragment,
@@ -145,16 +145,16 @@ impl<T> RouteBase<T>
     }
 }
 
-impl <T> From<String> for RouteBase<T>
+impl <T> From<String> for RouteInfo<T>
     where T: RouteState
 {
-    fn from(string: String) -> RouteBase<T> {
-        RouteBase::parse(string)
+    fn from(string: String) -> RouteInfo<T> {
+        RouteInfo::parse(string)
     }
 }
 
 
-impl <T> Transferable for RouteBase<T>
+impl <T> Transferable for RouteInfo<T>
     where for <'de> T: Serialize + Deserialize<'de>
 {}
 
@@ -170,9 +170,9 @@ macro_rules! route {
 #[test]
 fn route_macro() {
     let route = route!("/hello/world");
-    assert_eq!(route, Route::parse("hello/world"));
+    assert_eq!(route, SimpleRouteInfo::parse("hello/world"));
 
     let world = "world";
     let route = route!("hello/{}", world);
-    assert_eq!(route, Route::parse("hello/world"));
+    assert_eq!(route, SimpleRouteInfo::parse("hello/world"));
 }
