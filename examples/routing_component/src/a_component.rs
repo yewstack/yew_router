@@ -1,6 +1,5 @@
 
 use yew::prelude::*;
-use yew_router::prelude::*;
 use yew_router::components::router_button::RouterButton;
 use c_component::CModel;
 use yew::Properties;

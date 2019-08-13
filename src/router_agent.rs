@@ -12,6 +12,7 @@ use std::fmt::Debug;
 use route::RouteInfo;
 use route::RouteState;
 use yew::callback::Callback;
+use log::trace;
 
 /// Any state that can be used in the router agent must meet the criteria of this trait.
 pub trait RouterState<'de>: RouteState + Serialize + Deserialize<'de> + Debug {}
@@ -89,7 +90,7 @@ where
     fn update(&mut self, msg: Self::Message) {
         match msg {
             Msg::BrowserNavigationRouteChanged((_route_string, state)) => {
-                info!("Browser navigated");
+                trace!("Browser navigated");
                 let mut route = RouteInfo::current_route(&self.route_service);
                 route.state = state;
                 for sub in &self.subscribers {
@@ -142,12 +143,12 @@ where
         }
     }
     fn disconnected(&mut self, id: HandlerId) {
-        info!(
+        trace!(
             "request to disconnect; num subs: {}",
             self.subscribers.len()
         );
         self.subscribers.remove(&id);
-        info!(
+        trace!(
             "disconnect processed ; num subs: {}",
             self.subscribers.len()
         ); // the latter value should be -1

@@ -1,9 +1,5 @@
 use route::RouteInfo;
 use router_agent::{RouterAgent, RouterRequest};
-use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
-use stdweb::unstable::TryFrom as StdwebTryFrom;
-use stdweb::{JsSerialize, Value};
 use yew::Bridged;
 use yew::{
     html,
@@ -11,6 +7,7 @@ use yew::{
     Bridge, Component, ComponentLink, Html, Properties, Renderable, ShouldRender,
 };
 use YewRouterState;
+use log::error;
 
 pub trait FromRouteInfo<T> {
     fn from_route_info(path: &RouteInfo<T>) -> Option<Self>
@@ -21,7 +18,7 @@ pub trait FromRouteInfo<T> {
 fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
     props: COMP::Properties,
 ) -> Html<CONTEXT> {
-    let vcomp_scope: ScopeHolder<_> = Default::default(); // TODO, I don't exactly know what this does
+    let vcomp_scope: ScopeHolder<_> = Default::default(); // TODO, I don't exactly know what this does, I may want a scope holder directly tied to the current context?
     VNode::VComp(VComp::new::<COMP>(props, vcomp_scope))
 }
 
@@ -30,6 +27,7 @@ pub struct Route<T, CONTEXT: Component> {
     routing_and_display_fn: Box<dyn Fn(&RouteInfo<T>) -> Option<Html<CONTEXT>>>,
 }
 
+/// TODO, not sure if testing for pointer equality is the best option here
 impl<T, CONTEXT: Component> PartialEq for Route<T, CONTEXT> {
     fn eq(&self, other: &Self) -> bool {
         std::ptr::eq(
@@ -113,7 +111,7 @@ fn route_one_of<CONTEXT: Component, T: Clone>(
 pub struct Router<T: for<'de> YewRouterState<'de>> {
     route: RouteInfo<T>,
     route_options: Vec<Route<T, Router<T>>>,
-    _router_agent: Box<dyn Bridge<RouterAgent<T>>>,
+    router_agent: Box<dyn Bridge<RouterAgent<T>>>,
 }
 
 pub enum Msg<T> {
@@ -121,27 +119,28 @@ pub enum Msg<T> {
 }
 
 #[derive(PartialEq, Properties)]
-//pub struct Props<T:  Default + PartialEq + Clone + Serialize + for<'de> Deserialize<'de> + JsSerialize + StdwebTryFrom<Value> + Debug + 'static> {
 pub struct Props<T: for<'de> YewRouterState<'de>> {
     pub route_options: Vec<Route<T, Router<T>>>,
 }
 
-//impl <T: Default + PartialEq + Clone + Serialize + for<'de> Deserialize<'de> + JsSerialize + StdwebTryFrom<Value> + Debug + 'static> Component for Router<T> {
 impl<T: for<'de> YewRouterState<'de>> Component for Router<T> {
     type Message = Msg<T>;
     type Properties = Props<T>;
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         let callback = link.send_back(Msg::UpdateRoute);
-        let mut router_agent = RouterAgent::bridge(callback);
-        // TODO Not sure if this is technically correct. This should be sent _after_ the component has been created.
-        router_agent.send(RouterRequest::GetCurrentRoute);
+        let router_agent = RouterAgent::bridge(callback);
 
         Router {
             route: Default::default(), // This must be updated by immediately requesting a route update from the service bridge.
             route_options: props.route_options,
-            _router_agent: router_agent,
+            router_agent,
         }
+    }
+
+    fn mounted(&mut self) -> ShouldRender {
+        self.router_agent.send(RouterRequest::GetCurrentRoute);
+        false
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
@@ -158,17 +157,8 @@ impl<T: for<'de> YewRouterState<'de>> Component for Router<T> {
         true
     }
 }
-impl<
-        T: Default
-            + PartialEq
-            + Clone
-            + Serialize
-            + for<'de> Deserialize<'de>
-            + JsSerialize
-            + StdwebTryFrom<Value>
-            + Debug
-            + 'static,
-    > Renderable<Router<T>> for Router<T>
+
+impl<T: for<'de> YewRouterState<'de> > Renderable<Router<T>> for Router<T>
 {
     fn view(&self) -> VNode<Self> {
         route_one_of(&self.route_options, &self.route)
