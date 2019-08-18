@@ -5,7 +5,9 @@ use yew::prelude::*;
 use super::Msg;
 use super::Props;
 
-pub struct RouterButton {
+/// An anchor tag Component that when clicked, will navigate to the provided route.
+/// The Route's `to_route_string()` will be displayed as the href.
+pub struct RouterLink {
     router: Box<dyn Bridge<RouterAgent<()>>>,
     route: RouteInfo<()>,
     text: String,
@@ -13,7 +15,7 @@ pub struct RouterButton {
     class: String,
 }
 
-impl Component for RouterButton {
+impl Component for RouterLink {
     type Message = Msg;
     type Properties = Props;
 
@@ -21,7 +23,7 @@ impl Component for RouterButton {
         let callback = link.send_back(|_route: RouteInfo<()>| Msg::NoOp);
         let router = RouterAgent::bridge(callback);
 
-        RouterButton {
+        RouterLink {
             router,
             route: props.route,
             text: props.text,
@@ -40,6 +42,7 @@ impl Component for RouterButton {
             }
         }
     }
+
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         self.route = props.route;
         self.text = props.text;
@@ -49,16 +52,23 @@ impl Component for RouterButton {
     }
 }
 
-impl Renderable<RouterButton> for RouterButton {
-    fn view(&self) -> Html<RouterButton> {
+impl Renderable<RouterLink> for RouterLink {
+    fn view(&self) -> Html<RouterLink> {
+        use stdweb::web::event::IEvent;
+        let target = self.route.to_route_string();
+
         html! {
-            <button
-                class=&self.class,
-                onclick=|_| Msg::Clicked,
+            <a
+                class=self.class.clone(),
+                onclick=|event | {
+                    event.prevent_default();
+                    Msg::Clicked
+                },
                 disabled=self.disabled,
+                href=target,
             >
                 {&self.text}
-            </button>
+            </a>
         }
     }
 }

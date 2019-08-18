@@ -1,0 +1,11 @@
+[package]
+name = "test_case1"
+version = "0.1.0"
+authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+route_info_parser = {path = "../route_info_parser"}
+yew_router_route_macro_decl = {path = "../yew_router_route_macro_decl"}
