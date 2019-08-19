@@ -1,5 +1,5 @@
-use yew_router_route_macro_decl::route;
-use route_info_parser::{PathMatcher, OptimizedToken};
+use yew_router_derive::route;
+use yew_router_route_parser::{PathMatcher, OptimizedToken};
 use std::collections::HashMap;
 
 fn main() {

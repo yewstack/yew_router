@@ -1,11 +1,16 @@
 [package]
-name = "test_case1"
+name = "yew_router_from_matches_macro_impl"
 version = "0.1.0"
 authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+proc-macro = true
+
 [dependencies]
-yew_router_derive = {path = "../yew_router_derive"}
+syn = "1.0.2"
+quote = "1.0.1"
 yew_router_route_parser = {path = "../yew_router_route_parser"}
+proc-macro2 = "1.0.1"

@@ -1,6 +1,6 @@
 extern crate proc_macro;
 use proc_macro::{TokenStream};
-use route_info_parser::{PathMatcher, OptimizedToken};
+use yew_router_route_parser::{PathMatcher, OptimizedToken};
 use std::convert::TryFrom;
 use quote::{quote, ToTokens};
 use syn::export::TokenStream2;

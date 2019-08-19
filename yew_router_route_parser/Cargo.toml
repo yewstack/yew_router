@@ -1,5 +1,5 @@
 [package]
-name = "test_case1"
+name = "yew_router_route_parser"
 version = "0.1.0"
 authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 edition = "2018"
@@ -7,5 +7,4 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-yew_router_derive = {path = "../yew_router_derive"}
-yew_router_route_parser = {path = "../yew_router_route_parser"}
+nom = "5.0.0"

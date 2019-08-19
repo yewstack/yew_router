@@ -1,10 +1,12 @@
 [workspace]
 
 members = [
-    "route_info_parser",
+    "yew_router_route_parser",
     "yew_router_route_macro_impl",
-    "yew_router_route_macro_decl",
+    "yew_router_derive",
+    "yew_router_from_matches_macro_impl",
     "test_case1",
-    "YewRouter"
+    "YewRouter",
+    "integration_test"
 ]
 

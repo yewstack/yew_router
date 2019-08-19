@@ -11,6 +11,6 @@ proc-macro = true
 [dependencies]
 syn = "1.0.2"
 quote = "1.0.1"
-route_info_parser = {path = "../route_info_parser"}
+yew_router_route_parser = {path = "../yew_router_route_parser"}
 proc-macro2 = "1.0.1"
 proc-macro-hack = "0.5.9"

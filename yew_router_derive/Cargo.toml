@@ -1,5 +1,5 @@
 [package]
-name = "yew_router_route_macro_decl"
+name = "yew_router_derive"
 version = "0.1.0"
 authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 edition = "2018"
@@ -8,4 +8,5 @@ edition = "2018"
 
 [dependencies]
 yew_router_route_macro_impl = {path = "../yew_router_route_macro_impl"}
+yew_router_from_matches_macro_impl = {path = "../yew_router_from_matches_macro_impl"}
 proc-macro-hack = "0.5.9"
