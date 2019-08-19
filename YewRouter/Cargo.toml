@@ -11,6 +11,7 @@ serde_derive = "1.0"
 yew = { git = "https://github.com/yewstack/yew", branch="master" }
 yew_patterns = {git = "https://github.com/hgzimmerman/yew_patterns", branch="master"}
 stdweb = "0.4"
+yew_router_route_parser = {path = "../yew_router_route_parser"}
 
 [features]
 default = ["yew_router", "components"]

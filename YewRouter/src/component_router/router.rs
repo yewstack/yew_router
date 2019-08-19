@@ -7,7 +7,7 @@ use yew::{
     Bridge, Component, ComponentLink, Html, Properties, Renderable, ShouldRender,
 };
 use YewRouterState;
-use log::error;
+use log::{error, debug};
 
 pub trait FromRouteInfo<T> {
     fn from_route_info(path: &RouteInfo<T>) -> Option<Self>
@@ -106,8 +106,78 @@ fn route_one_of<CONTEXT: Component, T: Clone>(
         })
 }
 
+
+use yew_router_route_parser::{PathMatcher, FromMatches};
+use std::collections::HashMap;
+
+// TODO when this becomes a nested component, the CONTEXT type parameter can disappear, because "context" will be able to be Self instead
+pub struct Route2<CONTEXT: Component> {
+    path_matcher: PathMatcher,
+    render_fn: Box<Fn(&HashMap<String, String>) -> Option<Html<CONTEXT>>> // TODO This may be replaced with a phantomData<Target> later.
+}
+
+impl <CONTEXT: Component> Route2<CONTEXT> {
+
+    fn new<TARGET>(path_matcher: PathMatcher) -> Self
+    where
+        TARGET: Component + Renderable<TARGET>,
+        TARGET::Properties: FromMatches
+    {
+        Route2 {
+            path_matcher,
+            render_fn: Box::new(|matches| -> Option<Html<CONTEXT>> {
+                TARGET::Properties::from_matches(matches)
+                    .map(|properties| create_component::<TARGET, CONTEXT>(properties))
+                    .map_err(|err| {
+                        debug!("Component could not be created from matches: {:?}", err);
+                    })
+                    .ok()
+            })
+        }
+    }
+
+
+    // TODO this will reside in the parent, and context won't be a necessary type parameter.
+    // This is effectively the router's view function.
+    // Only instead of possibilities.iter()..., it will be something like self.children.iter()...
+    fn route_one_of<T: crate::route::RouteState>(possibilities: &[Route2<CONTEXT>], route: &RouteInfo<T>) -> Html<CONTEXT> {
+        let route : String= route.to_route_string();
+        possibilities
+            .iter()
+            .filter_map(|route_possibility: &Route2<CONTEXT>| -> Option<Html<CONTEXT>> {
+                route_possibility.path_matcher
+                    .match_path(&route)
+                    .map(|(_rest, hm)| {
+                        (route_possibility.render_fn)(&hm)
+                    })
+                    .ok()
+                    .flatten_stable()
+            })
+            .next() // Take the first path that succeeds.
+            .unwrap_or_else(|| {
+                error!("Routing failed. No default case was provided.");
+                html! { <></>}
+            })
+    }
+}
+
+
+trait Flatten<T> {
+    /// Because flatten is a nightly feature. I'm making a new variant of the function here for stable use.
+    /// The naming is changed to avoid this getting clobbered when object_flattening 60258 is stabilized.
+    fn flatten_stable(self) -> Option<T>;
+}
+
+impl<T> Flatten<T> for Option<Option<T>> {
+    fn flatten_stable(self) -> Option<T> {
+        match self {
+            None => None,
+            Some(v) => v,
+        }
+    }
+}
+
 /// Router with state type of T
-//pub struct Router<T: Default + PartialEq + Clone + Serialize + for<'de> Deserialize<'de> + JsSerialize + StdwebTryFrom<Value> + Debug + 'static> {
 pub struct Router<T: for<'de> YewRouterState<'de>> {
     route: RouteInfo<T>,
     route_options: Vec<Route<T, Router<T>>>,

@@ -6,6 +6,7 @@ extern crate yew;
 extern crate stdweb;
 /// Possibly move the code for the directional message bus into this project
 extern crate yew_patterns;
+extern crate yew_router_route_parser;
 
 pub mod routing_service;
 
