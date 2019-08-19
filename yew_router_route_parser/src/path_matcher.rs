@@ -6,6 +6,7 @@ use nom::bytes::complete::{tag, take_until, is_not};
 use nom::sequence::{preceded, terminated};
 use std::convert::TryFrom;
 use nom::combinator::peek;
+use log::debug;
 
 fn token_to_string(token: &Token) -> &str {
     match token {
@@ -14,12 +15,15 @@ fn token_to_string(token: &Token) -> &str {
         Token::QueryBegin => "?",
         Token::QuerySeparator => "&",
         Token::FragmentBegin => "#",
-        Token::MatchAny | Token::Capture {..} | Token::QueryCapture {..} => unreachable!()
+        Token::MatchAny | Token::Capture {..} | Token::QueryCapture {..} => {
+            log::error!("Bout to crash!");
+            unreachable!()
+        }
     }
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct PathMatcher {
     pub tokens: Vec<OptimizedToken>
 }
@@ -67,7 +71,10 @@ impl From<Vec<Token>> for PathMatcher {
                         Token::MatchAny => OptimizedToken::MatchAny,
                         Token::Capture {ident} => OptimizedToken::Capture {ident},
                         Token::QueryCapture {ident, value} => OptimizedToken::QueryCapture {ident, value},
-                        _ => unreachable!()
+                        _ => {
+                            log::error!("crashing time");
+                            unreachable!()
+                        }
                     };
                     optimized.push(token);
                 }
@@ -87,6 +94,7 @@ impl From<Vec<Token>> for PathMatcher {
 impl PathMatcher {
     // TODO, should find some way to support '/' characters in fragment. In the transform function, it could keep track of the seen hash begin yet, and transform captures based on that.
     pub fn match_path<'a>(&self, mut i: &'a str) -> IResult<&'a str, HashMap<String, String>> {
+        debug!("Attempting to match path: {:?} using: {:?}", i, self);
         let mut iter = self.tokens
             .iter()
             .peekable();
@@ -94,12 +102,14 @@ impl PathMatcher {
         let mut dictionary: HashMap<String, String> = HashMap::new();
 
         while let Some(token) = iter.next() {
-            dbg!(i);
-            i = match dbg!(token) {
+//            dbg!(i);
+            i = match token {
                 OptimizedToken::Match(literal) => {
+                    log::debug!("Matching literal: {}", literal);
                     tag(literal.as_str())(i)?.0
                 },
                 OptimizedToken::MatchAny => {
+                    log::debug!("Matching any");
                     if let Some(peaked_next_token) = iter.peek() {
                         let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
                         terminated(valid_capture_characters, peek(tag(delimiter)))(i)?.0
@@ -134,6 +144,7 @@ impl PathMatcher {
                 },
             };
         }
+        debug!("Path Matched");
 
         Ok((i, dictionary))
     }
@@ -165,7 +176,7 @@ fn valid_capture_characters_in_query(i: &str) -> IResult<&str, &str> {
     is_not(INVALID_CHARACTERS)(i)
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum OptimizedToken {
     /// Extraneous section-related tokens can be condensed into a match.
     Match(String),
@@ -226,5 +237,13 @@ mod tests {
         let path_matcher = PathMatcher::from(tokens);
         let (_, dict) = path_matcher.match_path("/general_kenobi").expect("should parse");
         assert_eq!(dict.get(&"hello".to_string()), Some(&"general_kenobi".to_string()))
+    }
+
+
+    #[test]
+    fn match_with_trailing_match_any() {
+        let tokens = vec![Token::Separator, Token::Match("a".to_string()), Token::Separator, Token::MatchAny];
+        let path_matcher = PathMatcher::from(tokens);
+        let (_, dict) = path_matcher.match_path("/a/").expect("should parse");
     }
 }

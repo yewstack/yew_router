@@ -7,6 +7,7 @@ members = [
     "yew_router_from_matches_macro_impl",
     "test_case1",
     "YewRouter",
-    "integration_test"
+    "integration_test",
+    "YewRouter/examples/routing_component"
 ]
 

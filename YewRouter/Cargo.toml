@@ -2,6 +2,7 @@
 name = "yew_router"
 version = "0.1.0"
 authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 log = "0.4"
@@ -9,9 +10,10 @@ web_logger = "0.1"
 serde = "1.0"
 serde_derive = "1.0"
 yew = { git = "https://github.com/yewstack/yew", branch="master" }
-yew_patterns = {git = "https://github.com/hgzimmerman/yew_patterns", branch="master"}
+yew_patterns = {git = "https://github.com/hgzimmerman/yew_patterns", branch="master"} # This the message bus should be moved inside this project.
 stdweb = "0.4"
 yew_router_route_parser = {path = "../yew_router_route_parser"}
+yew_router_derive = {path = "../yew_router_derive"}
 
 [features]
 default = ["yew_router", "components"]

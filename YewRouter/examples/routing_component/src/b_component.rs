@@ -3,7 +3,7 @@ use yew_router::prelude::*;
 use std::usize;
 use yew::Properties;
 use yew_router::route::RouteInfo;
-
+use yew_router::yew_router_derive::{FromMatches};
 
 pub struct BModel {
     number: Option<usize>,
@@ -192,6 +192,25 @@ impl <T> FromRouteInfo<T> for Props {
         } else {
             None // This will only render if the first path segment is "b"
         }
+    }
+}
+
+use yew_router::yew_router_route_parser::FromMatches;
+use std::collections::HashMap;
+use std::str::FromStr;
+use yew_router::yew_router_route_parser::FromMatchesError;
+
+impl FromMatches for Props {
+
+    fn from_matches(matches: &HashMap<String, String>) -> Result<Self, FromMatchesError> {
+
+        let number = matches.get(&"number".to_string()).map(|n: &String| usize::from_str(&n).map_err(|_| FromMatchesError::UnknownErr) ).transpose()?;
+
+        let props = Props {
+            number,
+            sub_path: matches.get(&"sub_path".to_string()).cloned()
+        };
+        Ok(props)
     }
 }
 

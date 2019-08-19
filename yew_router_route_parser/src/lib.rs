@@ -40,7 +40,7 @@ pub trait FromMatches: Sized {
     /// Verifies that all of the field names produced by the PathMatcher exist on the target props.
     /// Should panic if not all match.
     /// Should only be used at compile time.
-    fn verify(field_names: &HashSet<String>);
+    fn verify(field_names: &HashSet<String>) {}
 }
 
 #[cfg(test)]

@@ -1,13 +1,13 @@
-use route::RouteInfo;
-use router_agent::{RouterAgent, RouterRequest};
+use crate::route::RouteInfo;
+use crate::router_agent::{RouterAgent, RouterRequest};
 use yew::Bridged;
 use yew::{
     html,
     virtual_dom::{vcomp::ScopeHolder, VComp, VNode},
     Bridge, Component, ComponentLink, Html, Properties, Renderable, ShouldRender,
 };
-use YewRouterState;
-use log::{error, debug};
+use crate::YewRouterState;
+use log::{error, warn, debug};
 
 pub trait FromRouteInfo<T> {
     fn from_route_info(path: &RouteInfo<T>) -> Option<Self>
@@ -77,7 +77,7 @@ impl<T, CONTEXT: Component> Route<T, CONTEXT> {
     /// This option will be rendered regardless if the path matches the route.
     ///
     /// # Note
-    /// This will prevent any route below from ever matching.
+    /// This will prevent any route listed below this one from ever matching.
     pub fn children<F>(routing_condition: F) -> Self
     where
         F: Fn(&RouteInfo<T>) -> Html<CONTEXT> + 'static,
@@ -116,9 +116,15 @@ pub struct Route2<CONTEXT: Component> {
     render_fn: Box<Fn(&HashMap<String, String>) -> Option<Html<CONTEXT>>> // TODO This may be replaced with a phantomData<Target> later.
 }
 
+impl <CONTEXT: Component> PartialEq for Route2<CONTEXT> {
+    fn eq(&self, other: &Self) -> bool {
+        self.path_matcher.eq(&other.path_matcher)
+    }
+}
+
 impl <CONTEXT: Component> Route2<CONTEXT> {
 
-    fn new<TARGET>(path_matcher: PathMatcher) -> Self
+    pub fn new<TARGET>(path_matcher: PathMatcher) -> Self
     where
         TARGET: Component + Renderable<TARGET>,
         TARGET::Properties: FromMatches
@@ -141,7 +147,9 @@ impl <CONTEXT: Component> Route2<CONTEXT> {
     // This is effectively the router's view function.
     // Only instead of possibilities.iter()..., it will be something like self.children.iter()...
     fn route_one_of<T: crate::route::RouteState>(possibilities: &[Route2<CONTEXT>], route: &RouteInfo<T>) -> Html<CONTEXT> {
-        let route : String= route.to_route_string();
+        let route : String = route.to_route_string();
+
+        debug!("route one of ... for {:?}", route);
         possibilities
             .iter()
             .filter_map(|route_possibility: &Route2<CONTEXT>| -> Option<Html<CONTEXT>> {
@@ -154,8 +162,12 @@ impl <CONTEXT: Component> Route2<CONTEXT> {
                     .flatten_stable()
             })
             .next() // Take the first path that succeeds.
+            .map(|x| {
+                debug!("Route matched.");
+                x
+            })
             .unwrap_or_else(|| {
-                error!("Routing failed. No default case was provided.");
+                warn!("Routing failed. No default case was provided.");
                 html! { <></>}
             })
     }
@@ -180,7 +192,7 @@ impl<T> Flatten<T> for Option<Option<T>> {
 /// Router with state type of T
 pub struct Router<T: for<'de> YewRouterState<'de>> {
     route: RouteInfo<T>,
-    route_options: Vec<Route<T, Router<T>>>,
+    route_options: Vec<Route2<Router<T>>>,
     router_agent: Box<dyn Bridge<RouterAgent<T>>>,
 }
 
@@ -190,7 +202,7 @@ pub enum Msg<T> {
 
 #[derive(PartialEq, Properties)]
 pub struct Props<T: for<'de> YewRouterState<'de>> {
-    pub route_options: Vec<Route<T, Router<T>>>,
+    pub route_options: Vec<Route2<Router<T>>>,
 }
 
 impl<T: for<'de> YewRouterState<'de>> Component for Router<T> {
@@ -222,6 +234,7 @@ impl<T: for<'de> YewRouterState<'de>> Component for Router<T> {
             }
         }
     }
+
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         self.route_options = props.route_options;
         true
@@ -231,6 +244,6 @@ impl<T: for<'de> YewRouterState<'de>> Component for Router<T> {
 impl<T: for<'de> YewRouterState<'de> > Renderable<Router<T>> for Router<T>
 {
     fn view(&self) -> VNode<Self> {
-        route_one_of(&self.route_options, &self.route)
+        Route2::route_one_of(&self.route_options, &self.route)
     }
 }

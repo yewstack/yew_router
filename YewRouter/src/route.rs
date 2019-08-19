@@ -1,4 +1,4 @@
-use routing_service::RouteService;
+use crate::routing_service::RouteService;
 use serde::Deserialize;
 use serde::Serialize;
 use stdweb::unstable::TryFrom;

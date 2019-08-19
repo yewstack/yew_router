@@ -1,5 +1,5 @@
-use route::RouteInfo;
-use router_agent::{RouterAgent, RouterRequest};
+use crate::route::RouteInfo;
+use crate::router_agent::{RouterAgent, RouterRequest};
 use yew::prelude::*;
 
 use super::Msg;

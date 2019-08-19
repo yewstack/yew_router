@@ -6,3 +6,4 @@ authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 [dependencies]
 yew = { git = "https://github.com/yewstack/yew", branch = "master" }
 yew_router = {path = "../.."}
+web_logger = "0.1"

@@ -1,12 +1,5 @@
-extern crate log;
-extern crate serde;
-extern crate serde_derive;
-extern crate yew;
-
-extern crate stdweb;
 /// Possibly move the code for the directional message bus into this project
-extern crate yew_patterns;
-extern crate yew_router_route_parser;
+//extern crate yew_patterns;
 
 pub mod routing_service;
 
@@ -25,6 +18,12 @@ pub mod components;
 mod component_router;
 #[cfg(feature = "yew_router")]
 pub use component_router::*;
+
+#[cfg(feature = "yew_router")]
+pub use yew_router_route_parser;
+
+#[cfg(feature = "yew_router")]
+pub use yew_router_derive;
 
 // TODO preludes have kind of fallen out of favor, maybe this should be removed ???
 pub mod prelude {

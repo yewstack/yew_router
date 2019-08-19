@@ -2,9 +2,9 @@ pub mod router;
 
 //pub use self::yew_router::{YewRouter, DefaultPage, Props};
 //pub use self::routable::{Routable, RoutableBase};
-pub use self::router::{Props, Route, Router};
+pub use self::router::{Props, Route, Router, Route2};
 
-use router_agent::RouterState;
+use crate::router_agent::RouterState;
 
 /// Any state that can be managed by the `YewRouter` must meet the criteria of this trait.
 pub trait YewRouterState<'de>: RouterState<'de> + PartialEq {}

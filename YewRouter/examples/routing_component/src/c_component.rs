@@ -3,10 +3,11 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 use yew::Properties;
 use yew_router::router::FromRouteInfo;
+use yew_router::yew_router_derive::{FromMatches};
 
 pub struct CModel;
 
-#[derive(PartialEq, Properties)]
+#[derive(PartialEq, Properties, FromMatches)]
 pub struct Props{}
 
 pub enum Msg {

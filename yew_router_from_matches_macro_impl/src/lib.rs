@@ -1,7 +1,7 @@
 extern crate proc_macro;
 use proc_macro::{TokenStream};
 use syn;
-use syn::{DeriveInput, Data, Fields, Field, Ident};
+use syn::{DeriveInput, Data, Fields, Field, Ident, Type};
 use syn::parse_macro_input;
 use quote::quote;
 //use std::iter::{Map, Cloned};
@@ -63,18 +63,20 @@ pub fn from_matches(input: TokenStream) -> TokenStream {
                 }
             })
             .and_then(|m: &String| {
-                #types::try_from(m.clone())
-                    .map_err(|_| __FromMatchesError::UnknownErr)
+                let x: Result<#types, __FromMatchesError> = __FromStr::from_str(m.as_ref())
+                    .map_err(|_| __FromMatchesError::UnknownErr);
+                x
             })?;
         )*
     };
 
     let expanded = quote! {
-        use route_info_parser::FromMatchesError as __FromMatchesError;
-        use route_info_parser::FromMatches as __FromMatches;
+        use yew_router::yew_router_route_parser::FromMatchesError as __FromMatchesError;
+        use yew_router::yew_router_route_parser::FromMatches as __FromMatches;
         use std::collections::HashMap as __HashMap;
         use std::collections::HashSet as __HashSet;
-        use std::convert::TryFrom as __TryFrom;
+//        use std::convert::TryFrom as __TryFrom;
+        use std::str::FromStr as __FromStr;
 
         impl __FromMatches for #name {
             fn from_matches(matches: &__HashMap<String, String>) -> Result<Self, __FromMatchesError> {

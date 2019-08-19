@@ -1,5 +1,5 @@
 //! Routing service
-use routing_service::RouteService;
+use crate::routing_service::RouteService;
 
 use yew::prelude::worker::*;
 
@@ -9,8 +9,8 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::fmt::Debug;
 
-use route::RouteInfo;
-use route::RouteState;
+use crate::route::RouteInfo;
+use crate::route::RouteState;
 use yew::callback::Callback;
 use log::trace;
 

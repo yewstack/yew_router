@@ -8,11 +8,14 @@ use yew_router::Router;
 use yew_router::route::RouteInfo;
 use yew_router::Route;
 use c_component;
+use yew_router::yew_router_derive::{FromMatches, route};
+use yew_router::yew_router_route_parser::{PathMatcher, OptimizedToken};
+use yew_router::Route2;
 
 pub struct AModel {
 }
 
-#[derive(PartialEq, Properties)]
+#[derive(PartialEq, Properties, FromMatches)]
 pub struct Props{}
 
 pub enum Msg {
@@ -57,12 +60,13 @@ impl Renderable<AModel> for AModel {
                 </div>
                 <div>
                     <Router<()>: route_options=vec![
-                        Route::component::<CModel, _>(|route| c_component::Props::from_route_info(route)),
-                        Route::children(|_| html!{
-                            <div>
-                                {"404 page"}
-                            </div>
-                        })
+//                        Route::component::<CModel, _>(|route| c_component::Props::from_route_info(route)),
+                        Route2::new::<CModel>(route!("/*/c"))
+//                        Route::children(|_| html!{
+//                            <div>
+//                                {"404 page"}
+//                            </div>
+//                        })
                     ], />
 //                    <YewRouter: routes=routes![CModel], />
                 </div>

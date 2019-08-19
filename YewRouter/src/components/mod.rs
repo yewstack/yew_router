@@ -5,7 +5,7 @@ pub mod router_link;
 pub use self::router_button::RouterButton;
 pub use self::router_link::RouterLink;
 
-use route::RouteInfo;
+use crate::route::RouteInfo;
 use yew::Properties;
 
 /// Properties for Routing Components
