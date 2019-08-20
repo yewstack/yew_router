@@ -61,7 +61,7 @@ impl Renderable<AModel> for AModel {
                 <div>
                     <Router<()>: route_options=vec![
 //                        Route::component::<CModel, _>(|route| c_component::Props::from_route_info(route)),
-                        Route2::new::<CModel>(route!("/*/c"))
+                        Route2::new::<CModel>(route!("/{}/c"))
 //                        Route::children(|_| html!{
 //                            <div>
 //                                {"404 page"}

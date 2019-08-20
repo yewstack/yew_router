@@ -116,11 +116,27 @@ impl PathMatcher {
                                 let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
                                 terminated(valid_capture_characters, peek(tag(delimiter)))(i)?.0
                             } else {
-                                valid_capture_characters(i)?.0
+                                if i.len() == 0 {
+                                    i // Match even if nothing is left
+                                } else if i == "/" {
+                                    "" // Trailing '/' is allowed
+                                } else {
+                                    valid_capture_characters(i)?.0
+                                }
                             }
                         },
                         CaptureVariants::ManyUnnamed => {
-                            unimplemented!()
+                            log::debug!("Matching ManyUnnamed");
+                            if let Some(peaked_next_token) = iter.peek() {
+                                let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
+                                terminated(valid_many_capture_characters, peek(tag(delimiter)))(i)?.0
+                            } else {
+                                if i.len() == 0 {
+                                    i // Match even if nothing is left
+                                } else {
+                                    valid_many_capture_characters(i)?.0
+                                }
+                            }
                         }
                         CaptureVariants::NumberedUnnamed { sections: _ } => {
                             unimplemented!()
@@ -189,7 +205,12 @@ impl PathMatcher {
 
 /// Characters that don't interfere with parsing logic for capturing characters
 fn valid_capture_characters(i: &str) -> IResult<&str, &str> {
-    const INVALID_CHARACTERS: &str = " */#&?|{}=";
+    const INVALID_CHARACTERS: &str = " */#&?{}=";
+    is_not(INVALID_CHARACTERS)(i)
+}
+
+fn valid_many_capture_characters(i: &str) -> IResult<&str, &str> {
+    const INVALID_CHARACTERS: &str = " #&?{}=";
     is_not(INVALID_CHARACTERS)(i)
 }
 

@@ -59,14 +59,15 @@ impl Renderable<Model> for Model {
         html! {
             <div>
                 <nav class="menu",>
-                    <RouterButton: text=String::from("Go to A"), route=RouteInfo::parse("/a/c"), />
+                    <RouterButton: text=String::from("Go to A"), route=RouteInfo::parse("/a/"), />
                     <RouterLink: text=String::from("Go to B"), route=RouteInfo::parse("/b/#"), />
-                    <RouterButton: text=String::from("Go to A/C"), route=RouteInfo::parse("/c"), />
+                    <RouterButton: text=String::from("Go to C"), route=RouteInfo::parse("/c"), />
+                    <RouterButton: text=String::from("Go to A/C"), route=RouteInfo::parse("/a/c"), />
                 </nav>
                 <div>
                     <Router<()>:
                         route_options = vec![
-                            Route2::new::<AModel>(route!("/a/*")),
+                            Route2::new::<AModel>(route!("/a/{}")),
                             Route2::new::<BModel>(route!("/b/{sub_path}#{number}")),
                             Route2::new::<CModel>(route!("/c"))
 //                            Route::children(|_| html!{

@@ -1,6 +1,6 @@
 extern crate proc_macro;
 use proc_macro::{TokenStream};
-use yew_router_route_parser::{PathMatcher, OptimizedToken};
+use yew_router_route_parser::{PathMatcher, OptimizedToken, CaptureVariants};
 use std::convert::TryFrom;
 use quote::{quote, ToTokens};
 use syn::export::TokenStream2;
@@ -31,8 +31,13 @@ pub fn route(input: TokenStream) -> TokenStream {
     let pm= PathMatcher::try_from(s.as_str()).expect("Invalid Path Matcher");
     let t = pm.tokens.into_iter().map(ShadowOptimizedToken::from);
     let expanded = quote!{
-        PathMatcher {
-            tokens : vec![#(#t),*]
+        {
+            use yew_router::yew_router_route_parser::PathMatcher as __PathMatcher;
+            use yew_router::yew_router_route_parser::CaptureVariants as __CaptureVariants;
+            use yew_router::yew_router_route_parser::OptimizedToken as __OptimizedToken;
+            __PathMatcher {
+                tokens : vec![#(#t),*]
+            }
         }
     };
     TokenStream::from(expanded)
@@ -43,22 +48,18 @@ impl ToTokens for ShadowOptimizedToken {
         use ShadowOptimizedToken as SOT;
         let t: TokenStream2 = match self {
             SOT::Match(s) => {
-                TokenStream2::from(quote!{OptimizedToken::Match(#s.to_string())})
+                TokenStream2::from(quote!{__OptimizedToken::Match(#s.to_string())})
             }
-            SOT::MatchAny => {
-                TokenStream2::from(quote!{OptimizedToken::MatchAny})
-            }
-            SOT::Capture { ident } => {
-                let ident = ident.clone();
+            SOT::Capture ( variant ) => {
                 TokenStream2::from(quote!{
-                    OptimizedToken::Capture{ident: #ident.to_string()}
+                    __OptimizedToken::Capture(#variant)
                 })
             }
             SOT::QueryCapture { ident, value } => {
                 let ident = ident.clone();
                 let value = value.clone();
                 TokenStream2::from(quote!{
-                    OptimizedToken::QueryCapture{ident: #ident.to_string(), value: #value.to_string()}
+                    __OptimizedToken::QueryCapture{ident: #ident.to_string(), value: #value.to_string()}
                 })
             }
         };
@@ -70,11 +71,35 @@ impl ToTokens for ShadowOptimizedToken {
 /// It should match it exactly so that this macro can expand to the original.
 enum ShadowOptimizedToken {
     Match(String),
-    MatchAny,
-    Capture{ ident: String},
+    Capture(ShadowCaptureVariant),
     QueryCapture {
         ident: String,
         value: String
+    }
+}
+
+enum ShadowCaptureVariant {
+    Unnamed, // {} - matches anything
+    ManyUnnamed, // {*} - matches over multiple sections
+    NumberedUnnamed{sections: usize}, // {4} - matches 4 sections
+    Named(String), // {name} - captures a section and adds it to the map with a given name
+    ManyNamed(String), // {*:name} - captures over many sections and adds it to the map with a given name.
+    NumberedNamed{sections: usize, name: String} // {2:name} - captures a fixed number of sections with a given name.
+}
+
+impl ToTokens for ShadowCaptureVariant {
+
+    fn to_tokens(&self, ts: &mut TokenStream2) {
+        let t = match self {
+            ShadowCaptureVariant::Unnamed => TokenStream2::from(quote!{__CaptureVariants::Unnamed}),
+            ShadowCaptureVariant::ManyUnnamed => TokenStream2::from(quote!{__CaptureVariants::ManyUnnamed}),
+            ShadowCaptureVariant::NumberedUnnamed { sections } => TokenStream2::from(quote!{__CaptureVariants::NumberedUnnamed{#sections}}),
+            ShadowCaptureVariant::Named(name) => TokenStream2::from(quote!{__CaptureVariants::Named(#name.to_string())}),
+            ShadowCaptureVariant::ManyNamed(name) => TokenStream2::from(quote!{__CaptureVariants::ManyNamed(#name.to_string())}),
+            ShadowCaptureVariant::NumberedNamed { sections, name } => TokenStream2::from(quote!{__CaptureVariants::NumberedNamed{#sections, #name.to_string()}}),
+        };
+        ts.extend(t)
+
     }
 }
 
@@ -84,9 +109,25 @@ impl From<OptimizedToken> for ShadowOptimizedToken {
         use ShadowOptimizedToken as SOT;
         match ot {
             OT::Match(s) => SOT::Match(s),
-            OT::MatchAny => SOT::MatchAny,
-            OT::Capture { ident} => SOT::Capture {ident},
+            OT::Capture(variant) => SOT::Capture(variant.into()),
             OT::QueryCapture { ident, value } => SOT::QueryCapture {ident, value}
         }
+    }
+}
+
+impl From<CaptureVariants> for ShadowCaptureVariant {
+
+    fn from(cv: CaptureVariants) -> Self {
+        use CaptureVariants as CV;
+        use ShadowCaptureVariant as SCV;
+        match cv {
+            CV::Unnamed => SCV::Unnamed,
+            CaptureVariants::ManyUnnamed => SCV::ManyUnnamed,
+            CaptureVariants::NumberedUnnamed { sections } => SCV::NumberedUnnamed {sections},
+            CaptureVariants::Named(name) => SCV::Named(name),
+            CaptureVariants::ManyNamed(name) => SCV::ManyNamed(name),
+            CaptureVariants::NumberedNamed { sections, name } => SCV::NumberedNamed {sections, name}
+        }
+
     }
 }
