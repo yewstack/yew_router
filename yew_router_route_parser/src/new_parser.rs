@@ -1,23 +1,33 @@
 use nom::IResult;
 use nom::branch::alt;
-use nom::sequence::{delimited, separated_pair, tuple};
+use nom::sequence::{delimited, separated_pair, tuple, preceded};
 use nom::bytes::complete::{tag, is_not, take};
 use nom::combinator::{map, opt, all_consuming, peek};
 use nom::error::{ParseError, ErrorKind};
 use nom::multi::{many1, many0};
 use nom::character::is_digit;
+use nom::character::complete::{alpha1, digit1};
 
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Separator,
     Match(String), // Any string
-    MatchAny, // *
-    Capture{ident: String}, // {capture ident}
+    Capture(CaptureVariants), // {_}
     QueryBegin, // ?
     QuerySeparator, // &
     QueryCapture{ident: String, value: String}, // x=y
     FragmentBegin, // #
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum CaptureVariants {
+    Unnamed, // {} - matches anything
+    ManyUnnamed, // {*} - matches over multiple sections
+    NumberedUnnamed{sections: usize}, // {4} - matches 4 sections
+    Named(String), // {name} - captures a section and adds it to the map with a given name
+    ManyNamed(String), // {*:name} - captures over many sections and adds it to the map with a given name.
+    NumberedNamed{sections: usize, name: String} // {2:name} - captures a fixed number of sections with a given name.
 }
 
 #[derive(Debug, Clone)]
@@ -178,11 +188,20 @@ fn match_specific_token(i: &str) -> IResult<&str, Token> {
 }
 
 fn capture(i: &str) -> IResult<&str, Token> {
+    let capture_variants = alt(
+        (
+            map(peek(tag("}")), |_| CaptureVariants::Unnamed), // just empty {}
+            map(preceded(tag("*:"), valid_ident_characters), |s| CaptureVariants::ManyNamed(s.to_string())),
+            map(tag("*"), |_| CaptureVariants::ManyUnnamed),
+            map(valid_ident_characters, |s| CaptureVariants::Named(s.to_string())),
+            map(separated_pair(digit1, tag(":"), valid_ident_characters), |(n, s)| CaptureVariants::NumberedNamed {sections: n.parse().expect("Should parse digits"), name: s.to_string()}),
+            map(digit1, |num: &str| CaptureVariants::NumberedUnnamed {sections: num.parse().expect("should parse digits" )})
+        )
+    );
+
     map(
-        delimited(tag("{"), valid_ident_characters, tag("}")),
-        |ident: &str| {
-            Token::Capture {ident: ident.to_string()}
-        }
+        delimited(tag("{"), capture_variants, tag("}")),
+        Token::Capture
     )(i)
 }
 
@@ -190,13 +209,6 @@ fn query_capture(i: &str) -> IResult<&str, Token> {
     map(
         separated_pair(valid_ident_characters, tag("=",), valid_ident_characters),
         |(ident, value)| Token::QueryCapture {ident: ident.to_string(), value: value.to_string()}
-    )(i)
-}
-
-fn match_any_token(i: &str) -> IResult<&str, Token> {
-    map(
-        tag("*"),
-        |_| Token::MatchAny
     )(i)
 }
 
@@ -228,7 +240,7 @@ fn begin_fragment_token(i: &str) -> IResult<&str, Token> {
 
 fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
 
-    let (i, token): (&str, Token) = alt((match_specific_token, match_any_token, capture))(i)?;
+    let (i, token): (&str, Token) = alt((match_specific_token, capture))(i)?;
     let tokens = vec![token];
 
     /// You can't have two matching sections in a row, because there is nothing to indicate when
@@ -239,7 +251,7 @@ fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
         let token = tokens.last().expect("Must be at least one token.");
         match token {
             Token::Match(_) => {
-                let (i, t) = opt(alt((match_any_token, capture)))(i)?;
+                let (i, t) = opt( capture)(i)?;
                 if let Some(new_t) = t {
                     tokens.push(new_t);
                     match_next_section_matchers(i, tokens)
@@ -247,7 +259,7 @@ fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
                     Ok((i,tokens))
                 }
             },
-            Token::Capture {..} | Token::MatchAny => {
+            Token::Capture(_) => {
                 let (i, t) = opt(match_specific_token)(i)?;
                 if let Some(new_t) = t {
                     tokens.push(new_t);
@@ -262,7 +274,6 @@ fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
         }
     }
 
-
     match_next_section_matchers(i, tokens)
 }
 
@@ -271,10 +282,42 @@ fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
 mod tests {
     use super::*;
     #[test]
-    fn capture_test() {
+    fn capture_named_test() {
         let cap = capture("{hellothere}").unwrap();
-        assert_eq!(cap, ("", Token::Capture {ident: "hellothere".to_string()}))
+        assert_eq!(cap, ("", Token::Capture (CaptureVariants::Named("hellothere".to_string()))));
     }
+
+    #[test]
+    fn capture_many_unnamed_test() {
+        let cap = capture("{*}").unwrap();
+        assert_eq!(cap, ("", Token::Capture (CaptureVariants::ManyUnnamed)));
+    }
+
+    #[test]
+    fn capture_unnamed_test() {
+        let cap = capture("{}").unwrap();
+        assert_eq!(cap, ("", Token::Capture (CaptureVariants::Unnamed)));
+    }
+
+    #[test]
+    fn capture_numbered_unnamed_test() {
+        let cap = capture("{5}").unwrap();
+        assert_eq!(cap, ("", Token::Capture (CaptureVariants::NumberedUnnamed {sections: 5})));
+    }
+
+    #[test]
+    fn capture_numbered_named_test() {
+        let cap = capture("{5:name}").unwrap();
+        assert_eq!(cap, ("", Token::Capture (CaptureVariants::NumberedNamed{sections: 5, name: "name".to_string()})));
+    }
+
+
+    #[test]
+    fn capture_many_named() {
+        let cap = capture("{*:name}").unwrap();
+        assert_eq!(cap, ("", Token::Capture (CaptureVariants::ManyNamed("name".to_string()))));
+    }
+
 
     #[test]
     fn rejects_invalid_ident() {
@@ -286,10 +329,10 @@ mod tests {
         valid_ident_characters("Hello").expect("Should accept");
     }
 
-    #[test]
-    fn match_any() {
-        match_any_token("*").expect("Should match");
-    }
+//    #[test]
+//    fn match_any() {
+//        match_any_token("*").expect("Should match");
+//    }
 
     #[test]
     fn path_must_start_with_separator() {
@@ -326,21 +369,21 @@ mod tests {
             Token::Separator,
             Token::Match("hello".to_string()),
             Token::Separator,
-            Token::Capture{ ident: "there".to_string()}
+            Token::Capture(CaptureVariants::Named("there".to_string())),
         ]
         )
     }
 
     #[test]
     fn parse_can_handle_multiple_matches_per_section() {
-        let parsed = parse("/hello/{there}general*").expect("should parse");
+        let parsed = parse("/hello/{there}general{}").expect("should parse");
         assert_eq!(parsed.1, vec![
             Token::Separator,
             Token::Match("hello".to_string()),
             Token::Separator,
-            Token::Capture{ ident: "there".to_string()},
+            Token::Capture(CaptureVariants::Named("there".to_string())),
             Token::Match("general".to_string()),
-            Token::MatchAny
+            Token::Capture(CaptureVariants::Unnamed)
         ]
         )
     }

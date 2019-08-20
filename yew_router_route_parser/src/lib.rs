@@ -1,5 +1,6 @@
 
 mod parser;
+mod new_parser;
 mod path_matcher;
 pub use path_matcher::PathMatcher;
 pub use path_matcher::OptimizedToken;
@@ -194,7 +195,7 @@ mod integration_test {
 
     #[test]
     fn single_match_any_should_match_within_separator() {
-        let path_matcher = PathMatcher::try_from("/*/kenobi").expect("Should parse");
+        let path_matcher = PathMatcher::try_from("/{}/kenobi").expect("Should parse");
         path_matcher.match_path("/hello/kenobi").expect("should match");
     }
 

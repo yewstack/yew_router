@@ -1,4 +1,5 @@
-use crate::parser::Token;
+use crate::new_parser::Token;
+use crate::new_parser::CaptureVariants;
 
 use nom::IResult;
 use std::collections::{HashMap, HashSet};
@@ -15,7 +16,7 @@ fn token_to_string(token: &Token) -> &str {
         Token::QueryBegin => "?",
         Token::QuerySeparator => "&",
         Token::FragmentBegin => "#",
-        Token::MatchAny | Token::Capture {..} | Token::QueryCapture {..} => {
+        Token::Capture {..} | Token::QueryCapture {..} => {
             log::error!("Bout to crash!");
             unreachable!()
         }
@@ -32,7 +33,7 @@ impl TryFrom<&str> for PathMatcher {
     type Error = ();
 
     fn try_from(i: &str) -> Result<Self, Self::Error> {
-        let (_i, tokens) = crate::parser::parse(i).map_err(|_| ())?;
+        let (_i, tokens) = crate::new_parser::parse(i).map_err(|_| ())?;
         Ok(PathMatcher::from(tokens))
     }
 }
@@ -61,15 +62,14 @@ impl From<Vec<Token>> for PathMatcher {
                 Token::Separator | Token::Match(_) | Token::QueryBegin | Token::QuerySeparator | Token::FragmentBegin => {
                     run.push(token)
                 }
-                Token::MatchAny | Token::Capture {..} | Token:: QueryCapture {..} => {
+                Token::Capture (_) | Token:: QueryCapture {..} => {
                     if !run.is_empty() {
                         let s: String = run.iter().map(token_to_string).collect();
                         optimized.push(OptimizedToken::Match(s));
                         run.clear()
                     }
                     let token = match token {
-                        Token::MatchAny => OptimizedToken::MatchAny,
-                        Token::Capture {ident} => OptimizedToken::Capture {ident},
+                        Token::Capture (variant) => OptimizedToken::Capture (variant),
                         Token::QueryCapture {ident, value} => OptimizedToken::QueryCapture {ident, value},
                         _ => {
                             log::error!("crashing time");
@@ -102,32 +102,47 @@ impl PathMatcher {
         let mut dictionary: HashMap<String, String> = HashMap::new();
 
         while let Some(token) = iter.next() {
-//            dbg!(i);
             i = match token {
                 OptimizedToken::Match(literal) => {
                     log::debug!("Matching literal: {}", literal);
                     tag(literal.as_str())(i)?.0
                 },
-                OptimizedToken::MatchAny => {
-                    log::debug!("Matching any");
-                    if let Some(peaked_next_token) = iter.peek() {
-                        let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
-                        terminated(valid_capture_characters, peek(tag(delimiter)))(i)?.0
-                    } else {
-                        valid_capture_characters(i)?.0
-                    }
-                },
-                OptimizedToken::Capture { ident: capture_key } => {
-                    if let Some(peaked_next_token) = iter.peek() {
-                        let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("should be in sequence");
-                        dbg!(delimiter);
-                        let (ii, captured) = terminated(valid_capture_characters, peek(tag(delimiter)))(i)?;
-                        dictionary.insert(capture_key.clone(), captured.to_string());
-                        ii
-                    } else {
-                        let (ii, captured) = valid_capture_characters(i)?;
-                        dictionary.insert(capture_key.clone(), captured.to_string());
-                        ii
+
+                OptimizedToken::Capture (variant) => {
+                    match variant {
+                        CaptureVariants::Unnamed => {
+                            log::debug!("Matching Unnamed");
+                            if let Some(peaked_next_token) = iter.peek() {
+                                let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
+                                terminated(valid_capture_characters, peek(tag(delimiter)))(i)?.0
+                            } else {
+                                valid_capture_characters(i)?.0
+                            }
+                        },
+                        CaptureVariants::ManyUnnamed => {
+                            unimplemented!()
+                        }
+                        CaptureVariants::NumberedUnnamed { sections: _ } => {
+                            unimplemented!()
+                        }
+                        CaptureVariants::Named(capture_key) => {
+                            if let Some(peaked_next_token) = iter.peek() {
+                                let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("should be in sequence");
+                                let (ii, captured) = terminated(valid_capture_characters, peek(tag(delimiter)))(i)?;
+                                dictionary.insert(capture_key.clone(), captured.to_string());
+                                ii
+                            } else {
+                                let (ii, captured) = valid_capture_characters(i)?;
+                                dictionary.insert(capture_key.clone(), captured.to_string());
+                                ii
+                            }
+                        }
+                        CaptureVariants::ManyNamed(_) => {
+                            unimplemented!()
+                        }
+                        CaptureVariants::NumberedNamed { sections: _, name: _ } => {
+                            unimplemented!()
+                        }
                     }
                 },
                 OptimizedToken::QueryCapture { ident,  value: capture_key} => {
@@ -154,9 +169,16 @@ impl PathMatcher {
     pub fn capture_names(&self) -> HashSet<&str> {
         self.tokens.iter().fold(HashSet::new(), |mut acc, token| {
             match token {
-                OptimizedToken::Match(_) | OptimizedToken::MatchAny => {}
-                OptimizedToken::Capture { ident  } => {acc.insert(ident);},
-                OptimizedToken::QueryCapture {ident, ..} => {acc.insert(ident);},
+                OptimizedToken::Match(_) => {}
+                OptimizedToken::Capture(variant)  => {
+                    match variant {
+                        CaptureVariants::ManyNamed(name) | CaptureVariants::Named(name) | CaptureVariants::NumberedNamed {name, ..} => {acc.insert(name);},
+                        CaptureVariants::ManyUnnamed | CaptureVariants::Unnamed | CaptureVariants::NumberedUnnamed {..} => {}
+                    }
+                },
+                OptimizedToken::QueryCapture {ident, ..} => {
+                    acc.insert(ident
+                    );},
             }
             acc
         })
@@ -180,8 +202,7 @@ fn valid_capture_characters_in_query(i: &str) -> IResult<&str, &str> {
 pub enum OptimizedToken {
     /// Extraneous section-related tokens can be condensed into a match.
     Match(String),
-    MatchAny,
-    Capture{ ident: String},
+    Capture(CaptureVariants),
     QueryCapture {
         ident: String,
         value: String
@@ -224,7 +245,7 @@ mod tests {
 
     #[test]
     fn simple_capture() {
-        let tokens = vec![Token::Separator, Token::Capture { ident: "hello".to_string() }, Token::Separator];
+        let tokens = vec![Token::Separator, Token::Capture(CaptureVariants::Named("hello".to_string())), Token::Separator];
         let path_matcher = PathMatcher::from(tokens);
         let (_, dict) = path_matcher.match_path("/general_kenobi/").expect("should parse");
         assert_eq!(dict.get(&"hello".to_string()), Some(&"general_kenobi".to_string()))
@@ -233,7 +254,7 @@ mod tests {
 
     #[test]
     fn simple_capture_with_no_trailing_separator() {
-        let tokens = vec![Token::Separator, Token::Capture { ident: "hello".to_string() }];
+        let tokens = vec![Token::Separator, Token::Capture(CaptureVariants::Named("hello".to_string()))];
         let path_matcher = PathMatcher::from(tokens);
         let (_, dict) = path_matcher.match_path("/general_kenobi").expect("should parse");
         assert_eq!(dict.get(&"hello".to_string()), Some(&"general_kenobi".to_string()))
@@ -242,7 +263,7 @@ mod tests {
 
     #[test]
     fn match_with_trailing_match_any() {
-        let tokens = vec![Token::Separator, Token::Match("a".to_string()), Token::Separator, Token::MatchAny];
+        let tokens = vec![Token::Separator, Token::Match("a".to_string()), Token::Separator, Token::Capture(CaptureVariants::Unnamed)];
         let path_matcher = PathMatcher::from(tokens);
         let (_, dict) = path_matcher.match_path("/a/").expect("should parse");
     }
