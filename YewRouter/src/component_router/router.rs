@@ -109,6 +109,8 @@ fn route_one_of<CONTEXT: Component, T: Clone>(
 
 use yew_router_route_parser::{PathMatcher, FromMatches};
 use std::collections::HashMap;
+use std::marker::PhantomData;
+use yew::virtual_dom::VChild;
 
 // TODO when this becomes a nested component, the CONTEXT type parameter can disappear, because "context" will be able to be Self instead
 pub struct Route2<CONTEXT: Component> {
@@ -189,41 +191,93 @@ impl<T> Flatten<T> for Option<Option<T>> {
     }
 }
 
+
+//#[derive(Debug)]
+pub struct RouteChild {
+    path_matcher: PathMatcher,
+    target: Box<Fn(&HashMap<String, String>) -> Option<Html<Router>>> // TODO this might make sense to move inside of the PathMatcher so they can be derived at once
+}
+
+#[derive(Properties)]
+pub struct RouteChildProps {
+    #[props(required)]
+    pub path: PathMatcher,
+    #[props(required)]
+    pub target: Box<dyn Fn(&HashMap<String, String>) -> Option<Html<Router>>> // TODO this might make sense to move inside of the PathMatcher
+}
+
+impl Component for RouteChild {
+    type Message = ();
+    type Properties = RouteChildProps;
+
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        RouteChild {
+            path_matcher: props.path,
+            target: props.target
+        }
+    }
+
+    fn update(&mut self, msg: Self::Message) -> bool {
+        false
+    }
+
+    fn change(&mut self, props: Self::Properties) -> ShouldRender {
+        self.path_matcher = props.path;
+        true
+    }
+}
+
+
+
 /// Router with state type of T
-pub struct Router<T: for<'de> YewRouterState<'de>> {
-    route: RouteInfo<T>,
-    route_options: Vec<Route2<Router<T>>>,
-    router_agent: Box<dyn Bridge<RouterAgent<T>>>,
+//pub struct Router<T: for<'de> YewRouterState<'de>> {
+//    route: RouteInfo<T>,
+//    props: Props<T>,
+//    router_agent: Box<dyn Bridge<RouterAgent<T>>>,
+//}
+
+
+pub struct Router {
+    route: RouteInfo<()>,
+    props: Props,
+    router_agent: Box<dyn Bridge<RouterAgent<()>>>,
 }
 
 pub enum Msg<T> {
     UpdateRoute(RouteInfo<T>),
 }
 
-#[derive(PartialEq, Properties)]
-pub struct Props<T: for<'de> YewRouterState<'de>> {
-    pub route_options: Vec<Route2<Router<T>>>,
+type Children<T> = Box<dyn Fn() -> Vec<VChild<T, Router>>>;
+
+#[derive(Properties)]
+//pub struct Props<T: for<'de> YewRouterState<'de>> {
+pub struct Props {
+//    pub route_options: Vec<Route2<Router<T>>>,
+    #[props(required)]
+    children: Children<RouteChild>
 }
 
-impl<T: for<'de> YewRouterState<'de>> Component for Router<T> {
-    type Message = Msg<T>;
-    type Properties = Props<T>;
+impl Component for Router {
+    type Message = Msg<()>;
+//    type Properties = Props<T>;
+    type Properties = Props;
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         let callback = link.send_back(Msg::UpdateRoute);
-        let router_agent = RouterAgent::bridge(callback);
+        let mut router_agent = RouterAgent::bridge(callback);
 
+        router_agent.send(RouterRequest::GetCurrentRoute);
         Router {
             route: Default::default(), // This must be updated by immediately requesting a route update from the service bridge.
-            route_options: props.route_options,
+            props,
             router_agent,
         }
     }
 
-    fn mounted(&mut self) -> ShouldRender {
-        self.router_agent.send(RouterRequest::GetCurrentRoute);
-        false
-    }
+//    fn mounted(&mut self) -> ShouldRender {
+//        self.router_agent.send(RouterRequest::GetCurrentRoute);
+//        false
+//    }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
@@ -236,14 +290,38 @@ impl<T: for<'de> YewRouterState<'de>> Component for Router<T> {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        self.route_options = props.route_options;
+//        self.route_options = props.route_options;
+        self.props = props;
         true
     }
 }
 
-impl<T: for<'de> YewRouterState<'de> > Renderable<Router<T>> for Router<T>
+impl Renderable<Router> for Router
 {
     fn view(&self) -> VNode<Self> {
-        Route2::route_one_of(&self.route_options, &self.route)
+//        Route2::route_one_of(&self.route_options, &self.route)
+        let route : String = self.route.to_route_string();
+
+
+        debug!("route one of ... for {:?}", route);
+        (self.props.children)().into_iter()
+        .filter_map(|route_possibility| -> Option<Html<Self>> {
+            route_possibility.props.path
+                .match_path(&route)
+                .map(|(_rest, hm)| {
+                    (route_possibility.props.target)(&hm)
+                })
+                .ok()
+                .flatten_stable()
+        })
+        .next() // Take the first path that succeeds.
+        .map(|x| -> Html<Self> {
+            debug!("Route matched.");
+            x
+        })
+        .unwrap_or_else(|| {
+            warn!("Routing failed. No default case was provided.");
+            html! { <></>}
+        })
     }
 }

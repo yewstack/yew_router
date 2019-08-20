@@ -24,7 +24,7 @@ fn token_to_string(token: &Token) -> &str {
 }
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct PathMatcher {
     pub tokens: Vec<OptimizedToken>
 }

@@ -9,7 +9,8 @@ log = "0.4"
 web_logger = "0.1"
 serde = "1.0"
 serde_derive = "1.0"
-yew = { git = "https://github.com/yewstack/yew", branch="master" }
+#yew = { git = "https://github.com/yewstack/yew", branch="master" }
+yew = { git = "https://github.com/jstarry/yew", branch = "component-children" }
 yew_patterns = {git = "https://github.com/hgzimmerman/yew_patterns", branch="master"} # This the message bus should be moved inside this project.
 stdweb = "0.4"
 yew_router_route_parser = {path = "../yew_router_route_parser"}

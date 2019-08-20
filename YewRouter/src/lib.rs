@@ -1,3 +1,4 @@
+#![recursion_limit="128"]
 /// Possibly move the code for the directional message bus into this project
 //extern crate yew_patterns;
 
