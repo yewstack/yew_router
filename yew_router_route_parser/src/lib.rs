@@ -1,10 +1,12 @@
 
-mod parser;
+//mod parser;
 mod new_parser;
 mod path_matcher;
 pub use path_matcher::PathMatcher;
 pub use path_matcher::OptimizedToken;
 pub use new_parser::CaptureVariants;
+pub use path_matcher::parse_str_and_optimize_tokens;
+
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt::{Display, Formatter};

@@ -12,7 +12,6 @@ use yew_router::Router;
 use yew_router::components::RouterButton;
 use yew_router::components::RouterLink;
 use yew_router::Route;
-use yew_router::Route2;
 
 
 use b_component::BModel;
@@ -60,7 +59,6 @@ impl Renderable<Model> for Model {
 //        type RC = RouteChild<()>;
 
         let path = route!("/a/{}");
-        let pm = PathMatcher {tokens: vec![] };
 
 
 //        <nav class="menu",>
@@ -73,7 +71,8 @@ impl Renderable<Model> for Model {
             <div>
 //                <div>
                     <Router>
-                        <RouteChild path=path target=Box::new(<<AModel as Component>::Properties> as FromMatches::from_matches) />
+//                        <RouteChild yeet="hello".to_string() path=path target=Box::new(<<AModel as Component>::Properties> as FromMatches::from_matches) />
+                        <RouteChild path=route!("/a/{}" => AModel) />
                     </Router>
 //                </div>
             </div>

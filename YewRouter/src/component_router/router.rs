@@ -111,69 +111,70 @@ use yew_router_route_parser::{PathMatcher, FromMatches};
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use yew::virtual_dom::VChild;
+use yew::html::ChildrenWithProps;
 
 // TODO when this becomes a nested component, the CONTEXT type parameter can disappear, because "context" will be able to be Self instead
-pub struct Route2<CONTEXT: Component> {
-    path_matcher: PathMatcher,
-    render_fn: Box<Fn(&HashMap<String, String>) -> Option<Html<CONTEXT>>> // TODO This may be replaced with a phantomData<Target> later.
-}
+//pub struct Route2<CONTEXT: Component> {
+//    path_matcher: PathMatcher,
+//    render_fn: Box<Fn(&HashMap<String, String>) -> Option<Html<CONTEXT>>> // TODO This may be replaced with a phantomData<Target> later.
+//}
 
-impl <CONTEXT: Component> PartialEq for Route2<CONTEXT> {
-    fn eq(&self, other: &Self) -> bool {
-        self.path_matcher.eq(&other.path_matcher)
-    }
-}
+//impl <CONTEXT: Component> PartialEq for Route2<CONTEXT> {
+//    fn eq(&self, other: &Self) -> bool {
+//        self.path_matcher.eq(&other.path_matcher)
+//    }
+//}
 
-impl <CONTEXT: Component> Route2<CONTEXT> {
-
-    pub fn new<TARGET>(path_matcher: PathMatcher) -> Self
-    where
-        TARGET: Component + Renderable<TARGET>,
-        TARGET::Properties: FromMatches
-    {
-        Route2 {
-            path_matcher,
-            render_fn: Box::new(|matches| -> Option<Html<CONTEXT>> {
-                TARGET::Properties::from_matches(matches)
-                    .map(|properties| create_component::<TARGET, CONTEXT>(properties))
-                    .map_err(|err| {
-                        debug!("Component could not be created from matches: {:?}", err);
-                    })
-                    .ok()
-            })
-        }
-    }
-
-
-    // TODO this will reside in the parent, and context won't be a necessary type parameter.
-    // This is effectively the router's view function.
-    // Only instead of possibilities.iter()..., it will be something like self.children.iter()...
-    fn route_one_of<T: crate::route::RouteState>(possibilities: &[Route2<CONTEXT>], route: &RouteInfo<T>) -> Html<CONTEXT> {
-        let route : String = route.to_route_string();
-
-        debug!("route one of ... for {:?}", route);
-        possibilities
-            .iter()
-            .filter_map(|route_possibility: &Route2<CONTEXT>| -> Option<Html<CONTEXT>> {
-                route_possibility.path_matcher
-                    .match_path(&route)
-                    .map(|(_rest, hm)| {
-                        (route_possibility.render_fn)(&hm)
-                    })
-                    .ok()
-                    .flatten_stable()
-            })
-            .next() // Take the first path that succeeds.
-            .map(|x| {
-                debug!("Route matched.");
-                x
-            })
-            .unwrap_or_else(|| {
-                warn!("Routing failed. No default case was provided.");
-                html! { <></>}
-            })
-    }
-}
+//impl <CONTEXT: Component> Route2<CONTEXT> {
+//
+//    pub fn new<TARGET>(path_matcher: PathMatcher) -> Self
+//    where
+//        TARGET: Component + Renderable<TARGET>,
+//        TARGET::Properties: FromMatches
+//    {
+//        Route2 {
+//            path_matcher,
+//            render_fn: Box::new(|matches| -> Option<Html<CONTEXT>> {
+//                TARGET::Properties::from_matches(matches)
+//                    .map(|properties| create_component::<TARGET, CONTEXT>(properties))
+//                    .map_err(|err| {
+//                        debug!("Component could not be created from matches: {:?}", err);
+//                    })
+//                    .ok()
+//            })
+//        }
+//    }
+//
+//
+//    // TODO this will reside in the parent, and context won't be a necessary type parameter.
+//    // This is effectively the router's view function.
+//    // Only instead of possibilities.iter()..., it will be something like self.children.iter()...
+//    fn route_one_of<T: crate::route::RouteState>(possibilities: &[Route2<CONTEXT>], route: &RouteInfo<T>) -> Html<CONTEXT> {
+//        let route : String = route.to_route_string();
+//
+//        debug!("route one of ... for {:?}", route);
+//        possibilities
+//            .iter()
+//            .filter_map(|route_possibility: &Route2<CONTEXT>| -> Option<Html<CONTEXT>> {
+//                route_possibility.path_matcher
+//                    .match_path(&route)
+//                    .map(|(_rest, hm)| {
+//                        (route_possibility.render_fn)(&hm)
+//                    })
+//                    .ok()
+//                    .flatten_stable()
+//            })
+//            .next() // Take the first path that succeeds.
+//            .map(|x| {
+//                debug!("Route matched.");
+//                x
+//            })
+//            .unwrap_or_else(|| {
+//                warn!("Routing failed. No default case was provided.");
+//                html! { <></>}
+//            })
+//    }
+//}
 
 
 trait Flatten<T> {
@@ -194,16 +195,15 @@ impl<T> Flatten<T> for Option<Option<T>> {
 
 //#[derive(Debug)]
 pub struct RouteChild {
-    path_matcher: PathMatcher,
-    target: Box<Fn(&HashMap<String, String>) -> Option<Html<Router>>> // TODO this might make sense to move inside of the PathMatcher so they can be derived at once
+    props: RouteChildProps
 }
 
 #[derive(Properties)]
 pub struct RouteChildProps {
     #[props(required)]
-    pub path: PathMatcher,
-    #[props(required)]
-    pub target: Box<dyn Fn(&HashMap<String, String>) -> Option<Html<Router>>> // TODO this might make sense to move inside of the PathMatcher
+    pub path: PathMatcher<Router>,
+//    #[props(required)]
+//    pub target: Box<dyn Fn(&HashMap<String, String>) -> Option<Html<Router>>> // TODO this might make sense to move inside of the PathMatcher
 }
 
 impl Component for RouteChild {
@@ -212,8 +212,7 @@ impl Component for RouteChild {
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         RouteChild {
-            path_matcher: props.path,
-            target: props.target
+            props
         }
     }
 
@@ -222,7 +221,7 @@ impl Component for RouteChild {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        self.path_matcher = props.path;
+        self.props = props;
         true
     }
 }
@@ -247,14 +246,13 @@ pub enum Msg<T> {
     UpdateRoute(RouteInfo<T>),
 }
 
-type Children<T> = Box<dyn Fn() -> Vec<VChild<T, Router>>>;
+//type Children<T> = Box<dyn Fn() -> Vec<VChild<T, Router>>>;
 
 #[derive(Properties)]
 //pub struct Props<T: for<'de> YewRouterState<'de>> {
 pub struct Props {
-//    pub route_options: Vec<Route2<Router<T>>>,
     #[props(required)]
-    children: Children<RouteChild>
+    children: ChildrenWithProps<RouteChild, Router>
 }
 
 impl Component for Router {
@@ -304,24 +302,30 @@ impl Renderable<Router> for Router
 
 
         debug!("route one of ... for {:?}", route);
-        (self.props.children)().into_iter()
-        .filter_map(|route_possibility| -> Option<Html<Self>> {
-            route_possibility.props.path
-                .match_path(&route)
-                .map(|(_rest, hm)| {
-                    (route_possibility.props.target)(&hm)
-                })
-                .ok()
-                .flatten_stable()
-        })
-        .next() // Take the first path that succeeds.
-        .map(|x| -> Html<Self> {
-            debug!("Route matched.");
-            x
-        })
-        .unwrap_or_else(|| {
-            warn!("Routing failed. No default case was provided.");
-            html! { <></>}
-        })
+        (self.props.children)()
+            .into_iter()
+            .next()
+            .map(|s| {
+                html!{ {"suh"} }
+            })
+            .unwrap()
+//            .filter_map(|route_possibility| -> Option<Html<Self>> {
+//                route_possibility.props.path
+//                    .match_path(&route)
+//                    .map(|(_rest, hm)| {
+//                        (route_possibility.props.target)(&hm)
+//                    })
+//                    .ok()
+//                    .flatten_stable()
+//            })
+//            .next() // Take the first path that succeeds.
+//            .map(|x| -> Html<Self> {
+//                debug!("Route matched.");
+//                x
+//            })
+//            .unwrap_or_else(|| {
+//                warn!("Routing failed. No default case was provided.");
+//                html! { <></>}
+//            })
     }
 }

@@ -8,6 +8,8 @@ use nom::sequence::{preceded, terminated};
 use std::convert::TryFrom;
 use nom::combinator::peek;
 use log::debug;
+use yew::{Html, Component, Renderable};
+use crate::FromMatches;
 
 fn token_to_string(token: &Token) -> &str {
     match token {
@@ -17,31 +19,59 @@ fn token_to_string(token: &Token) -> &str {
         Token::QuerySeparator => "&",
         Token::FragmentBegin => "#",
         Token::Capture {..} | Token::QueryCapture {..} => {
-            log::error!("Bout to crash!");
+//            log::error!("Bout to crash!");
             unreachable!()
         }
     }
 }
 
-
-#[derive(Debug, PartialEq, Default)]
-pub struct PathMatcher {
-    pub tokens: Vec<OptimizedToken>
+/// The CTX refers to the context of the parent rendering this (The Router).
+pub struct PathMatcher<CTX: Component + Renderable<CTX>> {
+    pub tokens: Vec<OptimizedToken>,
+    pub render_fn: Box<dyn Fn(&HashMap<String, String>) -> Option<Html<CTX>>> // Having Router specified here would make dependency issues appear.
 }
 
-impl TryFrom<&str> for PathMatcher {
-    type Error = ();
-
-    fn try_from(i: &str) -> Result<Self, Self::Error> {
-        let (_i, tokens) = crate::new_parser::parse(i).map_err(|_| ())?;
-        Ok(PathMatcher::from(tokens))
+impl <CTX: Component + Renderable<CTX>> PartialEq for PathMatcher<CTX> {
+    fn eq(&self, other: &Self) -> bool {
+        self.tokens.eq(&other.tokens) && std::ptr::eq(&self.render_fn, &other.render_fn)
     }
 }
+
+impl <CTX: Component + Renderable<CTX>> Debug for PathMatcher<CTX> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+        f.debug_struct("PathMatcher")
+            .field("tokens", &self.tokens)
+            .field("render_fn", &"Fn".to_string())
+            .finish()
+    }
+}
+//
+//impl <CTX: FromMatches> TryFrom<&str> for PathMatcher<CTX> {
+//    type Error = ();
+//
+//    fn try_from(i: &str) -> Result<Self, Self::Error> {
+//        let (_i, tokens) = crate::new_parser::parse(i).map_err(|_| ())?;
+//        let pm = PathMatcher {
+//            tokens: optimize_tokens(tokens),
+//            render_fn: Box::new(())
+//        };
+//        Ok((tokens))
+//    }
+//}
+
+
+
+
 
 
 // TODO this apparently doesn't work?.
 // Its not super important.
 use nom::Err;
+use std::marker::PhantomData;
+use std::fmt::{Debug, Formatter, Error};
+use yew::virtual_dom::vcomp::ScopeHolder;
+use yew::virtual_dom::{VComp, VNode};
+
 /// Should assign i.
 #[allow(unused)]
 fn assign_i<I,O,E>(f: impl Fn(I) -> Result<(I, O), Err<E>>) -> impl Fn(I) -> Result<O, Err<E>> {
@@ -52,46 +82,101 @@ fn assign_i<I,O,E>(f: impl Fn(I) -> Result<(I, O), Err<E>>) -> impl Fn(I) -> Res
     }
 }
 
-impl From<Vec<Token>> for PathMatcher {
-    fn from(tokens: Vec<Token>) -> Self {
-        let mut optimized = vec![];
-        let mut run = vec![];
+// TODO, forget the whole From thing. just create a free function that creates a vec<OptimizedToken>
+// Then the html fn can be created separately.
 
-        tokens.into_iter().for_each( |token| {
-            match &token {
-                Token::Separator | Token::Match(_) | Token::QueryBegin | Token::QuerySeparator | Token::FragmentBegin => {
-                    run.push(token)
-                }
-                Token::Capture (_) | Token:: QueryCapture {..} => {
-                    if !run.is_empty() {
-                        let s: String = run.iter().map(token_to_string).collect();
-                        optimized.push(OptimizedToken::Match(s));
-                        run.clear()
-                    }
-                    let token = match token {
-                        Token::Capture (variant) => OptimizedToken::Capture (variant),
-                        Token::QueryCapture {ident, value} => OptimizedToken::QueryCapture {ident, value},
-                        _ => {
-                            log::error!("crashing time");
-                            unreachable!()
-                        }
-                    };
-                    optimized.push(token);
-                }
-            }
-        });
-        if !run.is_empty() {
-            let s: String = run.iter().map(token_to_string).collect();
-            optimized.push(OptimizedToken::Match(s));
-        }
 
-        PathMatcher {
-            tokens: optimized
-        }
-    }
+//impl <CTX: FromMatches, TARGET> From<Vec<Token>> for PathMatcher<CTX> {
+//    fn from(tokens: Vec<Token>) -> Self {
+//
+//
+//        PathMatcher {
+//            tokens: optimized,
+//            render_fn: Box::new(<<TARGET as Component>::Properties> as FromMatches::from_matches)
+//        }
+//    }
+//}
+
+fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
+    props: COMP::Properties,
+) -> Html<CONTEXT> {
+    let vcomp_scope: ScopeHolder<_> = Default::default(); // TODO, I don't exactly know what this does, I may want a scope holder directly tied to the current context?
+    VNode::VComp(VComp::new::<COMP>(props, vcomp_scope))
 }
 
-impl PathMatcher {
+pub fn parse_str_and_optimize_tokens(i: &str) -> Result<Vec<OptimizedToken>, ()> {
+    let (_, tokens) = crate::new_parser::parse(i).map_err(|_| ())?;
+    Ok(optimize_tokens(tokens))
+}
+
+fn optimize_tokens(tokens: Vec<Token>) -> Vec<OptimizedToken> {
+    let mut optimized = vec![];
+    let mut run = vec![];
+
+    tokens.into_iter().for_each( |token| {
+        match &token {
+            Token::Separator | Token::Match(_) | Token::QueryBegin | Token::QuerySeparator | Token::FragmentBegin => {
+                run.push(token)
+            }
+            Token::Capture (_) | Token:: QueryCapture {..} => {
+                if !run.is_empty() {
+                    let s: String = run.iter().map(token_to_string).collect();
+                    optimized.push(OptimizedToken::Match(s));
+                    run.clear()
+                }
+                let token = match token {
+                    Token::Capture (variant) => OptimizedToken::Capture (variant),
+                    Token::QueryCapture {ident, value} => OptimizedToken::QueryCapture {ident, value},
+                    _ => {
+                        log::error!("crashing time");
+                        unreachable!()
+                    }
+                };
+                optimized.push(token);
+            }
+        }
+    });
+    if !run.is_empty() {
+        let s: String = run.iter().map(token_to_string).collect();
+        optimized.push(OptimizedToken::Match(s));
+    }
+    optimized
+}
+
+
+impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
+
+
+
+    pub fn try_from<CMP>(i: &str, cmp: PhantomData<CMP>) -> Result<Self, ()>
+    where
+        CMP: Component + Renderable<CMP>,
+        CMP::Properties: FromMatches
+    {
+        let (_i, tokens) = crate::new_parser::parse(i).map_err(|_| ())?;
+        let pm = PathMatcher {
+            tokens: optimize_tokens(tokens),
+            render_fn: Self::create_render_fn(cmp)
+        };
+        Ok(pm)
+    }
+
+    pub fn create_render_fn<CMP>(_: PhantomData<CMP>) -> Box<Fn(&HashMap<String, String>) -> Option<Html<CTX>>>
+    where
+        CMP: Component + Renderable<CMP>,
+        CMP::Properties: FromMatches
+    {
+        Box::new(|matches: &HashMap<String, String>| {
+            CMP::Properties::from_matches(matches)
+                .map(|properties| create_component::<CMP, CTX>(properties))
+                .map_err(|err| {
+                    debug!("Component could not be created from matches: {:?}", err);
+                })
+                .ok()
+        })
+    }
+
+
     // TODO, should find some way to support '/' characters in fragment. In the transform function, it could keep track of the seen hash begin yet, and transform captures based on that.
     pub fn match_path<'a>(&self, mut i: &'a str) -> IResult<&'a str, HashMap<String, String>> {
         debug!("Attempting to match path: {:?} using: {:?}", i, self);
@@ -193,8 +278,8 @@ impl PathMatcher {
                     }
                 },
                 OptimizedToken::QueryCapture {ident, ..} => {
-                    acc.insert(ident
-                    );},
+                    acc.insert(ident);
+                },
             }
             acc
         })

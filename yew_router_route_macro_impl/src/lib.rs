@@ -1,42 +1,53 @@
 extern crate proc_macro;
 use proc_macro::{TokenStream};
 use yew_router_route_parser::{PathMatcher, OptimizedToken, CaptureVariants};
-use std::convert::TryFrom;
 use quote::{quote, ToTokens};
 use syn::export::TokenStream2;
 use proc_macro_hack::proc_macro_hack;
-use syn::token::Token;
-use syn::{Token, Error};
-use syn::parse::{Parser, Parse, ParseBuffer};
+use syn::{Error, Type};
+use syn::parse::{Parse, ParseBuffer};
 use syn::parse_macro_input;
 
 struct S {
-    s: String
+    s: String,
+    ty: Type
 }
 impl Parse for S {
     fn parse(input: &ParseBuffer) -> Result<Self, Error> {
         let s = input.parse::<syn::LitStr>()?;
-        Ok(S{s: s.value()})
+        let _ = input.parse::<syn::token::FatArrow>()?;
+        let ty = input.parse::<syn::Type>()?;
+        Ok(
+            S {
+                s: s.value(),
+                ty
+            }
+        )
     }
 }
 
-/// Expected to be used like: route!("/route/to/thing")
+/// Expected to be used like: route!("/route/to/thing" => Component)
 #[proc_macro_hack]
 pub fn route(input: TokenStream) -> TokenStream {
     let s = parse_macro_input!(input as S);
-    let s = s.s;
+    let ty = s.ty;
+    let s: String = s.s;
 
     // Do the parsing at compile time so the user knows if their matcher is malformed.
     // It will still be their responsibility to know that the corresponding Props can be acquired from a path matcher.
-    let pm= PathMatcher::try_from(s.as_str()).expect("Invalid Path Matcher");
-    let t = pm.tokens.into_iter().map(ShadowOptimizedToken::from);
+//    let pm= PathMatcher::try_from(s.as_str()).expect("Invalid Path Matcher");
+    let t = yew_router_route_parser::parse_str_and_optimize_tokens(s.as_str())
+        .expect("Invalid Path Matcher")
+        .into_iter()
+        .map(ShadowOptimizedToken::from);
     let expanded = quote!{
         {
             use yew_router::yew_router_route_parser::PathMatcher as __PathMatcher;
             use yew_router::yew_router_route_parser::CaptureVariants as __CaptureVariants;
             use yew_router::yew_router_route_parser::OptimizedToken as __OptimizedToken;
             __PathMatcher {
-                tokens : vec![#(#t),*]
+                tokens : vec![#(#t),*],
+                render_fn : __PathMatcher::create_render_fn(PhantomData<#ty>)
             }
         }
     };

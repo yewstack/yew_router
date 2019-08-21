@@ -10,7 +10,6 @@ use yew_router::Route;
 use c_component;
 use yew_router::yew_router_derive::{FromMatches, route};
 use yew_router::yew_router_route_parser::{PathMatcher, OptimizedToken};
-use yew_router::Route2;
 
 pub struct AModel {
 }

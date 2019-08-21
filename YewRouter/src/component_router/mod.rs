@@ -2,7 +2,7 @@ pub mod router;
 
 //pub use self::yew_router::{YewRouter, DefaultPage, Props};
 //pub use self::routable::{Routable, RoutableBase};
-pub use self::router::{Props, Route, Router, Route2};
+pub use self::router::{Props, Route, Router};
 
 use crate::router_agent::RouterState;
 
