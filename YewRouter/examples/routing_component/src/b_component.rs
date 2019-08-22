@@ -1,5 +1,4 @@
 use yew::prelude::*;
-use yew_router::prelude::*;
 use std::usize;
 use yew::Properties;
 use yew_router::{RouteInfo, RouterAgent};
@@ -7,6 +6,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use yew_router::path_matcher::FromMatchesError;
 use yew_router::path_matcher::FromMatches;
+use yew_router::route_agent::RouteRequest;
 
 pub struct BModel {
     number: Option<usize>,
@@ -40,7 +40,7 @@ impl Component for BModel {
         let callback = link.send_back(|route: RouteInfo| Msg::HandleRoute(route));
         let mut router = RouterAgent::bridge(callback);
 
-        router.send(RouterRequest::GetCurrentRoute);
+        router.send(RouteRequest::GetCurrentRoute);
 
         BModel {
             number: props.number,
@@ -74,7 +74,7 @@ impl Component for BModel {
                 // because the changes made here only affect the current component,
                 // so mutation might as well be contained to the core component update loop
                 // instead of being sent through the router.
-                self.router.send(RouterRequest::ChangeRouteNoBroadcast(route));
+                self.router.send(RouteRequest::ChangeRouteNoBroadcast(route));
                 true
             }
             Msg::HandleRoute(_route) => {

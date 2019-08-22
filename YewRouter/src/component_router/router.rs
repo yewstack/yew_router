@@ -1,7 +1,7 @@
 //! Router and Route components
 
 use crate::route_info::RouteInfo;
-use crate::router_agent::{RouterAgent, RouterRequest};
+use crate::route_agent::{RouteAgent, RouteRequest};
 use yew::Bridged;
 use yew::{
     html,
@@ -53,7 +53,7 @@ impl <T: for<'de> YewRouterState<'de>> Component for Route<T> {
 pub struct Router<T: for<'de> YewRouterState<'de>> {
     route: RouteInfo<T>,
     props: Props<T>,
-    router_agent: Box<dyn Bridge<RouterAgent<T>>>,
+    router_agent: Box<dyn Bridge<RouteAgent<T>>>,
 }
 
 /// Message for Router.
@@ -76,9 +76,9 @@ impl <T> Component for Router<T>
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         let callback = link.send_back(Msg::UpdateRoute);
-        let mut router_agent = RouterAgent::bridge(callback);
+        let mut router_agent = RouteAgent::bridge(callback);
 
-        router_agent.send(RouterRequest::GetCurrentRoute);
+        router_agent.send(RouteRequest::GetCurrentRoute);
         Router {
             route: Default::default(), // This must be updated by immediately requesting a route update from the service bridge.
             props,

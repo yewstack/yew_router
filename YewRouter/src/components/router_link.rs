@@ -1,5 +1,5 @@
 use crate::route_info::RouteInfo;
-use crate::router_agent::{RouterAgent, RouterRequest};
+use crate::route_agent::{RouteAgent, RouteRequest};
 use yew::prelude::*;
 
 use super::Msg;
@@ -8,7 +8,7 @@ use super::Props;
 /// An anchor tag Component that when clicked, will navigate to the provided route.
 /// The Route's `to_route_string()` will be displayed as the href.
 pub struct RouterLink {
-    router: Box<dyn Bridge<RouterAgent<()>>>,
+    router: Box<dyn Bridge<RouteAgent<()>>>,
     // TODO make this hold a link and a optional state instead, so they can each independently be passed in as props.
     route: RouteInfo<()>,
     text: String,
@@ -22,7 +22,7 @@ impl Component for RouterLink {
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         let callback = link.send_back(|_route: RouteInfo<()>| Msg::NoOp);
-        let router = RouterAgent::bridge(callback);
+        let router = RouteAgent::bridge(callback);
 
         RouterLink {
             router,
@@ -38,7 +38,7 @@ impl Component for RouterLink {
             Msg::NoOp => false,
             Msg::Clicked => {
                 self.router
-                    .send(RouterRequest::ChangeRoute(self.route.clone()));
+                    .send(RouteRequest::ChangeRoute(self.route.clone()));
                 false
             }
         }

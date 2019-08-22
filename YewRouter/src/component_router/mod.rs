@@ -17,7 +17,7 @@ pub type Router = router::Router<()>;
 pub type Route = router::Route<()>;
 
 
-use crate::router_agent::RouterState;
+use crate::route_agent::RouterState;
 
 /// Any state that can be managed by the `YewRouter` must meet the criteria of this trait.
 pub trait YewRouterState<'de>: RouterState<'de> + PartialEq {}

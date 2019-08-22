@@ -1,5 +1,5 @@
 //! Wrapper around route url string, and associated history state.
-use crate::routing_service::RouteService;
+use crate::route_service::RouteService;
 use serde::Deserialize;
 use serde::Serialize;
 use stdweb::unstable::TryFrom;

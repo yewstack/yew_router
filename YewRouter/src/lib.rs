@@ -2,12 +2,12 @@
 /// Possibly move the code for the directional message bus into this project
 //extern crate yew_patterns;
 
-pub mod routing_service;
+pub mod route_service;
 
 #[cfg(feature = "router_agent")]
-pub mod router_agent;
+pub mod route_agent;
 #[cfg(feature = "router_agent")]
-pub type RouterAgent = router_agent::RouterAgent<()>;
+pub type RouterAgent = route_agent::RouteAgent<()>;
 
 #[cfg(feature = "router_agent")]
 pub mod route_info;
@@ -28,13 +28,3 @@ pub use yew_router_path_matcher as path_matcher;
 #[cfg(feature = "yew_router")]
 pub use yew_router_derive::{route, FromMatches};
 
-// TODO preludes have kind of fallen out of favor, maybe this should be removed ???
-pub mod prelude {
-    //    #[cfg(feature = "yew_router")]
-    //    pub use super::component_router::{YewRouter, Props, DefaultPage, RoutableBase, Routable};
-
-    #[cfg(feature = "router_agent")]
-    pub use super::{RouteInfo};
-    #[cfg(feature = "router_agent")]
-    pub use super::router_agent::{RouterRequest};
-}
