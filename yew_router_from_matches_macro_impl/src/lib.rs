@@ -1,7 +1,7 @@
 extern crate proc_macro;
 use proc_macro::{TokenStream};
 use syn;
-use syn::{DeriveInput, Data, Fields, Field, Ident, Type};
+use syn::{DeriveInput, Data, Fields, Field, Ident};
 use syn::parse_macro_input;
 use quote::quote;
 //use std::iter::{Map, Cloned};
@@ -71,8 +71,8 @@ pub fn from_matches(input: TokenStream) -> TokenStream {
     };
 
     let expanded = quote! {
-        use yew_router::yew_router_route_parser::FromMatchesError as __FromMatchesError;
-        use yew_router::yew_router_route_parser::FromMatches as __FromMatches;
+        use yew_router::path_matcher::FromMatchesError as __FromMatchesError;
+        use yew_router::path_matcher::FromMatches as __FromMatches;
         use std::collections::HashMap as __HashMap;
         use std::collections::HashSet as __HashSet;
 //        use std::convert::TryFrom as __TryFrom;

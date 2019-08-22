@@ -3,7 +3,10 @@ use yew_router::prelude::*;
 use std::usize;
 use yew::Properties;
 use yew_router::route::RouteInfo;
-use yew_router::yew_router_derive::{FromMatches};
+use std::collections::HashMap;
+use std::str::FromStr;
+use yew_router::path_matcher::FromMatchesError;
+use yew_router::path_matcher::FromMatches;
 
 pub struct BModel {
     number: Option<usize>,
@@ -137,68 +140,7 @@ impl Renderable<BModel> for BModel {
     }
 }
 
-//impl Routable for BModel {
-//    // Once proc macros land, it wouldn't be too difficult to set up a macro that does all of the below that looks like
-//    // #[route("/b/<sub_path>#<number>")]
-//    // That will implement this trait for the Component.
-//    //
-//    // The syntax could be extended to not care about prior paths like so:
-//    // #[route("/*/<sub_path>#<number>")]
-//    fn resolve_props(route: &Route) -> Option<Self::Properties> {
-//        let first_segment = route.path_segments.get(0).unwrap();
-//            if "b" == first_segment.as_str() {
-//                let mut props = Props {
-//                    number: None,
-//                    sub_path: None,
-//                };
-//                props.sub_path = route
-//                    .path_segments
-//                    .get(1)
-//                    .cloned();
-//                props.number = route
-//                    .clone()
-//                    .fragment
-//                    .and_then(|x: String| usize::from_str_radix(&x, 10).ok());
-//                Some(props)
-//            } else {
-//                None // This will only render if the first path segment is "b"
-//            }
-//    }
-//
-//    fn will_try_to_route(route: &Route) -> bool {
-//        route.path_segments.get(0).is_some()
-//    }
-//}
-use yew_router::router::FromRouteInfo;
-impl <T> FromRouteInfo<T> for Props {
 
-    fn from_route_info(route: &RouteInfo<T>) -> Option<Self> {
-        let first_segment = route.path_segments.get(0)?;
-        if "b" == first_segment.as_str() {
-            let mut props = Props {
-                number: None,
-                sub_path: None,
-            };
-            props.sub_path = route
-                .path_segments
-                .get(1)
-                .cloned();
-            props.number = route
-                .clone()
-                .fragment
-                .as_ref()
-                .and_then(|x: &String| usize::from_str_radix(&x, 10).ok());
-            Some(props)
-        } else {
-            None // This will only render if the first path segment is "b"
-        }
-    }
-}
-
-use yew_router::yew_router_route_parser::FromMatches;
-use std::collections::HashMap;
-use std::str::FromStr;
-use yew_router::yew_router_route_parser::FromMatchesError;
 
 impl FromMatches for Props {
 

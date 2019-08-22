@@ -11,7 +11,6 @@ use yew_router::prelude::*;
 use yew_router::Router;
 use yew_router::components::RouterButton;
 use yew_router::components::RouterLink;
-use yew_router::Route;
 
 
 use b_component::BModel;
@@ -19,7 +18,6 @@ use a_component::AModel;
 use c_component::CModel;
 
 use yew_router::yew_router_derive::route;
-use yew_router::yew_router_route_parser::{PathMatcher, OptimizedToken}; // TODO, this is needed due to lack of proc macro hygene. It needs to be imported there
 
 
 fn main() {
@@ -56,25 +54,22 @@ impl Component for Model {
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
         use yew_router::router::RouteChild;
-//        type RC = RouteChild<()>;
 
-        let path = route!("/a/{}");
-
-
-//        <nav class="menu",>
-//                    <RouterButton: text=String::from("Go to A"), route=RouteInfo::parse("/a/"), />
-//                    <RouterLink: text=String::from("Go to B"), route=RouteInfo::parse("/b/#"), />
-//                    <RouterButton: text=String::from("Go to C"), route=RouteInfo::parse("/c"), />
-//                    <RouterButton: text=String::from("Go to A/C"), route=RouteInfo::parse("/a/c"), />
-//                </nav>
         html! {
             <div>
-//                <div>
+                <nav class="menu",>
+                    <RouterButton: text=String::from("Go to A"), route=RouteInfo::parse("/a/"), />
+                    <RouterLink: text=String::from("Go to B"), route=RouteInfo::parse("/b/#"), />
+                    <RouterButton: text=String::from("Go to C"), route=RouteInfo::parse("/c"), />
+                    <RouterButton: text=String::from("Go to A/C"), route=RouteInfo::parse("/a/c"), />
+                </nav>
+                <div>
                     <Router>
-//                        <RouteChild yeet="hello".to_string() path=path target=Box::new(<<AModel as Component>::Properties> as FromMatches::from_matches) />
                         <RouteChild path=route!("/a/{}" => AModel) />
+                        <RouteChild path=route!("/c" => CModel) />
+                        <RouteChild path=route!("/b/{sub_path}" => BModel) />
                     </Router>
-//                </div>
+                </div>
             </div>
         }
     }

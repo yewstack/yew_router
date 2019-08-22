@@ -107,7 +107,7 @@ fn route_one_of<CONTEXT: Component, T: Clone>(
 }
 
 
-use yew_router_route_parser::{PathMatcher, FromMatches};
+use yew_router_path_matcher::{PathMatcher, FromMatches};
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use yew::virtual_dom::VChild;
@@ -302,30 +302,24 @@ impl Renderable<Router> for Router
 
 
         debug!("route one of ... for {:?}", route);
-        (self.props.children)()
-            .into_iter()
-            .next()
-            .map(|s| {
-                html!{ {"suh"} }
+        self.props.children.iter()
+            .filter_map(|route_possibility| -> Option<Html<Self>> {
+                route_possibility.props.path
+                    .match_path(&route)
+                    .map(|(_rest, hm)| {
+                        (route_possibility.props.path.render_fn)(&hm)
+                    })
+                    .ok()
+                    .flatten_stable()
             })
-            .unwrap()
-//            .filter_map(|route_possibility| -> Option<Html<Self>> {
-//                route_possibility.props.path
-//                    .match_path(&route)
-//                    .map(|(_rest, hm)| {
-//                        (route_possibility.props.target)(&hm)
-//                    })
-//                    .ok()
-//                    .flatten_stable()
-//            })
-//            .next() // Take the first path that succeeds.
-//            .map(|x| -> Html<Self> {
-//                debug!("Route matched.");
-//                x
-//            })
-//            .unwrap_or_else(|| {
-//                warn!("Routing failed. No default case was provided.");
-//                html! { <></>}
-//            })
+            .next() // Take the first path that succeeds.
+            .map(|x| -> Html<Self> {
+                debug!("Route matched.");
+                x
+            })
+            .unwrap_or_else(|| {
+                warn!("Routing failed. No default case was provided.");
+                html! { <></>}
+            })
     }
 }

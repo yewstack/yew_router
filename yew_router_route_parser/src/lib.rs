@@ -1,11 +1,16 @@
 
 //mod parser;
-mod new_parser;
-mod path_matcher;
-pub use path_matcher::PathMatcher;
-pub use path_matcher::OptimizedToken;
+pub mod new_parser;
+mod token_optimizer;
 pub use new_parser::CaptureVariants;
-pub use path_matcher::parse_str_and_optimize_tokens;
+pub use token_optimizer::{parse_str_and_optimize_tokens, optimize_tokens, OptimizedToken};
+
+
+//#[cfg(feature = "path_matcher")]
+//mod path_matcher;
+//#[cfg(feature = "path_matcher")]
+//pub use path_matcher::PathMatcher;
+
 
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
@@ -44,7 +49,7 @@ pub trait FromMatches: Sized {
     /// Verifies that all of the field names produced by the PathMatcher exist on the target props.
     /// Should panic if not all match.
     /// Should only be used at compile time.
-    fn verify(field_names: &HashSet<String>) {}
+    fn verify(_field_names: &HashSet<String>) {}
 }
 
 #[cfg(test)]

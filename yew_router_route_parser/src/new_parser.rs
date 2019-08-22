@@ -6,7 +6,7 @@ use nom::combinator::{map, opt, all_consuming, peek};
 use nom::error::{ParseError, ErrorKind};
 use nom::multi::{many1, many0};
 use nom::character::is_digit;
-use nom::character::complete::{alpha1, digit1};
+use nom::character::complete::{digit1};
 
 
 #[derive(Debug, Clone, PartialEq)]

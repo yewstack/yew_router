@@ -1,6 +1,7 @@
-use crate::new_parser::Token;
-use crate::new_parser::CaptureVariants;
 
+pub use yew_router_route_parser::{OptimizedToken, CaptureVariants, FromMatches, FromMatchesError};
+
+use yew_router_route_parser::new_parser::Token;
 use nom::IResult;
 use std::collections::{HashMap, HashSet};
 use nom::bytes::complete::{tag, take_until, is_not};
@@ -8,11 +9,13 @@ use nom::sequence::{preceded, terminated};
 use std::convert::TryFrom;
 use nom::combinator::peek;
 use log::debug;
-use crate::token_optimizer::{OptimizedToken, optimize_tokens};
-
-
+use yew_router_route_parser::{optimize_tokens, new_parser};
 use yew::{Html, Component, Renderable};
-use crate::FromMatches;
+use nom::Err;
+use std::marker::PhantomData;
+use std::fmt::{Debug, Formatter, Error};
+use yew::virtual_dom::{VComp, VNode, vcomp::ScopeHolder};
+
 
 /// The CTX refers to the context of the parent rendering this (The Router).
 pub struct PathMatcher<CTX: Component + Renderable<CTX>> {
@@ -38,11 +41,6 @@ impl <CTX: Component + Renderable<CTX>> Debug for PathMatcher<CTX> {
 
 
 
-use nom::Err;
-use std::marker::PhantomData;
-use std::fmt::{Debug, Formatter, Error};
-
-use yew::virtual_dom::{VComp, VNode, vcomp::ScopeHolder};
 
 
 fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
@@ -57,14 +55,12 @@ fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
 
 impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
 
-
-
     pub fn try_from<CMP>(i: &str, cmp: PhantomData<CMP>) -> Result<Self, ()>
-    where
-        CMP: Component + Renderable<CMP>,
-        CMP::Properties: FromMatches
+        where
+            CMP: Component + Renderable<CMP>,
+            CMP::Properties: FromMatches
     {
-        let (_i, tokens) = crate::new_parser::parse(i).map_err(|_| ())?;
+        let (_i, tokens) = new_parser::parse(i).map_err(|_| ())?;
         let pm = PathMatcher {
             tokens: optimize_tokens(tokens),
             render_fn: Self::create_render_fn(cmp)
@@ -73,9 +69,9 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
     }
 
     pub fn create_render_fn<CMP>(_: PhantomData<CMP>) -> Box<dyn Fn(&HashMap<String, String>) -> Option<Html<CTX>>>
-    where
-        CMP: Component + Renderable<CMP>,
-        CMP::Properties: FromMatches
+        where
+            CMP: Component + Renderable<CMP>,
+            CMP::Properties: FromMatches
     {
         Box::new(|matches: &HashMap<String, String>| {
             CMP::Properties::from_matches(matches)

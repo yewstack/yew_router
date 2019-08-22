@@ -4,6 +4,15 @@ version = "0.1.0"
 authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 edition = "2018"
 
+
+[features]
+default = ["yew_router", "components"]
+
+yew_router = ["router_agent"]
+router_agent = []
+components = ["router_agent"]
+
+
 [dependencies]
 log = "0.4"
 web_logger = "0.1"
@@ -12,12 +21,6 @@ serde_derive = "1.0"
 #yew = { git = "https://github.com/yewstack/yew", branch="master" }
 yew = { git = "https://github.com/jstarry/yew", branch = "component-children" }
 stdweb = "0.4"
-yew_router_route_parser = {path = "../yew_router_route_parser"}
+#yew_router_route_parser = {path = "../yew_router_route_parser"}
+yew_router_path_matcher = {path = "../yew_router_path_matcher"}
 yew_router_derive = {path = "../yew_router_derive"}
-
-[features]
-default = ["yew_router", "components"]
-
-yew_router = ["router_agent"]
-router_agent = []
-components = ["router_agent"]

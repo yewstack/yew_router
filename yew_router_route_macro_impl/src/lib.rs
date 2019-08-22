@@ -1,6 +1,6 @@
 extern crate proc_macro;
 use proc_macro::{TokenStream};
-use yew_router_route_parser::{PathMatcher, OptimizedToken, CaptureVariants};
+use yew_router_route_parser::{OptimizedToken, CaptureVariants};
 use quote::{quote, ToTokens};
 use syn::export::TokenStream2;
 use proc_macro_hack::proc_macro_hack;
@@ -35,19 +35,23 @@ pub fn route(input: TokenStream) -> TokenStream {
 
     // Do the parsing at compile time so the user knows if their matcher is malformed.
     // It will still be their responsibility to know that the corresponding Props can be acquired from a path matcher.
-//    let pm= PathMatcher::try_from(s.as_str()).expect("Invalid Path Matcher");
     let t = yew_router_route_parser::parse_str_and_optimize_tokens(s.as_str())
         .expect("Invalid Path Matcher")
         .into_iter()
         .map(ShadowOptimizedToken::from);
     let expanded = quote!{
         {
-            use yew_router::yew_router_route_parser::PathMatcher as __PathMatcher;
-            use yew_router::yew_router_route_parser::CaptureVariants as __CaptureVariants;
-            use yew_router::yew_router_route_parser::OptimizedToken as __OptimizedToken;
+            use yew_router::path_matcher::PathMatcher as __PathMatcher;
+            use yew_router::path_matcher::CaptureVariants as __CaptureVariants;
+            use yew_router::path_matcher::OptimizedToken as __OptimizedToken;
+            use std::marker::PhantomData as __PhantomData;
+            use yew_router::Router as __Router;
+
+            let phantom: __PhantomData<#ty> = __PhantomData;
+            let render_fn = __PathMatcher::<__Router>::create_render_fn::<#ty>(phantom);
             __PathMatcher {
                 tokens : vec![#(#t),*],
-                render_fn : __PathMatcher::create_render_fn(PhantomData<#ty>)
+                render_fn
             }
         }
     };

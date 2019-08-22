@@ -21,7 +21,7 @@ mod component_router;
 pub use component_router::*;
 
 #[cfg(feature = "yew_router")]
-pub use yew_router_route_parser;
+pub use yew_router_path_matcher as path_matcher;
 
 #[cfg(feature = "yew_router")]
 pub use yew_router_derive;

@@ -1,9 +1,8 @@
-
 use yew::prelude::*;
 use yew_router::prelude::*;
 use yew::Properties;
 use yew_router::router::FromRouteInfo;
-use yew_router::yew_router_derive::{FromMatches};
+use yew_router::yew_router_derive::FromMatches;
 
 pub struct CModel;
 
@@ -54,19 +53,4 @@ impl <T> FromRouteInfo<T> for Props {
         }
     }
 }
-
-//impl Routable for CModel {
-//
-//    fn resolve_props(route: &Route) -> Option<Self::Properties> {
-//        let second_segment = route.path_segments.get(1).unwrap();
-//        if "c" == second_segment.as_str() {
-//            Some(Props)
-//        } else {
-//            None
-//        }
-//    }
-//    fn will_try_to_route(route: &Route) -> bool {
-//        route.path_segments.get(1).is_some()
-//    }
-//}
 
