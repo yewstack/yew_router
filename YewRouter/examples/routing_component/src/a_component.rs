@@ -8,7 +8,6 @@ use yew_router::Router;
 use yew_router::route::RouteInfo;
 use yew_router::yew_router_derive::{FromMatches, route};
 use yew_router::router::RouteChild;
-use yew_router::router::FromRouteInfo;
 
 pub struct AModel {
 }
@@ -66,16 +65,3 @@ impl Renderable<AModel> for AModel {
     }
 }
 
-
-impl <T> FromRouteInfo<T> for Props {
-
-    fn from_route_info(route: &RouteInfo<T>) -> Option<Self> {
-        let first_segment = route.path_segments.get(0)?;
-        if "a" == first_segment.as_str() {
-            Some(Props{})
-        } else {
-            None // This will only render if the first path segment is "a"
-        }
-
-    }
-}

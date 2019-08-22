@@ -1,7 +1,5 @@
 use yew::prelude::*;
-use yew_router::prelude::*;
 use yew::Properties;
-use yew_router::router::FromRouteInfo;
 use yew_router::yew_router_derive::FromMatches;
 
 pub struct CModel;
@@ -38,18 +36,6 @@ impl Renderable<CModel> for CModel {
             <div>
                 {" I am the C component"}
             </div>
-        }
-    }
-}
-
-impl <T> FromRouteInfo<T> for Props {
-
-    fn from_route_info(route: &RouteInfo<T>) -> Option<Self> {
-        let second_segment = route.path_segments.get(1)?;
-        if "c" == second_segment.as_str() {
-            Some(Props{})
-        } else {
-            None
         }
     }
 }
