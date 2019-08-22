@@ -9,8 +9,8 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::fmt::Debug;
 
-use crate::route::RouteInfo;
-use crate::route::RouteState;
+use crate::route_info::RouteInfo;
+use crate::route_info::RouteState;
 use yew::callback::Callback;
 use log::trace;
 
@@ -44,14 +44,10 @@ pub enum RouterRequest<T> {
 
 impl<T> Transferable for RouterRequest<T> where for<'de> T: Serialize + Deserialize<'de> {}
 
-/// A simplified routerBase that assumes that no state is stored.
-pub type Router = RouterBase<()>;
 /// A simplified interface to the router agent
-pub struct RouterBase<T>(Box<dyn Bridge<RouterAgent<T>>>)
+pub struct RouterAgentBridge<T>(Box<dyn Bridge<RouterAgent<T>>>)
 where
     for<'de> T: RouterState<'de>;
-
-pub type SimpleRouterAgent = RouterAgent<()>;
 
 /// The Router agent holds on to the RouteService singleton and mediates access to it.
 pub struct RouterAgent<T>
@@ -156,13 +152,13 @@ where
     }
 }
 
-impl<T> RouterBase<T>
+impl<T> RouterAgentBridge<T>
 where
     for<'de> T: RouterState<'de>,
 {
     pub fn new(callback: Callback<RouteInfo<T>>) -> Self {
         let router_agent = RouterAgent::bridge(callback);
-        RouterBase(router_agent)
+        RouterAgentBridge(router_agent)
     }
 
     /// Experimental, may be removed
@@ -171,7 +167,7 @@ where
     pub fn spawn(callback: Callback<RouteInfo<T>>) -> Self {
         use yew::agent::Discoverer;
         let router_agent = Context::spawn_or_join(callback);
-        RouterBase(router_agent)
+        RouterAgentBridge(router_agent)
     }
 
     pub fn send(&mut self, request: RouterRequest<T>) {

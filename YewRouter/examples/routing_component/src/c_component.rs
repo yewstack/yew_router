@@ -1,6 +1,6 @@
 use yew::prelude::*;
 use yew::Properties;
-use yew_router::yew_router_derive::FromMatches;
+use yew_router::FromMatches;
 
 pub struct CModel;
 

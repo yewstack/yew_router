@@ -1,4 +1,4 @@
-use crate::route::RouteInfo;
+use crate::route_info::RouteInfo;
 use crate::router_agent::{RouterAgent, RouterRequest};
 use yew::prelude::*;
 

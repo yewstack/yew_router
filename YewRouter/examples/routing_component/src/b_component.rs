@@ -2,7 +2,7 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 use std::usize;
 use yew::Properties;
-use yew_router::route::RouteInfo;
+use yew_router::{RouteInfo, RouterAgent};
 use std::collections::HashMap;
 use std::str::FromStr;
 use yew_router::path_matcher::FromMatchesError;
@@ -11,7 +11,7 @@ use yew_router::path_matcher::FromMatches;
 pub struct BModel {
     number: Option<usize>,
     sub_path: Option<String>,
-    router: Box<dyn Bridge<SimpleRouterAgent>>
+    router: Box<dyn Bridge<RouterAgent>>
 }
 
 #[derive(PartialEq, Properties)]
@@ -27,7 +27,7 @@ pub enum Msg {
     Increment,
     Decrement,
     UpdateSubpath(String),
-    HandleRoute(SimpleRouteInfo)
+    HandleRoute(RouteInfo)
 }
 
 
@@ -37,8 +37,8 @@ impl Component for BModel {
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
 
-        let callback = link.send_back(|route: SimpleRouteInfo| Msg::HandleRoute(route));
-        let mut router = SimpleRouterAgent::bridge(callback);
+        let callback = link.send_back(|route: RouteInfo| Msg::HandleRoute(route));
+        let mut router = RouterAgent::bridge(callback);
 
         router.send(RouterRequest::GetCurrentRoute);
 

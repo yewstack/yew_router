@@ -1,3 +1,4 @@
+//! Wrapper around route url string, and associated history state.
 use crate::routing_service::RouteService;
 use serde::Deserialize;
 use serde::Serialize;
@@ -8,7 +9,6 @@ use stdweb::Value;
 use yew::agent::Transferable;
 use std::ops::Deref;
 
-pub type SimpleRouteInfo = RouteInfo<()>;
 
 /// Any state that can be stored by the History API must meet the criteria of this trait.
 pub trait RouteState: Clone + Default + JsSerialize + TryFrom<Value> + 'static {}
@@ -25,18 +25,12 @@ impl<T> RouteInfo<T>
 where
     T: RouteState,
 {
-    /// Converts the Route to a string that is used to set the URL.
-    #[deprecated]
-    pub fn to_route_string(&self) -> String {
-        self.route.clone()
-    }
-
     /// Gets the current route from the route service.
     ///
     /// # Note
     /// It does not get the current state.
     /// That is only provided via events.
-    /// See routing_service.RouteService.register_callback to acquire state.
+    /// See [RouteService.register_callback](struct.RouteService.html#method.register_callback) to acquire state.
     pub fn current_route(route_service: &RouteService<T>) -> Self {
         RouteInfo {
             route: route_service.get_route(),

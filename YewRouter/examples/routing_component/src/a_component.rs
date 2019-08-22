@@ -3,9 +3,10 @@ use yew::prelude::*;
 use yew_router::components::router_button::RouterButton;
 use c_component::CModel;
 use yew::Properties;
-use yew_router::route::RouteInfo;
-use yew_router::yew_router_derive::{FromMatches, route};
+use yew_router::route_info::RouteInfo;
+use yew_router::{FromMatches};
 use yew_router::{Router, Route};
+use yew_router::route;
 
 pub struct AModel {
 }

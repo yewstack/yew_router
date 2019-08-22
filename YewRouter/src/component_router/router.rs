@@ -1,4 +1,6 @@
-use crate::route::RouteInfo;
+//! Router and Route components
+
+use crate::route_info::RouteInfo;
 use crate::router_agent::{RouterAgent, RouterRequest};
 use yew::Bridged;
 use yew::{
@@ -11,23 +13,25 @@ use log::{warn, trace};
 use yew_router_path_matcher::{PathMatcher};
 use yew::html::ChildrenWithProps;
 
-
-pub struct RouteChild<T: for<'de> YewRouterState<'de>> {
-    props: RouteChildProps<T>
+/// A nested component used inside of [Router](struct.Router.html) that can determine if a
+/// sub-component can be rendered.
+pub struct Route<T: for<'de> YewRouterState<'de>> {
+    props: RouteProps<T>
 }
 
+/// Properties for Route.
 #[derive(Properties)]
-pub struct RouteChildProps<T: for<'de> YewRouterState<'de>> {
+pub struct RouteProps<T: for<'de> YewRouterState<'de>> {
     #[props(required)]
     pub path: PathMatcher<Router<T>>,
 }
 
-impl <T: for<'de> YewRouterState<'de>> Component for RouteChild<T> {
+impl <T: for<'de> YewRouterState<'de>> Component for Route<T> {
     type Message = ();
-    type Properties = RouteChildProps<T>;
+    type Properties = RouteProps<T>;
 
     fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        RouteChild {
+        Route {
             props
         }
     }
@@ -42,21 +46,26 @@ impl <T: for<'de> YewRouterState<'de>> Component for RouteChild<T> {
     }
 }
 
+/// Rendering control flow component.
+///
+/// Based on the current url and its child [Routes](struct.Route.html), it will choose one route and
+/// render its associated component.
 pub struct Router<T: for<'de> YewRouterState<'de>> {
     route: RouteInfo<T>,
     props: Props<T>,
     router_agent: Box<dyn Bridge<RouterAgent<T>>>,
 }
 
+/// Message for Router.
 pub enum Msg<T> {
     UpdateRoute(RouteInfo<T>),
 }
 
-
+/// Properties for Router.
 #[derive(Properties)]
 pub struct Props<T: for<'de> YewRouterState<'de>> {
     #[props(required)]
-    children: ChildrenWithProps<RouteChild<T>, Router<T>>
+    children: ChildrenWithProps<Route<T>, Router<T>>
 }
 
 impl <T> Component for Router<T>

@@ -6,11 +6,13 @@ pub mod routing_service;
 
 #[cfg(feature = "router_agent")]
 pub mod router_agent;
+#[cfg(feature = "router_agent")]
+pub type RouterAgent = router_agent::RouterAgent<()>;
 
 #[cfg(feature = "router_agent")]
-pub mod route;
+pub mod route_info;
 #[cfg(feature = "router_agent")]
-pub use route::SimpleRouteInfo;
+pub type RouteInfo = route_info::RouteInfo<()>;
 
 #[cfg(feature = "components")]
 pub mod components;
@@ -24,7 +26,7 @@ pub use component_router::{router, Route, Router, YewRouterState};
 pub use yew_router_path_matcher as path_matcher;
 
 #[cfg(feature = "yew_router")]
-pub use yew_router_derive;
+pub use yew_router_derive::{route, FromMatches};
 
 // TODO preludes have kind of fallen out of favor, maybe this should be removed ???
 pub mod prelude {
@@ -32,7 +34,7 @@ pub mod prelude {
     //    pub use super::component_router::{YewRouter, Props, DefaultPage, RoutableBase, Routable};
 
     #[cfg(feature = "router_agent")]
-    pub use super::route::{RouteInfo, SimpleRouteInfo};
+    pub use super::{RouteInfo};
     #[cfg(feature = "router_agent")]
-    pub use super::router_agent::{Router, RouterRequest, SimpleRouterAgent};
+    pub use super::router_agent::{RouterRequest};
 }

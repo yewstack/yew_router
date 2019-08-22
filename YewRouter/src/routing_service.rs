@@ -9,7 +9,7 @@ use stdweb::web::Location;
 use stdweb::Value;
 use yew::callback::Callback;
 
-use crate::route::RouteState;
+use crate::route_info::RouteState;
 use std::marker::PhantomData;
 
 /// A service that facilitates manipulation of the browser's URL bar and responding to browser

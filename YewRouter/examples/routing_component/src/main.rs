@@ -11,13 +11,13 @@ use yew_router::prelude::*;
 use yew_router::{Router, Route};
 use yew_router::components::RouterButton;
 use yew_router::components::RouterLink;
+use yew_router::route;
 
 
 use b_component::BModel;
 use a_component::AModel;
 use c_component::CModel;
 
-use yew_router::yew_router_derive::route;
 
 
 fn main() {

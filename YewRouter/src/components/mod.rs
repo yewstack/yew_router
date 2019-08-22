@@ -1,11 +1,12 @@
+//! Components that integrate with the router agent.
+//!
 pub mod router_button;
-/// Components that integrate with the router agent.
 pub mod router_link;
 
 pub use self::router_button::RouterButton;
 pub use self::router_link::RouterLink;
 
-use crate::route::RouteInfo;
+use crate::route_info::RouteInfo;
 use yew::Properties;
 
 /// Properties for Routing Components

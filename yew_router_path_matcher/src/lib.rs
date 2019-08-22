@@ -16,7 +16,8 @@ use std::marker::PhantomData;
 use std::fmt::{Debug, Formatter, Error};
 use yew::virtual_dom::{VComp, VNode, vcomp::ScopeHolder};
 
-
+/// Attempts to match routes, transform the route to Component props and render that Component.
+///
 /// The CTX refers to the context of the parent rendering this (The Router).
 pub struct PathMatcher<CTX: Component + Renderable<CTX>> {
     pub tokens: Vec<OptimizedToken>,
