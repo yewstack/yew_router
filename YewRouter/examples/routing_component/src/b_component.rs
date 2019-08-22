@@ -58,19 +58,17 @@ impl Component for BModel {
                 }
 
                 // The path dictating that this component be instantiated must be provided
-                let mut path_segments = vec!["b".into()];
-                if let Some(ref sub_path) = self.sub_path {
-                    path_segments.push(sub_path.clone())
-                }
-
-                let fragment: Option<String> = self.number.map(|x: usize | x.to_string());
-
-                let route = RouteInfo {
-                    path_segments,
-                    query: None,
-                    fragment,
-                    state: (),
+                let route_string = "b".to_string();
+                let route_string = match &self.sub_path {
+                    Some(sub_path) => route_string + "/" + &sub_path,
+                    None => route_string
                 };
+                let route_string = match &self.number.map(|x: usize | x.to_string()) {
+                    Some(number) => route_string + "#" + &number,
+                    None => route_string
+                };
+
+                let route = RouteInfo::from(route_string);
 
                 // Don't tell the router to alert its subscribers,
                 // because the changes made here only affect the current component,
@@ -79,12 +77,13 @@ impl Component for BModel {
                 self.router.send(RouterRequest::ChangeRouteNoBroadcast(route));
                 true
             }
-            Msg::HandleRoute(route) => {
+            Msg::HandleRoute(_route) => {
                 // Instead of each component selecting which parts of the path are important to it,
                 // it is also possible to match on the `route.to_route_string().as_str()` once
                 // and create enum variants representing the different children and pass them as props.
-                self.sub_path = route.path_segments.get(1).map(String::clone);
-                self.number = route.fragment.and_then(|x| usize::from_str_radix(&x, 10).ok());
+//                self.sub_path = route.path_segments.get(1).map(String::clone);
+//                self.number = route.fragment.and_then(|x| usize::from_str_radix(&x, 10).ok());
+                // TODO this is broken
 
                 true
             }

@@ -12,19 +12,19 @@ use yew_router_path_matcher::{PathMatcher};
 use yew::html::ChildrenWithProps;
 
 
-pub struct RouteChild {
-    props: RouteChildProps
+pub struct RouteChild<T: for<'de> YewRouterState<'de>> {
+    props: RouteChildProps<T>
 }
 
 #[derive(Properties)]
-pub struct RouteChildProps {
+pub struct RouteChildProps<T: for<'de> YewRouterState<'de>> {
     #[props(required)]
-    pub path: PathMatcher<Router>,
+    pub path: PathMatcher<Router<T>>,
 }
 
-impl Component for RouteChild {
+impl <T: for<'de> YewRouterState<'de>> Component for RouteChild<T> {
     type Message = ();
-    type Properties = RouteChildProps;
+    type Properties = RouteChildProps<T>;
 
     fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
         RouteChild {
@@ -42,10 +42,10 @@ impl Component for RouteChild {
     }
 }
 
-pub struct Router {
-    route: RouteInfo<()>,
-    props: Props,
-    router_agent: Box<dyn Bridge<RouterAgent<()>>>,
+pub struct Router<T: for<'de> YewRouterState<'de>> {
+    route: RouteInfo<T>,
+    props: Props<T>,
+    router_agent: Box<dyn Bridge<RouterAgent<T>>>,
 }
 
 pub enum Msg<T> {
@@ -54,16 +54,16 @@ pub enum Msg<T> {
 
 
 #[derive(Properties)]
-//pub struct Props<T: for<'de> YewRouterState<'de>> {
-pub struct Props {
+pub struct Props<T: for<'de> YewRouterState<'de>> {
     #[props(required)]
-    children: ChildrenWithProps<RouteChild, Router>
+    children: ChildrenWithProps<RouteChild<T>, Router<T>>
 }
 
-impl Component for Router {
-    type Message = Msg<()>;
-//    type Properties = Props<T>;
-    type Properties = Props;
+impl <T> Component for Router<T>
+    where T: for<'de> YewRouterState<'de>
+{
+    type Message = Msg<T>;
+    type Properties = Props<T>;
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         let callback = link.send_back(Msg::UpdateRoute);
@@ -98,16 +98,15 @@ impl Component for Router {
     }
 }
 
-impl Renderable<Router> for Router
+impl <T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T>
 {
     fn view(&self) -> VNode<Self> {
-        let route : String = self.route.to_route_string();
 
-        trace!("Routing one of {} routes for  {:?}", self.props.children.iter().count(), route);
+        trace!("Routing one of {} routes for  {:?}", self.props.children.iter().count(), &self.route);
         self.props.children.iter()
             .filter_map(|route_possibility| -> Option<Html<Self>> {
                 route_possibility.props.path
-                    .match_path(&route)
+                    .match_path(&self.route)
                     .map(|(_rest, hm)| {
                         (route_possibility.props.path.render_fn)(&hm)
                     })

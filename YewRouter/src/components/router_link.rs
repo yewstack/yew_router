@@ -9,6 +9,7 @@ use super::Props;
 /// The Route's `to_route_string()` will be displayed as the href.
 pub struct RouterLink {
     router: Box<dyn Bridge<RouterAgent<()>>>,
+    // TODO make this hold a link and a optional state instead, so they can each independently be passed in as props.
     route: RouteInfo<()>,
     text: String,
     disabled: bool,
@@ -55,7 +56,7 @@ impl Component for RouterLink {
 impl Renderable<RouterLink> for RouterLink {
     fn view(&self) -> Html<RouterLink> {
         use stdweb::web::event::IEvent;
-        let target = self.route.to_route_string();
+        let target: &str = &self.route;
 
         html! {
             <a

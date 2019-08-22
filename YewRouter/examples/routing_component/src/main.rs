@@ -8,7 +8,7 @@ mod c_component;
 
 use yew::prelude::*;
 use yew_router::prelude::*;
-use yew_router::Router;
+use yew_router::{Router, Route};
 use yew_router::components::RouterButton;
 use yew_router::components::RouterLink;
 
@@ -53,21 +53,20 @@ impl Component for Model {
 
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
-        use yew_router::router::RouteChild;
 
         html! {
             <div>
                 <nav class="menu",>
-                    <RouterButton: text=String::from("Go to A"), route=RouteInfo::parse("/a/"), />
-                    <RouterLink: text=String::from("Go to B"), route=RouteInfo::parse("/b/#"), />
-                    <RouterButton: text=String::from("Go to C"), route=RouteInfo::parse("/c"), />
-                    <RouterButton: text=String::from("Go to A/C"), route=RouteInfo::parse("/a/c"), />
+                    <RouterButton: text=String::from("Go to A"), route=RouteInfo::from("/a/"), />
+                    <RouterLink: text=String::from("Go to B"), route=RouteInfo::from("/b/#"), />
+                    <RouterButton: text=String::from("Go to C"), route=RouteInfo::from("/c"), />
+                    <RouterButton: text=String::from("Go to A/C"), route=RouteInfo::from("/a/c"), />
                 </nav>
                 <div>
                     <Router>
-                        <RouteChild path=route!("/a/{}" => AModel) />
-                        <RouteChild path=route!("/c" => CModel) />
-                        <RouteChild path=route!("/b/{sub_path}" => BModel) />
+                        <Route path=route!("/a/{}" => AModel) />
+                        <Route path=route!("/c" => CModel) />
+                        <Route path=route!("/b/{sub_path}" => BModel) />
                     </Router>
                 </div>
             </div>

@@ -3,11 +3,9 @@ use yew::prelude::*;
 use yew_router::components::router_button::RouterButton;
 use c_component::CModel;
 use yew::Properties;
-use yew_router::Router;
-
 use yew_router::route::RouteInfo;
 use yew_router::yew_router_derive::{FromMatches, route};
-use yew_router::router::RouteChild;
+use yew_router::{Router, Route};
 
 pub struct AModel {
 }
@@ -48,16 +46,16 @@ impl Renderable<AModel> for AModel {
                 <div>
                     <RouterButton:
                         text=String::from("Go to a/c"),
-                        route=RouteInfo::parse("/a/c"),
+                        route=RouteInfo::from("/a/c"),
                     />
                     <RouterButton:
                         text=String::from("Go to a/d (Component does not exist)"),
-                        route=RouteInfo::parse("/a/d"),
+                        route=RouteInfo::from("/a/d"),
                     />
                 </div>
                 <div>
                     <Router>
-                        <RouteChild path=route!("/{}/c" => CModel) />
+                        <Route path=route!("/{}/c" => CModel) />
                     </Router>
                 </div>
             </div>

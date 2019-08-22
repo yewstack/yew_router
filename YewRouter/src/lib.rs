@@ -18,7 +18,7 @@ pub mod components;
 #[cfg(feature = "yew_router")]
 mod component_router;
 #[cfg(feature = "yew_router")]
-pub use component_router::*;
+pub use component_router::{router, Route, Router, YewRouterState};
 
 #[cfg(feature = "yew_router")]
 pub use yew_router_path_matcher as path_matcher;
