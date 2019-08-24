@@ -148,7 +148,7 @@ where
             "disconnect processed ; num subs: {}",
             self.subscribers.len()
         ); // the latter value should be -1
-           // if it doesn't then the handlerIds are different for each request
+           // if it isn't then the handlerIds are different for each request
     }
 }
 

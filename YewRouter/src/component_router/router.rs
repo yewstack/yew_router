@@ -1,4 +1,4 @@
-//! Router and Route components
+//! Router Component.
 
 use crate::route_info::RouteInfo;
 use crate::route_agent::{RouteAgent, RouteRequest};
@@ -10,46 +10,69 @@ use yew::{
 };
 use crate::YewRouterState;
 use log::{warn, trace};
-use yew_router_path_matcher::{PathMatcher};
-use yew::html::ChildrenWithProps;
+use yew::html::{ChildrenWithProps, ChildrenRenderer};
+use crate::component_router::route::Route;
+use yew::virtual_dom::VChild;
 
-/// A nested component used inside of [Router](struct.Router.html) that can determine if a
-/// sub-component can be rendered.
-pub struct Route<T: for<'de> YewRouterState<'de>> {
-    props: RouteProps<T>
-}
-
-/// Properties for Route.
-#[derive(Properties)]
-pub struct RouteProps<T: for<'de> YewRouterState<'de>> {
-    #[props(required)]
-    pub path: PathMatcher<Router<T>>,
-}
-
-impl <T: for<'de> YewRouterState<'de>> Component for Route<T> {
-    type Message = ();
-    type Properties = RouteProps<T>;
-
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Route {
-            props
-        }
-    }
-
-    fn update(&mut self, _msg: Self::Message) -> bool {
-        false
-    }
-
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        self.props = props;
-        true
-    }
-}
 
 /// Rendering control flow component.
 ///
 /// Based on the current url and its child [Routes](struct.Route.html), it will choose one route and
 /// render its associated component.
+///
+///
+/// # Example
+/// ```
+/// use yew::prelude::*;
+/// use yew_router::{Router, Route, route, FromMatches};
+///
+/// pub struct AComponent {}
+///
+/// #[derive(Properties, FromMatches)]
+/// pub struct AComponentProps {
+///     value: String
+/// }
+///
+/// impl Component for AComponent {
+/// # type Message = ();
+///    type Properties = AComponentProps;
+///    //...
+/// # fn create(props: Self::Properties,link: ComponentLink<Self>) -> Self {
+/// #        unimplemented!()
+/// #    }
+/// # fn update(&mut self,msg: Self::Message) -> bool {
+/// #        unimplemented!()
+/// #    }
+/// }
+/// # impl Renderable<AComponent> for AComponent {
+///  #     fn view(&self) -> Html<Self> {
+/// #        unimplemented!()
+/// #    }
+///# }
+///
+/// pub struct Model {}
+/// impl Component for Model {
+///     //...
+/// #   type Message = ();
+/// #   type Properties = ();
+/// #   fn create(_: Self::Properties, _link: ComponentLink<Self>) -> Self {
+/// #       Model {}
+/// #   }
+/// #   fn update(&mut self, msg: Self::Message) -> ShouldRender {
+/// #        false
+/// #   }
+/// }
+///
+/// impl Renderable<Model> for Model {
+///     fn view(&self) -> Html<Self> {
+///         html! {
+///             <Router>
+///                 <Route path=route!("/a/{value}" => AComponent ) />
+///             </Router>
+///         }
+///     }
+/// }
+/// ```
 pub struct Router<T: for<'de> YewRouterState<'de>> {
     route: RouteInfo<T>,
     props: Props<T>,
@@ -60,6 +83,9 @@ pub struct Router<T: for<'de> YewRouterState<'de>> {
 pub enum Msg<T> {
     UpdateRoute(RouteInfo<T>),
 }
+
+// TODO this may be the key to something
+pub type RouteChilds<PAR> = ChildrenRenderer<VChild<Box<dyn From<String>>, PAR>>;
 
 /// Properties for Router.
 #[derive(Properties)]
