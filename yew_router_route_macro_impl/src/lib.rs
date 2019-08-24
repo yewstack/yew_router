@@ -10,13 +10,18 @@ use syn::parse_macro_input;
 
 struct S {
     s: String,
-    ty: Type
+    ty: Option<Type>
 }
 impl Parse for S {
     fn parse(input: &ParseBuffer) -> Result<Self, Error> {
         let s = input.parse::<syn::LitStr>()?;
-        let _ = input.parse::<syn::token::FatArrow>()?;
-        let ty = input.parse::<syn::Type>()?;
+        let ty: Option<Type> = input.parse::<syn::token::FatArrow>()
+            .ok()
+            .and_then(|_|
+                input.parse::<syn::Type>().ok()
+            );
+//        let _ = input.parse::<syn::token::FatArrow>()?;
+//        let ty = input.parse::<syn::Type>().ok();
         Ok(
             S {
                 s: s.value(),
@@ -39,16 +44,28 @@ pub fn route(input: TokenStream) -> TokenStream {
         .expect("Invalid Path Matcher")
         .into_iter()
         .map(ShadowOptimizedToken::from);
+
+
+    let render_fn = match ty {
+        Some(ty) => quote!{
+            use std::marker::PhantomData as __PhantomData;
+            use yew_router::Router as __Router;
+            let phantom: __PhantomData<#ty> = __PhantomData;
+            let render_fn = Some(__PathMatcher::<__Router>::create_render_fn::<#ty>(phantom));
+        },
+        None => quote!{
+            let render_fn = None;
+        }
+    };
+
     let expanded = quote!{
         {
             use yew_router::path_matcher::PathMatcher as __PathMatcher;
             use yew_router::path_matcher::CaptureVariants as __CaptureVariants;
             use yew_router::path_matcher::OptimizedToken as __OptimizedToken;
-            use std::marker::PhantomData as __PhantomData;
-            use yew_router::Router as __Router;
 
-            let phantom: __PhantomData<#ty> = __PhantomData;
-            let render_fn = __PathMatcher::<__Router>::create_render_fn::<#ty>(phantom);
+            #render_fn
+
             __PathMatcher {
                 tokens : vec![#(#t),*],
                 render_fn

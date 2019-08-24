@@ -21,7 +21,7 @@ use yew::virtual_dom::{VComp, VNode, vcomp::ScopeHolder};
 /// The CTX refers to the context of the parent rendering this (The Router).
 pub struct PathMatcher<CTX: Component + Renderable<CTX>> {
     pub tokens: Vec<OptimizedToken>,
-    pub render_fn: Box<dyn Fn(&HashMap<String, String>) -> Option<Html<CTX>>> // Having Router specified here would make dependency issues appear.
+    pub render_fn: Option<Box<dyn Fn(&HashMap<String, String>) -> Option<Html<CTX>>>> // Having Router specified here would make dependency issues appear.
 }
 
 impl <CTX: Component + Renderable<CTX>> PartialEq for PathMatcher<CTX> {
@@ -64,7 +64,7 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
         let (_i, tokens) = new_parser::parse(i).map_err(|_| ())?;
         let pm = PathMatcher {
             tokens: optimize_tokens(tokens),
-            render_fn: Self::create_render_fn(cmp)
+            render_fn: Some(Self::create_render_fn(cmp))
         };
         Ok(pm)
     }

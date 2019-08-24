@@ -1,6 +1,6 @@
 //! Route Component.
 use yew_router_path_matcher::PathMatcher;
-use yew::{Component, ComponentLink, ShouldRender, Properties};
+use yew::{Component, ComponentLink, ShouldRender, Properties, Children};
 use super::YewRouterState;
 use crate::component_router::router::Router;
 
@@ -15,6 +15,7 @@ pub struct Route<T: for<'de> YewRouterState<'de>> {
 pub struct RouteProps<T: for<'de> YewRouterState<'de>> {
     #[props(required)]
     pub path: PathMatcher<Router<T>>,
+    pub children: Children<Router<T>>
 }
 
 impl <T: for<'de> YewRouterState<'de>> Component for Route<T> {

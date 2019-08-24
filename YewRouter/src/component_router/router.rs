@@ -139,11 +139,19 @@ impl <T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T>
 
         trace!("Routing one of {} routes for  {:?}", self.props.children.iter().count(), &self.route);
         self.props.children.iter()
-            .filter_map(|route_possibility| -> Option<Html<Self>> {
-                route_possibility.props.path
+            .filter_map(|route| -> Option<Html<Self>> {
+                route.props.path
                     .match_path(&self.route)
                     .map(|(_rest, hm)| {
-                        (route_possibility.props.path.render_fn)(&hm)
+                        let mut children_iter = route.props.children.iter().peekable();
+                        if let Some(render_fn) = route.props.path.render_fn {
+                            (render_fn)(&hm)
+                        } else if let Some(_) = children_iter.peek() {
+                            Some(html!{{for children_iter}})
+                        } else {
+                            None
+                        }
+//                        (route.props.path.render_fn)(&hm)
                     })
                     .ok()
                     .flatten_stable()

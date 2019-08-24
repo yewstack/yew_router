@@ -61,12 +61,16 @@ impl Renderable<Model> for Model {
                     <RouterLink: text=String::from("Go to B"), route=RouteInfo::from("/b/#"), />
                     <RouterButton: text=String::from("Go to C"), route=RouteInfo::from("/c"), />
                     <RouterButton: text=String::from("Go to A/C"), route=RouteInfo::from("/a/c"), />
+                    <RouterButton: text=String::from("Go to E"), route=RouteInfo::from("/e"), />
                 </nav>
                 <div>
                     <Router>
                         <Route path=route!("/a/{}" => AModel) />
                         <Route path=route!("/c" => CModel) />
                         <Route path=route!("/b/{sub_path}" => BModel) />
+                        <Route path=route!("/e")>
+                             {"Hello there from the E component"}
+                        </Route>
                     </Router>
                 </div>
             </div>
