@@ -143,37 +143,30 @@ impl <T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T>
                 route.props.path
                     .match_path(&self.route)
                     .map(|(_rest, hm)| {
-                        let mut children_iter = route.props.children.iter().peekable();
+                        let mut children = route.props.children.iter().peekable();
 
-                        match (route.props.path.render_fn, children_iter.peek()) {
+                        match (route.props.path.render_fn, children.peek()) {
                             (Some(render), Some(_)) => {
+                                // If the component can't be created from the matches,
+                                // the nested children will be rendered anyways
                                 match (render)(&hm) {
                                     Some(rendered) => {
                                         Some(html!{
                                             <>
                                                 {rendered}
-                                                {for children_iter}
+                                                {for children}
                                             </>
                                         })
                                     }
-                                    None => Some(html!{{for children_iter}})
+                                    None => Some(html!{{for children}})
                                 }
                             },
                             (Some(render), None)=> {
                                 render(&hm)
                             }
-                            (None, Some(_)) => Some(html!{{for children_iter}}),
+                            (None, Some(_)) => Some(html!{{for children}}),
                             (None, None) => None
                         }
-
-//                        if let Some(render_fn) = route.props.path.render_fn {
-//                            (render_fn)(&hm)
-//                        } else if let Some(_) = children_iter.peek() {
-//                            Some(html!{{for children_iter}})
-//                        } else {
-//                            None
-//                        }
-//                        (route.props.path.render_fn)(&hm)
                     })
                     .ok()
                     .flatten_stable()

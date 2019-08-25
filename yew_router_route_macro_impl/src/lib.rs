@@ -5,27 +5,70 @@ use quote::{quote, ToTokens};
 use syn::export::TokenStream2;
 use proc_macro_hack::proc_macro_hack;
 use syn::{Error, Type};
+
 use syn::parse::{Parse, ParseBuffer};
 use syn::parse_macro_input;
+use syn::Token;
+use syn::Expr;
+use syn::spanned::Spanned;
+
+enum Either<T, U> {
+    Left(T),
+    Right(U)
+}
 
 struct S {
     s: String,
-    ty: Option<Type>
+    target: Option<Either<Type, Expr>>
 }
 impl Parse for S {
     fn parse(input: &ParseBuffer) -> Result<Self, Error> {
         let s = input.parse::<syn::LitStr>()?;
-        let ty: Option<Type> = input.parse::<syn::token::FatArrow>()
-            .ok()
-            .and_then(|_|
-                input.parse::<syn::Type>().ok()
-            );
-//        let _ = input.parse::<syn::token::FatArrow>()?;
-//        let ty = input.parse::<syn::Type>().ok();
+        // The specification of a type must be preceded by a "=>"
+        let lookahead = input.lookahead1();
+        let target: Option<Either<Type, Expr>> = if lookahead.peek(Token![=>]) {
+            input.parse::<syn::token::FatArrow>()
+                .ok()
+                .map(|_| {
+                    let lookahead = input.lookahead1();
+                    input.parse::<Type>()
+                        .map(Either::Left)
+                })
+                .transpose()?
+        } else if lookahead.peek(Token![,]){
+            input.parse::<syn::token::Comma>()
+                .ok()
+                .map(|_| {
+//                    input.parse::<syn::Lit>()
+                    input.parse::<syn::Expr>()
+                        .and_then(|expr| {
+                            match &expr {
+                                Expr::Closure(_) | Expr::Block(_) | Expr::MethodCall(_) | Expr::Call(_) | Expr::Lit(_) => Ok(expr),
+                                Expr::Group(_) => Err(Error::new(expr.span(), "Erroneous error")),
+                                Expr::Path(_) => panic!("path"), // TODO this is broken.
+                                Expr::__Nonexhaustive => panic!("nonexhaustive"),
+                                _ => Err(Error::new(expr.span(), "Must be a Component's Type, a closure returning Option<Html<_>>, or expression that can resolve to such a closure."))
+                            }
+                        })
+                        .map(Either::Right)
+                })
+                .transpose()?
+        } else {
+            None
+        };
+
+        let expr = input.parse::<syn::Expr>()
+            .and_then(|expr| {
+                match &expr {
+                    Expr::Closure(_) | Expr::Block(_) | Expr::Call(_) | Expr::Lit(_) => Ok(expr),
+                    _ => Err(Error::new(expr.span(), "Must be closure, or structure that can resolve to a closure."))
+                }
+            });
+
         Ok(
             S {
                 s: s.value(),
-                ty
+                target
             }
         )
     }
@@ -35,7 +78,7 @@ impl Parse for S {
 #[proc_macro_hack]
 pub fn route(input: TokenStream) -> TokenStream {
     let s = parse_macro_input!(input as S);
-    let ty = s.ty;
+    let target = s.target;
     let s: String = s.s;
 
     // Do the parsing at compile time so the user knows if their matcher is malformed.
@@ -46,12 +89,24 @@ pub fn route(input: TokenStream) -> TokenStream {
         .map(ShadowOptimizedToken::from);
 
 
-    let render_fn = match ty {
-        Some(ty) => quote!{
-            use std::marker::PhantomData as __PhantomData;
-            use yew_router::Router as __Router;
-            let phantom: __PhantomData<#ty> = __PhantomData;
-            let render_fn = Some(__PathMatcher::<__Router>::create_render_fn::<#ty>(phantom));
+    let render_fn = match target {
+        Some(target) => {
+            match target {
+                Either::Left(ty) => {
+                    quote! {
+                        use std::marker::PhantomData as __PhantomData;
+                        use yew_router::Router as __Router;
+                        let phantom: __PhantomData<#ty> = __PhantomData;
+                        let render_fn = Some(__PathMatcher::<__Router>::create_render_fn::<#ty>(phantom));
+                    }
+                }
+                Either::Right(expr) => {
+                    quote! {
+                        let x: Box<Fn(&std::collections::HashMap<String,String>) -> Option<Html<_>> > = Box::new(#expr);
+                        let render_fn = Some(x);
+                    }
+                }
+            }
         },
         None => quote!{
             let render_fn = None;

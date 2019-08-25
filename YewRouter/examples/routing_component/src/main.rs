@@ -1,4 +1,4 @@
-#![recursion_limit="256"]
+#![recursion_limit="512"]
 extern crate yew;
 extern crate yew_router;
 
@@ -63,6 +63,8 @@ impl Renderable<Model> for Model {
                     <RouterButton: text=String::from("Go to A/C"), route=RouteInfo::from("/a/c"), />
                     <RouterButton: text=String::from("Go to E"), route=RouteInfo::from("/e"), />
                     <RouterButton: text=String::from("Go to E/C"), route=RouteInfo::from("/e/c"), />
+                    <RouterButton: text=String::from("Go to F (hello there)"), route=RouteInfo::from("/f/there"), />
+                    <RouterButton: text=String::from("Go to F (hello world)"), route=RouteInfo::from("/f/world"), />
                 </nav>
                 <div>
                     <Router>
@@ -75,6 +77,14 @@ impl Renderable<Model> for Model {
                         <Route path=route!("/e")>
                              {"Hello there from the E \"child\""}
                         </Route>
+                        <Route path=route!(
+                            "/f/{capture}",
+                            |matches| {
+                                Some(html!{
+                                    {format!("hello {}", matches[&"capture".to_string()])}
+                                })
+                            })
+                        />
                     </Router>
                 </div>
             </div>
