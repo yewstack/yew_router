@@ -28,26 +28,20 @@ fn main() {
 }
 
 
+pub struct Model {}
 
-pub struct Model {
-}
 
-pub enum Msg {
-    NoOp
-}
 
 impl Component for Model {
-    type Message = Msg;
+    type Message = ();
     type Properties = ();
 
     fn create(_: Self::Properties, _link: ComponentLink<Self>) -> Self {
         Model {}
     }
 
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
-        match msg {
-            Msg::NoOp => false
-        }
+    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
+        false
     }
 }
 
@@ -83,10 +77,7 @@ impl Renderable<Model> for Model {
                         <Route path=route!("/e")>
                              {"Hello there from the E \"child\""}
                         </Route>
-                        <Route path=route!(
-                            "/f/{capture}",
-                            f)
-                        />
+                        <Route path=route!("/f/{capture}", f)/>
                     </Router>
                 </div>
             </div>
