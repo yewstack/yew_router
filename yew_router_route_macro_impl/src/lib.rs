@@ -18,8 +18,18 @@ enum Either<T, U> {
     Right(U)
 }
 
+
+/// Parses either:
+///
+/// `"route_string" => ComponentType` or `"route_string", |matches| {...}` or `"route_string", render_fn``
+///
+/// The `=>` and `,` are present to distinguish the type capture from the variable ident capture,
+/// because they otherwise can't be distinguished.
 struct S {
+    /// The routing string
     s: String,
+    /// The render target, either a Component, whose props will be synthesized from the routing string,
+    /// or a function that can render Html
     target: Option<Either<Type, Either<Ident, Expr>>>
 }
 impl Parse for S {
@@ -39,9 +49,11 @@ impl Parse for S {
             input.parse::<syn::token::Comma>()
                 .ok()
                 .map(|_| {
+                    // attempt to match an ident first
                     input.parse::<syn::Ident>()
                         .map(Either::Left)
                         .or_else(|_| {
+                            // Then attempt to get it from an expression
                             input.parse::<syn::Expr>()
                                 .and_then(|expr| {
                                     match &expr {
@@ -53,17 +65,6 @@ impl Parse for S {
                                 .map(Either::Right)
                         })
                         .map(Either::Right)
-                    // TODO support either EXPR or Ident
-//                    input.parse::<syn::Ident>()
-//                    input.parse::<syn::Expr>()
-//                        .and_then(|expr| {
-//                            match &expr {
-//                                Expr::Closure(_) | Expr::Block(_) | Expr::MethodCall(_) | Expr::Call(_) | Expr::Path(_) => Ok(expr),
-//                                Expr::__Nonexhaustive => panic!("nonexhaustive"),
-//                                _ => Err(Error::new(expr.span(), "Must be a Component's Type, a Fn(&HashMap<String, String> -> Option<Html<_>>, or expression that can resolve to such a function."))
-//                            }
-//                        })
-//                        .map(Either::Right)
                 })
                 .transpose()?
         } else {
