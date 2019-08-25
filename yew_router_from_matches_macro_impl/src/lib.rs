@@ -79,7 +79,7 @@ pub fn from_matches(input: TokenStream) -> TokenStream {
         use std::str::FromStr as __FromStr;
 
         impl __FromMatches for #name {
-            fn from_matches(matches: &__HashMap<String, String>) -> Result<Self, __FromMatchesError> {
+            fn from_matches(matches: &__HashMap<&str, String>) -> Result<Self, __FromMatchesError> {
                 #assignments
 
                 let x = #name {

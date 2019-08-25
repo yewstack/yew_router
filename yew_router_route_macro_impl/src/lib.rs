@@ -110,13 +110,16 @@ pub fn route(input: TokenStream) -> TokenStream {
                     match ident_or_expr {
                         Either::Left(ident) => {
                             quote! {
-                                let f: Box<Fn(&std::collections::HashMap<String,String>) -> Option<Html<_>> > = Box::new(#ident);
+                                use yew_router::path_matcher::RenderFn as __RenderFn;
+                                let f: Box<dyn __RenderFn<_> > = Box::new(#ident);
                                 let render_fn = Some(f);
                             }
                         },
                         Either::Right(expr) => {
                             quote! {
-                                let f: Box<Fn(&std::collections::HashMap<String,String>) -> Option<Html<_>> > = Box::new(#expr);
+
+                                use yew_router::path_matcher::RenderFn as __RenderFn;
+                                let f: Box<dyn __RenderFn<_>> = Box::new(#expr);
                                 let render_fn = Some(f);
                             }
                         }

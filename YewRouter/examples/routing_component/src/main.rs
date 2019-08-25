@@ -54,9 +54,9 @@ impl Component for Model {
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
 
-        let f = |matches: &HashMap<String, String>| {
+        let f = |matches: &HashMap<&str, String>| {
             Some(html!{
-                {format!("hello {}", matches[&"capture".to_string()])}
+                {format!("hello {}", matches[&"capture"])}
             })
         };
 

@@ -45,7 +45,7 @@ impl Error for FromMatchesError {
 pub trait FromMatches: Sized {
     /// Produces the props from the hashmap.
     /// It is expected that `TryFrom<String>` be implemented on all of the types contained within the props.
-    fn from_matches(matches: &HashMap<String, String>) -> Result<Self, FromMatchesError>;
+    fn from_matches(matches: &HashMap<&str, String>) -> Result<Self, FromMatchesError>;
     /// Verifies that all of the field names produced by the PathMatcher exist on the target props.
     /// Should panic if not all match.
     /// Should only be used at compile time.

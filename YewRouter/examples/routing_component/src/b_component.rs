@@ -143,13 +143,13 @@ impl Renderable<BModel> for BModel {
 
 impl FromMatches for Props {
 
-    fn from_matches(matches: &HashMap<String, String>) -> Result<Self, FromMatchesError> {
+    fn from_matches(matches: &HashMap<&str, String>) -> Result<Self, FromMatchesError> {
 
-        let number = matches.get(&"number".to_string()).map(|n: &String| usize::from_str(&n).map_err(|_| FromMatchesError::UnknownErr) ).transpose()?;
+        let number = matches.get("number").map(|n: &String| usize::from_str(&n).map_err(|_| FromMatchesError::UnknownErr) ).transpose()?;
 
         let props = Props {
             number,
-            sub_path: matches.get(&"sub_path".to_string()).cloned()
+            sub_path: matches.get("sub_path").cloned()
         };
         Ok(props)
     }

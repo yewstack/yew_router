@@ -1,27 +1,32 @@
 
 pub use yew_router_route_parser::{OptimizedToken, CaptureVariants, FromMatches, FromMatchesError};
 
-use yew_router_route_parser::new_parser::Token;
 use nom::IResult;
 use std::collections::{HashMap, HashSet};
 use nom::bytes::complete::{tag, take_until, is_not};
 use nom::sequence::{preceded, terminated};
-use std::convert::TryFrom;
 use nom::combinator::peek;
 use log::debug;
 use yew_router_route_parser::{optimize_tokens, new_parser};
 use yew::{Html, Component, Renderable};
-use nom::Err;
 use std::marker::PhantomData;
 use std::fmt::{Debug, Formatter, Error};
 use yew::virtual_dom::{VComp, VNode, vcomp::ScopeHolder};
+
+pub trait RenderFn<CTX: yew::Component>: Fn(&HashMap<&str, String>) -> Option<Html<CTX>> + objekt::Clone {}
+
+impl <CTX, T> RenderFn<CTX> for T
+    where
+    T: Fn(&HashMap<&str, String>) -> Option<Html<CTX>> + objekt::Clone,
+    CTX: yew::Component
+{}
 
 /// Attempts to match routes, transform the route to Component props and render that Component.
 ///
 /// The CTX refers to the context of the parent rendering this (The Router).
 pub struct PathMatcher<CTX: Component + Renderable<CTX>> {
     pub tokens: Vec<OptimizedToken>,
-    pub render_fn: Option<Box<dyn Fn(&HashMap<String, String>) -> Option<Html<CTX>>>> // Having Router specified here would make dependency issues appear.
+    pub render_fn: Option<Box<dyn RenderFn<CTX>>> // Having Router specified here would make dependency issues appear.
 }
 
 impl <CTX: Component + Renderable<CTX>> PartialEq for PathMatcher<CTX> {
@@ -69,12 +74,12 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
         Ok(pm)
     }
 
-    pub fn create_render_fn<CMP>(_: PhantomData<CMP>) -> Box<dyn Fn(&HashMap<String, String>) -> Option<Html<CTX>>>
+    pub fn create_render_fn<CMP>(_: PhantomData<CMP>) -> Box<dyn RenderFn<CTX>>
         where
             CMP: Component + Renderable<CMP>,
             CMP::Properties: FromMatches
     {
-        Box::new(|matches: &HashMap<String, String>| {
+        Box::new(|matches: &HashMap<&str, String>| {
             CMP::Properties::from_matches(matches)
                 .map(|properties| create_component::<CMP, CTX>(properties))
                 .map_err(|err| {
@@ -86,13 +91,13 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
 
 
     // TODO, should find some way to support '/' characters in fragment. In the transform function, it could keep track of the seen hash begin yet, and transform captures based on that.
-    pub fn match_path<'a>(&self, mut i: &'a str) -> IResult<&'a str, HashMap<String, String>> {
+    pub fn match_path<'a>(&self, mut i: &'a str) -> IResult<&'a str, HashMap<&str, String>> {
         debug!("Attempting to match path: {:?} using: {:?}", i, self);
         let mut iter = self.tokens
             .iter()
             .peekable();
 
-        let mut dictionary: HashMap<String, String> = HashMap::new();
+        let mut dictionary: HashMap<&str, String> = HashMap::new();
 
         while let Some(token) = iter.next() {
             i = match token {
@@ -138,11 +143,11 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
                             if let Some(peaked_next_token) = iter.peek() {
                                 let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("should be in sequence");
                                 let (ii, captured) = terminated(valid_capture_characters, peek(tag(delimiter)))(i)?;
-                                dictionary.insert(capture_key.clone(), captured.to_string());
+                                dictionary.insert(&capture_key, captured.to_string());
                                 ii
                             } else {
                                 let (ii, captured) = valid_capture_characters(i)?;
-                                dictionary.insert(capture_key.clone(), captured.to_string());
+                                dictionary.insert(&capture_key, captured.to_string());
                                 ii
                             }
                         }
@@ -158,11 +163,11 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
                     if let Some(peaked_next_token) = iter.peek() {
                         let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("should be in sequence");
                         let (ii, captured) = preceded(tag(format!("{}=", ident).as_str()), take_until(delimiter))(i)?; // TODO this should also probably prevent invalid characters
-                        dictionary.insert(capture_key.clone(), captured.to_string());
+                        dictionary.insert(&capture_key, captured.to_string());
                         ii
                     } else {
                         let (ii, captured) = preceded(tag(format!("{}=", ident).as_str()), valid_capture_characters_in_query)(i)?;
-                        dictionary.insert(capture_key.clone(), captured.to_string());
+                        dictionary.insert(&capture_key, captured.to_string());
                         ii
                     }
                 },

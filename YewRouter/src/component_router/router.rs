@@ -10,9 +10,8 @@ use yew::{
 };
 use crate::YewRouterState;
 use log::{warn, trace};
-use yew::html::{ChildrenWithProps, ChildrenRenderer};
+use yew::html::{ChildrenWithProps};
 use crate::component_router::route::Route;
-use yew::virtual_dom::VChild;
 
 
 /// Rendering control flow component.
@@ -84,9 +83,6 @@ pub enum Msg<T> {
     UpdateRoute(RouteInfo<T>),
 }
 
-// TODO this may be the key to something
-pub type RouteChilds<PAR> = ChildrenRenderer<VChild<Box<dyn From<String>>, PAR>>;
-
 /// Properties for Router.
 #[derive(Properties)]
 pub struct Props<T: for<'de> YewRouterState<'de>> {
@@ -140,16 +136,20 @@ impl <T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T>
         trace!("Routing one of {} routes for  {:?}", self.props.children.iter().count(), &self.route);
         self.props.children.iter()
             .filter_map(|route| -> Option<Html<Self>> {
-                route.props.path
-                    .match_path(&self.route)
-                    .map(|(_rest, hm)| {
-                        let mut children = route.props.children.iter().peekable();
+                let mut children = route.props.children.iter().peekable();
+                let render = match &route.props.path.render_fn {
+                    Some(r) => Some(objekt::clone_box(&**r)),
+                    None => None
+                };
 
-                        match (route.props.path.render_fn, children.peek()) {
+                route.props.path.match_path(&self.route)
+                    .map(|(_rest, matches): (&str, std::collections::HashMap<&str, String>)| {
+
+                        match (render, children.peek()) {
                             (Some(render), Some(_)) => {
                                 // If the component can't be created from the matches,
                                 // the nested children will be rendered anyways
-                                match (render)(&hm) {
+                                match (render)(&matches) {
                                     Some(rendered) => {
                                         Some(html!{
                                             <>
@@ -162,7 +162,7 @@ impl <T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T>
                                 }
                             },
                             (Some(render), None)=> {
-                                render(&hm)
+                                render(&matches)
                             }
                             (None, Some(_)) => Some(html!{{for children}}),
                             (None, None) => None
