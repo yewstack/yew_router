@@ -10,6 +10,7 @@ use syn::parse::{Parse, ParseBuffer};
 use syn::parse_macro_input;
 use syn::Token;
 use syn::Expr;
+use syn::Ident;
 use syn::spanned::Spanned;
 
 enum Either<T, U> {
@@ -19,18 +20,17 @@ enum Either<T, U> {
 
 struct S {
     s: String,
-    target: Option<Either<Type, Expr>>
+    target: Option<Either<Type, Either<Ident, Expr>>>
 }
 impl Parse for S {
     fn parse(input: &ParseBuffer) -> Result<Self, Error> {
         let s = input.parse::<syn::LitStr>()?;
         // The specification of a type must be preceded by a "=>"
         let lookahead = input.lookahead1();
-        let target: Option<Either<Type, Expr>> = if lookahead.peek(Token![=>]) {
+        let target: Option<Either<Type, Either<Ident, Expr>>> = if lookahead.peek(Token![=>]) {
             input.parse::<syn::token::FatArrow>()
                 .ok()
                 .map(|_| {
-                    let lookahead = input.lookahead1();
                     input.parse::<Type>()
                         .map(Either::Left)
                 })
@@ -39,31 +39,36 @@ impl Parse for S {
             input.parse::<syn::token::Comma>()
                 .ok()
                 .map(|_| {
-//                    input.parse::<syn::Lit>()
-                    input.parse::<syn::Expr>()
-                        .and_then(|expr| {
-                            match &expr {
-                                Expr::Closure(_) | Expr::Block(_) | Expr::MethodCall(_) | Expr::Call(_) | Expr::Lit(_) => Ok(expr),
-                                Expr::Group(_) => Err(Error::new(expr.span(), "Erroneous error")),
-                                Expr::Path(_) => panic!("path"), // TODO this is broken.
-                                Expr::__Nonexhaustive => panic!("nonexhaustive"),
-                                _ => Err(Error::new(expr.span(), "Must be a Component's Type, a closure returning Option<Html<_>>, or expression that can resolve to such a closure."))
-                            }
+                    input.parse::<syn::Ident>()
+                        .map(Either::Left)
+                        .or_else(|_| {
+                            input.parse::<syn::Expr>()
+                                .and_then(|expr| {
+                                    match &expr {
+                                        Expr::Closure(_) | Expr::Block(_) | Expr::MethodCall(_) | Expr::Call(_) | Expr::Path(_) => Ok(expr),
+                                        Expr::__Nonexhaustive => panic!("nonexhaustive"),
+                                        _ => Err(Error::new(expr.span(), "Must be a Component's Type, a Fn(&HashMap<String, String> -> Option<Html<_>>, or expression that can resolve to such a function."))
+                                    }
+                                })
+                                .map(Either::Right)
                         })
                         .map(Either::Right)
+                    // TODO support either EXPR or Ident
+//                    input.parse::<syn::Ident>()
+//                    input.parse::<syn::Expr>()
+//                        .and_then(|expr| {
+//                            match &expr {
+//                                Expr::Closure(_) | Expr::Block(_) | Expr::MethodCall(_) | Expr::Call(_) | Expr::Path(_) => Ok(expr),
+//                                Expr::__Nonexhaustive => panic!("nonexhaustive"),
+//                                _ => Err(Error::new(expr.span(), "Must be a Component's Type, a Fn(&HashMap<String, String> -> Option<Html<_>>, or expression that can resolve to such a function."))
+//                            }
+//                        })
+//                        .map(Either::Right)
                 })
                 .transpose()?
         } else {
             None
         };
-
-        let expr = input.parse::<syn::Expr>()
-            .and_then(|expr| {
-                match &expr {
-                    Expr::Closure(_) | Expr::Block(_) | Expr::Call(_) | Expr::Lit(_) => Ok(expr),
-                    _ => Err(Error::new(expr.span(), "Must be closure, or structure that can resolve to a closure."))
-                }
-            });
 
         Ok(
             S {
@@ -100,10 +105,20 @@ pub fn route(input: TokenStream) -> TokenStream {
                         let render_fn = Some(__PathMatcher::<__Router>::create_render_fn::<#ty>(phantom));
                     }
                 }
-                Either::Right(expr) => {
-                    quote! {
-                        let x: Box<Fn(&std::collections::HashMap<String,String>) -> Option<Html<_>> > = Box::new(#expr);
-                        let render_fn = Some(x);
+                Either::Right(ident_or_expr) => {
+                    match ident_or_expr {
+                        Either::Left(ident) => {
+                            quote! {
+                                let f: Box<Fn(&std::collections::HashMap<String,String>) -> Option<Html<_>> > = Box::new(#ident);
+                                let render_fn = Some(f);
+                            }
+                        },
+                        Either::Right(expr) => {
+                            quote! {
+                                let f: Box<Fn(&std::collections::HashMap<String,String>) -> Option<Html<_>> > = Box::new(#expr);
+                                let render_fn = Some(f);
+                            }
+                        }
                     }
                 }
             }

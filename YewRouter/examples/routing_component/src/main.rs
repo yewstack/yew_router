@@ -17,7 +17,7 @@ use yew_router::route;
 use b_component::BModel;
 use a_component::AModel;
 use c_component::CModel;
-
+use std::collections::HashMap;
 
 
 fn main() {
@@ -54,6 +54,12 @@ impl Component for Model {
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
 
+        let f = |matches: &HashMap<String, String>| {
+            Some(html!{
+                {format!("hello {}", matches[&"capture".to_string()])}
+            })
+        };
+
         html! {
             <div>
                 <nav class="menu",>
@@ -79,11 +85,7 @@ impl Renderable<Model> for Model {
                         </Route>
                         <Route path=route!(
                             "/f/{capture}",
-                            |matches| {
-                                Some(html!{
-                                    {format!("hello {}", matches[&"capture".to_string()])}
-                                })
-                            })
+                            f)
                         />
                     </Router>
                 </div>
