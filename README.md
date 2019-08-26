@@ -9,7 +9,9 @@ I'm currently working towards getting this library in a releasable state.
 html!{
     <Router>
         <Route path=route!("/a/{}" => AComponent) />
-        <Route path=route!("/b" => BComponent) />
+        <Route path=route!("/b") >
+            <BComponent />
+        </Route>
         <Route path=route!("/c/{capture}" => |matches| {
             Some(html!{{matches["capture"}})
         }) />
