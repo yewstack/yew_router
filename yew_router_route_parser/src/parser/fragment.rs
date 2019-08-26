@@ -1,10 +1,18 @@
 use nom::IResult;
 use crate::parser::Token;
-use crate::parser::optional_section;
-use crate::parser::ret_vec;
-use crate::parser::begin_fragment_token;
+use crate::parser::util::{optional_matches, optional_matches_v};
 use crate::parser::section_matchers;
 use nom::branch::alt;
+use nom::combinator::map;
+use nom::bytes::complete::tag;
+
+
+fn begin_fragment_token(i: &str) -> IResult<&str, Token> {
+    map(
+        tag("#"),
+        |_| Token::FragmentBegin
+    )(i)
+}
 
 /// #item
 fn simple_fragment_parser(i: &str) -> IResult<&str, Vec<Token>> {
@@ -18,12 +26,13 @@ fn simple_fragment_parser(i: &str) -> IResult<&str, Vec<Token>> {
 /// #(item)
 fn fragment_parser_with_optional_item(i: &str) -> IResult<&str, Vec<Token>> {
     let (i, begin) = begin_fragment_token(i)?;
-    let (i, optional) = optional_section(section_matchers)(i)?;
+    let (i, optional) = optional_matches(section_matchers)(i)?;
     let v = vec![begin, optional];
     Ok((i, v))
 }
 
-pub(super) fn fragment_parser(i: &str) -> IResult<&str, Vec<Token>> {
+/// #item | #(item) | (#(item)) | (#item)
+pub fn fragment_parser(i: &str) -> IResult<&str, Vec<Token>> {
     fn inner_fragment_parser(i: &str) -> IResult<&str, Vec<Token>> {
         alt((
             simple_fragment_parser, // #item
@@ -32,7 +41,7 @@ pub(super) fn fragment_parser(i: &str) -> IResult<&str, Vec<Token>> {
     }
     alt((
         inner_fragment_parser, // #item | #(item)
-        ret_vec(optional_section(inner_fragment_parser)) // (#(item)) | (#item)
+        optional_matches_v(inner_fragment_parser) // (#(item)) | (#item)
     ))(i)
 }
 

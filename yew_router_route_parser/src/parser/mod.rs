@@ -1,14 +1,18 @@
 use nom::IResult;
 use nom::branch::alt;
 use nom::sequence::{delimited, separated_pair, tuple, preceded};
-use nom::bytes::complete::{tag, is_not, take};
+use nom::bytes::complete::{tag};
 use nom::combinator::{map, opt, all_consuming, peek};
 use nom::error::{ParseError, ErrorKind};
 use nom::multi::{many1, many0};
-use nom::character::is_digit;
 use nom::character::complete::{digit1};
-use std::hint::unreachable_unchecked;
 
+use self::core::valid_ident_characters;
+
+mod core;
+mod util;
+mod path;
+mod query;
 mod fragment;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -177,17 +181,7 @@ fn query_parser(i: &str) -> IResult<&str, Vec<Token>> {
 }
 
 
-/// Captures a string up to the point where a character not possible to be present in Rust's identifier is encountered.
-/// It prevents the first character from being a digit.
-pub fn valid_ident_characters(i: &str) -> IResult<&str, &str> {
-    const INVALID_CHARACTERS: &str = " -*/+#?&^@~`;,.|\\{}[]()=\t\n";
-    let (i, next) = peek(take(1usize))(i)?; // Look at the first character
-    if is_digit(next.bytes().next().unwrap()) {
-        return Err(nom::Err::Error((i, ErrorKind::Digit))) // Digits not allowed
-    } else {
-        is_not(INVALID_CHARACTERS)(i)
-    }
-}
+
 
 fn match_specific_token(i: &str) -> IResult<&str, Token> {
     map(
@@ -253,12 +247,7 @@ fn query_separator_token(i: &str) -> IResult<&str, Token> {
         |_| Token::QuerySeparator
     )(i)
 }
-fn begin_fragment_token(i: &str) -> IResult<&str, Token> {
-    map(
-        tag("#"),
-        |_| Token::FragmentBegin
-    )(i)
-}
+
 
 fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
 
@@ -296,26 +285,6 @@ fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
 
     match_next_section_matchers(i, tokens)
 }
-
-
-
-fn ret_vec<'a, >(f: impl Fn(&'a str) -> IResult<&'a str, Token>) -> impl Fn(&'a str) -> IResult<&'a str, Vec<Token>> {
-    move |i: &str | {
-        (f)(i).map(|(i, t)| (i, vec![t]))
-    }
-}
-
-fn optional_section<'a, F>(f: F) -> impl Fn(&'a str) -> IResult<&'a str, Token>
-    where
-        F: Fn(&'a str) -> IResult<&'a str, Vec<Token>>
-{
-    move |i: &str| -> IResult<&str, Token> {
-        let f = &f;
-        delimited(tag("("), f, tag(")"))(i)
-            .map(|(i, t)| (i, Token::Optional(t)))
-    }
-}
-
 
 #[cfg(test)]
 mod tests {
