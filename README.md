@@ -12,7 +12,7 @@ html!{
         <Route path=route!("/b") >
             <BComponent />
         </Route>
-        <Route path=route!("/c/{capture}" => |matches| {
+        <Route path=route!("/c/{capture}", |matches| {
             Some(html!{{matches["capture"}})
         }) />
     </Router>
