@@ -7,6 +7,7 @@ use nom::error::{ParseError, ErrorKind};
 use nom::multi::{many1, many0};
 use nom::character::is_digit;
 use nom::character::complete::{digit1};
+use std::hint::unreachable_unchecked;
 
 
 #[derive(Debug, Clone, PartialEq)]
@@ -16,9 +17,9 @@ pub enum Token {
     Capture(CaptureVariants), // {_}
     QueryBegin, // ?
     QuerySeparator, // &
-    QueryCapture{ident: String, value: String}, // x=y
+    QueryCapture{ident: String, value: CaptureOrMatch}, // x=y
     FragmentBegin, // #
-    Optional(Box<Vec<Token>>)
+    Optional(Vec<Token>)
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -29,6 +30,12 @@ pub enum CaptureVariants {
     Named(String), // {name} - captures a section and adds it to the map with a given name
     ManyNamed(String), // {*:name} - captures over many sections and adds it to the map with a given name.
     NumberedNamed{sections: usize, name: String} // {2:name} - captures a fixed number of sections with a given name.
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum CaptureOrMatch {
+    Match(String),
+    Capture(CaptureVariants)
 }
 
 #[derive(Debug, Clone)]
@@ -208,9 +215,19 @@ fn capture(i: &str) -> IResult<&str, Token> {
 
 fn query_capture(i: &str) -> IResult<&str, Token> {
     map(
-        separated_pair(valid_ident_characters, tag("=",), valid_ident_characters),
-        |(ident, value)| Token::QueryCapture {ident: ident.to_string(), value: value.to_string()}
+        separated_pair(valid_ident_characters, tag("=",), capture_or_match),
+        |(ident, value)| Token::QueryCapture {ident: ident.to_string(), value}
     )(i)
+}
+
+fn capture_or_match(i: &str) -> IResult<&str, CaptureOrMatch> {
+    let (i, token) = alt((capture, match_specific_token))(i)?;
+    let token = match token {
+        Token::Capture(variant) => CaptureOrMatch::Capture(variant),
+        Token::Match(m) => CaptureOrMatch::Match(m),
+        _ => unreachable!("Only should handle captures and matches")
+    };
+    Ok((i, token))
 }
 
 fn separator_token(i: &str) -> IResult<&str, Token> {
@@ -290,7 +307,7 @@ fn optional_section<F: Fn(&str) -> IResult<&str, Vec<Token>>>(f: F) -> impl Fn(&
     move |i: &str| -> IResult<&str, Token> {
         let f = &f;
         delimited(tag("("), f, tag(")"))(i)
-            .map(|(i,t)| (i, Token::Optional(Box::new(t))))
+            .map(|(i, t)| (i, Token::Optional(t)))
     }
 }
 

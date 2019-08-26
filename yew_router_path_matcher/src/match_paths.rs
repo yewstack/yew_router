@@ -29,7 +29,7 @@ pub(super) fn match_paths<'a, 'b>(tokens: &'b Vec<OptimizedToken>, mut i: &'a st
                     match_paths(inner_tokens, i)
                 })(i) {
                     Ok((ii, inner_matches)) => {
-                        //TODO needs some tests to verify if the following is right
+                        //TODO needs some tests to verify if the following is right (handling of i)
                         if let Some(inner_matches) = inner_matches {
                             matches.extend(inner_matches);
                         }
@@ -46,18 +46,6 @@ pub(super) fn match_paths<'a, 'b>(tokens: &'b Vec<OptimizedToken>, mut i: &'a st
                     CaptureVariants::Named(name) => capture_named(i, &mut iter, &name, &mut matches )?,
                     CaptureVariants::ManyNamed(name) => capture_many_named(i, &mut iter, &name, &mut matches )?,
                     CaptureVariants::NumberedNamed { sections, name } => capture_numbered_named(i, &mut iter, &name, *sections, &mut matches)?
-                }
-            },
-            OptimizedToken::QueryCapture { ident,  value: capture_key} => {
-                if let Some(peaked_next_token) = iter.peek() {
-                    let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("should be in sequence");
-                    let (ii, captured) = preceded(tag(format!("{}=", ident).as_str()), take_until(delimiter))(i)?; // TODO this should also probably prevent invalid characters
-                    matches.insert(&capture_key, captured.to_string());
-                    ii
-                } else {
-                    let (ii, captured) = preceded(tag(format!("{}=", ident).as_str()), valid_capture_characters_in_query)(i)?;
-                    matches.insert(&capture_key, captured.to_string());
-                    ii
                 }
             },
         };
@@ -220,4 +208,80 @@ fn valid_many_capture_characters(i: &str) -> IResult<&str, &str> {
 fn valid_capture_characters_in_query(i: &str) -> IResult<&str, &str> {
     const INVALID_CHARACTERS: &str = " *#&?|{}=";
     is_not(INVALID_CHARACTERS)(i)
+}
+
+
+#[cfg(test)]
+mod integration_test {
+    use super::*;
+
+
+
+    #[test]
+    fn match_query_after_path() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path?hello=there").expect("Should parse");
+        match_paths(&x, "/a/path?hello=there").expect("should match");
+    }
+
+    #[test]
+    fn match_query_after_path_trailing_slash() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path/?hello=there").expect("Should parse");
+        match_paths(&x, "/a/path/?hello=there").expect("should match");
+    }
+
+// TODO this should be able to be less strict. A trailing slash before a # or ? should be ignored
+
+//    #[test]
+//    fn match_query_after_path_slash_ignored() {
+//        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path/?hello=there").expect("Should parse");
+//        match_paths(&x, "/a/path?hello=there").expect("should match");
+//    }
+
+    #[test]
+    fn match_query() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("?hello=there").expect("Should parse");
+        match_paths(&x, "?hello=there").expect("should match");
+    }
+
+    #[test]
+    fn named_capture_query() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("?hello={there}").expect("Should parse");
+        let (_, matches) = match_paths(&x, "?hello=there").expect("should match");
+        assert_eq!(matches["there"], "there".to_string())
+    }
+
+
+
+
+    #[test]
+    fn match_fragment() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("#test").expect("Should parse");
+        match_paths(&x, "#test").expect("should match");
+    }
+
+
+    #[test]
+    fn match_fragment_after_path() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path/#test").expect("Should parse");
+        match_paths(&x, "/a/path/#test").expect("should match");
+    }
+
+    #[test]
+    fn match_fragment_after_path_no_slash() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path#test").expect("Should parse");
+        match_paths(&x, "/a/path#test").expect("should match");
+    }
+
+    #[test]
+    fn match_fragment_after_query() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path?query=thing#test").expect("Should parse");
+        match_paths(&x, "/a/path?query=thing#test").expect("should match");
+    }
+
+
+    #[test]
+    fn match_fragment_after_query_capture() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path?query={capture}#test").expect("Should parse");
+        match_paths(&x, "/a/path?query=thing#test").expect("should match");
+    }
 }

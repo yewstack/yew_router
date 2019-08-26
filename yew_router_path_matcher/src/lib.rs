@@ -106,9 +106,6 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
                         CaptureVariants::ManyUnnamed | CaptureVariants::Unnamed | CaptureVariants::NumberedUnnamed {..} => {}
                     }
                 },
-                OptimizedToken::QueryCapture {ident, ..} => {
-                    acc.insert(ident);
-                },
             }
             acc
         })

@@ -1,5 +1,5 @@
 use crate::new_parser::Token;
-use crate::new_parser::CaptureVariants;
+use crate::new_parser::{CaptureVariants, CaptureOrMatch};
 
 
 #[derive(Debug, PartialEq)]
@@ -7,10 +7,10 @@ pub enum OptimizedToken {
     /// Extraneous section-related tokens can be condensed into a match.
     Match(String),
     Capture(CaptureVariants),
-    QueryCapture {
-        ident: String,
-        value: String
-    },
+//    QueryCapture {
+//        ident: String,
+//        value: CaptureVariants
+//    },
     Optional(Vec<OptimizedToken>)
 }
 
@@ -56,7 +56,7 @@ pub fn optimize_tokens(tokens: Vec<Token>) -> Vec<OptimizedToken> {
                 run.push(token)
             }
             Token::Optional(tokens) => {
-                optimized.push(OptimizedToken::Optional(optimize_tokens(*tokens.clone()))) // TODO, don't know if this is technically correct.
+                optimized.push(OptimizedToken::Optional(optimize_tokens(tokens.clone()))) // TODO, don't know if this is technically correct.
             },
             Token::Capture (_) | Token:: QueryCapture {..} => {
                 if !run.is_empty() {
@@ -64,15 +64,24 @@ pub fn optimize_tokens(tokens: Vec<Token>) -> Vec<OptimizedToken> {
                     optimized.push(OptimizedToken::Match(s));
                     run.clear()
                 }
-                let token = match token {
-                    Token::Capture (variant) => OptimizedToken::Capture (variant),
-                    Token::QueryCapture {ident, value} => OptimizedToken::QueryCapture {ident, value},
+                match token {
+                    Token::Capture (variant) => {
+                        optimized.push(OptimizedToken::Capture (variant))
+                    },
+                    Token::QueryCapture {ident, value} => {
+                        let cap_or_match: OptimizedToken = match value {
+                            CaptureOrMatch::Match(m) => OptimizedToken::Match(m),
+                            CaptureOrMatch::Capture(v) => OptimizedToken::Capture(v)
+                        };
+                        optimized.extend(vec![OptimizedToken::Match(format!("{}=", ident)), cap_or_match])
+
+                    }//OptimizedToken::QueryCapture {ident, value},
                     _ => {
                         log::error!("crashing time");
                         unreachable!()
                     }
                 };
-                optimized.push(token);
+//                optimized.push(token);
             }
         }
     });
