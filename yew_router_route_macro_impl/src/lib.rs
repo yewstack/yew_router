@@ -100,10 +100,8 @@ pub fn route(input: TokenStream) -> TokenStream {
             match target {
                 Either::Left(ty) => {
                     quote! {
-                        use std::marker::PhantomData as __PhantomData;
-                        use yew_router::Router as __Router;
-                        let phantom: __PhantomData<#ty> = __PhantomData;
-                        let render_fn = Some(__PathMatcher::<__Router>::create_render_fn::<#ty>(phantom));
+                        let phantom: std::marker::PhantomData<#ty> = std::marker::PhantomData;
+                        let render_fn = Some(yew_router::path_matcher::PathMatcher::<yew_router::Router>::create_render_fn::<#ty>(phantom));
                     }
                 }
                 Either::Right(ident_or_expr) => {
@@ -134,13 +132,9 @@ pub fn route(input: TokenStream) -> TokenStream {
 
     let expanded = quote!{
         {
-            use yew_router::path_matcher::PathMatcher as __PathMatcher;
-            use yew_router::path_matcher::CaptureVariant as __CaptureVariant;
-            use yew_router::path_matcher::OptimizedToken as __OptimizedToken;
-
             #render_fn
 
-            __PathMatcher {
+            yew_router::path_matcher::PathMatcher {
                 tokens : vec![#(#t),*],
                 render_fn
             }
@@ -154,16 +148,16 @@ impl ToTokens for ShadowOptimizedToken {
         use ShadowOptimizedToken as SOT;
         let t: TokenStream2 = match self {
             SOT::Match(s) => {
-                TokenStream2::from(quote!{__OptimizedToken::Match(#s.to_string())})
+                TokenStream2::from(quote!{yew_router::path_matcher::OptimizedToken::Match(#s.to_string())})
             }
             SOT::Capture ( variant ) => {
                 TokenStream2::from(quote!{
-                    __OptimizedToken::Capture(#variant)
+                    yew_router::path_matcher::OptimizedToken::Capture(#variant)
                 })
             }
             SOT::Optional(optional) => {
                 TokenStream2::from(quote!{
-                    __OptimizedToken::Optional(vec![#(#optional),*])
+                    yew_router::path_matcher::OptimizedToken::Optional(vec![#(#optional),*])
                 })
             }
         };
@@ -192,12 +186,12 @@ impl ToTokens for ShadowCaptureVariant {
 
     fn to_tokens(&self, ts: &mut TokenStream2) {
         let t = match self {
-            ShadowCaptureVariant::Unnamed => TokenStream2::from(quote!{__CaptureVariant::Unnamed}),
-            ShadowCaptureVariant::ManyUnnamed => TokenStream2::from(quote!{__CaptureVariant::ManyUnnamed}),
-            ShadowCaptureVariant::NumberedUnnamed { sections } => TokenStream2::from(quote!{__CaptureVariant::NumberedUnnamed{#sections}}),
-            ShadowCaptureVariant::Named(name) => TokenStream2::from(quote!{__CaptureVariant::Named(#name.to_string())}),
-            ShadowCaptureVariant::ManyNamed(name) => TokenStream2::from(quote!{__CaptureVariant::ManyNamed(#name.to_string())}),
-            ShadowCaptureVariant::NumberedNamed { sections, name } => TokenStream2::from(quote!{__CaptureVariant::NumberedNamed{#sections, #name.to_string()}}),
+            ShadowCaptureVariant::Unnamed => TokenStream2::from(quote!{yew_router::path_matcher::CaptureVariant::Unnamed}),
+            ShadowCaptureVariant::ManyUnnamed => TokenStream2::from(quote!{yew_router::path_matcher::CaptureVariant::ManyUnnamed}),
+            ShadowCaptureVariant::NumberedUnnamed { sections } => TokenStream2::from(quote!{yew_router::path_matcher::CaptureVariant::NumberedUnnamed{#sections}}),
+            ShadowCaptureVariant::Named(name) => TokenStream2::from(quote!{yew_router::path_matcher::CaptureVariant::Named(#name.to_string())}),
+            ShadowCaptureVariant::ManyNamed(name) => TokenStream2::from(quote!{yew_router::path_matcher::CaptureVariant::ManyNamed(#name.to_string())}),
+            ShadowCaptureVariant::NumberedNamed { sections, name } => TokenStream2::from(quote!{yew_router::path_matcher::CaptureVariant::NumberedNamed{#sections, #name.to_string()}}),
         };
         ts.extend(t)
 
