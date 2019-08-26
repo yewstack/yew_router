@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use yew_router_derive::FromMatches;
+    use yew_router::FromMatches;
     use std::collections::HashMap;
 
     #[test]
@@ -23,8 +23,8 @@ mod tests {
             there: String,
         }
         let mut hm = HashMap::new();
-        hm.insert("hello".to_string(), "yeet".to_string());
-        hm.insert("there".to_string(), "yote".to_string());
+        hm.insert("hello", "yeet".to_string());
+        hm.insert("there", "yote".to_string());
         let x = S::from_matches(&hm).expect("should create from hash map.");
         assert_eq!(x.hello, "yeet".to_string());
         assert_eq!(x.there, "yote".to_string());

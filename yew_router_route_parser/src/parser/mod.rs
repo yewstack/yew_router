@@ -8,6 +8,7 @@ use nom::multi::{many1, many0};
 use nom::character::complete::{digit1};
 
 use self::core::valid_ident_characters;
+use self::core::{capture_or_match, match_specific_token, capture};
 
 mod core;
 mod util;
@@ -65,7 +66,7 @@ pub fn parse(i: &str) -> IResult<&str, Vec<Token>> {
         all_consuming(tuple(
             (
                 opt(path_parser),
-                opt(query_parser),
+                opt(query::query_parser),
                 opt(fragment::fragment_parser)
             )
         )),
@@ -128,105 +129,12 @@ fn path_parser(i: &str) -> IResult<&str, Vec<Token>> {
 }
 
 
-/// Matches:
-/// * "?query=item"
-/// * "?query=item&query2=item"
-/// * "?query=item&query2=item&query3=item"
-/// * "?query={capture}"
-/// * "?query={capture}&query2=item"
-/// * etc...
-fn query_parser(i: &str) -> IResult<&str, Vec<Token>> {
-    fn begin_query_parser(i: &str) -> IResult<&str, (Token, Token)> {
-        tuple(
-            (
-                query_begin_token,
-                query
-            )
-        )(i)
-    }
-
-    fn rest_query_parser(i: &str) -> IResult<&str, Vec<Token>> {
-        map(
-            many0(tuple(
-                (
-                    query_separator_token,
-                    query
-                )
-            )),
-            |tokens: Vec<(Token, Token)>| {
-                let new_capacity = tokens.capacity() * 2;
-                tokens.into_iter().fold(Vec::with_capacity(new_capacity), |mut accumulator, element| {
-                    accumulator.push(element.0);
-                    accumulator.push(element.1);
-                    accumulator
-                })
-
-            }
-        )(i)
-    }
-
-    map(
-        tuple(
-            (
-                begin_query_parser,
-                rest_query_parser
-            )
-        ),
-        |(first, mut rest)| {
-            let mut tokens = vec![first.0, first.1];
-            tokens.append(&mut rest);
-            tokens
-        }
-    )(i)
-}
 
 
 
 
-fn match_specific_token(i: &str) -> IResult<&str, Token> {
-    map(
-        valid_ident_characters,
-        |ident| Token::Match(ident.to_string())
-    )(i)
-}
 
-fn capture(i: &str) -> IResult<&str, Token> {
-    let capture_variants = alt(
-        (
-            map(peek(tag("}")), |_| CaptureVariant::Unnamed), // just empty {}
-            map(preceded(tag("*:"), valid_ident_characters), |s| CaptureVariant::ManyNamed(s.to_string())),
-            map(tag("*"), |_| CaptureVariant::ManyUnnamed),
-            map(valid_ident_characters, |s| CaptureVariant::Named(s.to_string())),
-            map(separated_pair(digit1, tag(":"), valid_ident_characters), |(n, s)| CaptureVariant::NumberedNamed {sections: n.parse().expect("Should parse digits"), name: s.to_string()}),
-            map(digit1, |num: &str| CaptureVariant::NumberedUnnamed {sections: num.parse().expect("should parse digits" )})
-        )
-    );
 
-    map(
-        delimited(tag("{"), capture_variants, tag("}")),
-        Token::Capture
-    )(i)
-}
-
-/// matches "item=item" and "item={capture}"
-fn query(i: &str) -> IResult<&str, Token> {
-    map(
-        separated_pair(valid_ident_characters, tag("=",), capture_or_match),
-        |(ident, value)| Token::QueryCapture {ident: ident.to_string(), capture_or_match: value }
-    )(i)
-}
-
-/// Matches either "item" or "{capture}"
-/// It returns a subset enum of Token.
-fn capture_or_match(i: &str) -> IResult<&str, CaptureOrMatch> {
-    let (i, token) = alt((capture, match_specific_token))(i)?;
-    let token = match token {
-        Token::Capture(variant) => CaptureOrMatch::Capture(variant),
-        Token::Match(m) => CaptureOrMatch::Match(m),
-        _ => unreachable!("Only should handle captures and matches")
-    };
-    Ok((i, token))
-}
 
 fn separator_token(i: &str) -> IResult<&str, Token> {
     map(
@@ -235,18 +143,6 @@ fn separator_token(i: &str) -> IResult<&str, Token> {
     )(i)
 }
 
-fn query_begin_token(i: &str) -> IResult<&str, Token> {
-    map(
-        tag("?"),
-        |_| Token::QueryBegin
-    )(i)
-}
-fn query_separator_token(i: &str) -> IResult<&str, Token> {
-    map(
-        tag("&"),
-        |_| Token::QuerySeparator
-    )(i)
-}
 
 
 fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {

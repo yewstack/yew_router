@@ -122,7 +122,7 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use yew_router_route_parser::new_parser::Token;
+    use yew_router_route_parser::parser::Token;
     use yew::ComponentLink;
 
     struct DummyC {}
