@@ -1,5 +1,5 @@
 
-pub use yew_router_route_parser::{OptimizedToken, CaptureVariants, FromMatches, FromMatchesError};
+pub use yew_router_route_parser::{OptimizedToken, CaptureVariant, FromMatches, FromMatchesError};
 
 mod match_paths;
 
@@ -102,8 +102,8 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
                 OptimizedToken::Match(_) => {}
                 OptimizedToken::Capture(variant)  => {
                     match variant {
-                        CaptureVariants::ManyNamed(name) | CaptureVariants::Named(name) | CaptureVariants::NumberedNamed {name, ..} => {acc.insert(name);},
-                        CaptureVariants::ManyUnnamed | CaptureVariants::Unnamed | CaptureVariants::NumberedUnnamed {..} => {}
+                        CaptureVariant::ManyNamed(name) | CaptureVariant::Named(name) | CaptureVariant::NumberedNamed {name, ..} => {acc.insert(name);},
+                        CaptureVariant::ManyUnnamed | CaptureVariant::Unnamed | CaptureVariant::NumberedUnnamed {..} => {}
                     }
                 },
             }
@@ -169,7 +169,7 @@ mod tests {
 
     #[test]
     fn simple_capture() {
-        let tokens = vec![Token::Separator, Token::Capture(CaptureVariants::Named("hello".to_string())), Token::Separator];
+        let tokens = vec![Token::Separator, Token::Capture(CaptureVariant::Named("hello".to_string())), Token::Separator];
         let path_matcher = PathMatcher::<DummyC>::from(tokens);
         let (_, matches) = path_matcher.match_path("/general_kenobi/").expect("should parse");
         assert_eq!(matches["hello"], "general_kenobi".to_string())
@@ -178,7 +178,7 @@ mod tests {
 
     #[test]
     fn simple_capture_with_no_trailing_separator() {
-        let tokens = vec![Token::Separator, Token::Capture(CaptureVariants::Named("hello".to_string()))];
+        let tokens = vec![Token::Separator, Token::Capture(CaptureVariant::Named("hello".to_string()))];
         let path_matcher = PathMatcher::<DummyC>::from(tokens);
         let (_, matches) = path_matcher.match_path("/general_kenobi").expect("should parse");
         assert_eq!(matches["hello"], "general_kenobi".to_string())
@@ -187,21 +187,21 @@ mod tests {
 
     #[test]
     fn match_with_trailing_match_any() {
-        let tokens = vec![Token::Separator, Token::Match("a".to_string()), Token::Separator, Token::Capture(CaptureVariants::Unnamed)];
+        let tokens = vec![Token::Separator, Token::Match("a".to_string()), Token::Separator, Token::Capture(CaptureVariant::Unnamed)];
         let path_matcher = PathMatcher::<DummyC>::from(tokens);
         let (_, _matches) = path_matcher.match_path("/a/").expect("should parse");
     }
 
     #[test]
     fn match_n() {
-        let tokens = vec![Token::Separator,  Token::Capture(CaptureVariants::NumberedUnnamed {sections: 3}), Token::Separator, Token::Match("a".to_string())];
+        let tokens = vec![Token::Separator, Token::Capture(CaptureVariant::NumberedUnnamed {sections: 3}), Token::Separator, Token::Match("a".to_string())];
         let path_matcher = PathMatcher::<DummyC>::from(tokens);
         let (_, _matches) = path_matcher.match_path("/garbage1/garbage2/garbage3/a").expect("should parse");
     }
 
     #[test]
     fn match_n_no_overrun() {
-        let tokens = vec![Token::Separator,  Token::Capture(CaptureVariants::NumberedUnnamed {sections: 3})];
+        let tokens = vec![Token::Separator,  Token::Capture(CaptureVariant::NumberedUnnamed {sections: 3})];
         let path_matcher = PathMatcher::<DummyC>::from(tokens);
         let (s, _matches) = path_matcher.match_path("/garbage1/garbage2/garbage3").expect("should parse");
         assert_eq!(s.len(), 0)
@@ -210,7 +210,7 @@ mod tests {
 
     #[test]
     fn match_n_named() {
-        let tokens = vec![Token::Separator, Token::Capture(CaptureVariants::NumberedNamed {sections: 3, name: "captured".to_string() }), Token::Separator, Token::Match("a".to_string())];
+        let tokens = vec![Token::Separator, Token::Capture(CaptureVariant::NumberedNamed {sections: 3, name: "captured".to_string() }), Token::Separator, Token::Match("a".to_string())];
         let path_matcher = PathMatcher::<DummyC>::from(tokens);
         let (_, matches) = path_matcher.match_path("/garbage1/garbage2/garbage3/a").expect("should parse");
         assert_eq!(matches["captured"], "garbage1/garbage2/garbage3".to_string())
@@ -219,14 +219,14 @@ mod tests {
 
     #[test]
     fn match_many() {
-        let tokens = vec![Token::Separator, Token::Capture(CaptureVariants::ManyUnnamed), Token::Separator, Token::Match("a".to_string())];
+        let tokens = vec![Token::Separator, Token::Capture(CaptureVariant::ManyUnnamed), Token::Separator, Token::Match("a".to_string())];
         let path_matcher = PathMatcher::<DummyC>::from(tokens);
         let (_, _matches) = path_matcher.match_path("/garbage1/garbage2/garbage3/a").expect("should parse");
     }
 
     #[test]
     fn match_many_named() {
-        let tokens = vec![Token::Separator, Token::Capture(CaptureVariants::ManyNamed("captured".to_string())), Token::Separator, Token::Match("a".to_string())];
+        let tokens = vec![Token::Separator, Token::Capture(CaptureVariant::ManyNamed("captured".to_string())), Token::Separator, Token::Match("a".to_string())];
         let path_matcher = PathMatcher::<DummyC>::from(tokens);
         let (_, matches) = path_matcher.match_path("/garbage1/garbage2/garbage3/a").expect("should parse");
         assert_eq!(matches["captured"], "garbage1/garbage2/garbage3".to_string())

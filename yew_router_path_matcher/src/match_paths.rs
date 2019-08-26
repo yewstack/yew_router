@@ -1,4 +1,4 @@
-use yew_router_route_parser::{CaptureVariants, OptimizedToken};
+use yew_router_route_parser::{CaptureVariant, OptimizedToken};
 use nom::IResult;
 use crate::Matches;
 use nom::bytes::complete::{tag, take_until, is_not};
@@ -40,12 +40,12 @@ pub(super) fn match_paths<'a, 'b>(tokens: &'b Vec<OptimizedToken>, mut i: &'a st
             }
             OptimizedToken::Capture (variant) => {
                 match variant {
-                    CaptureVariants::Unnamed => capture_unnamed(i, &mut iter)?,
-                    CaptureVariants::ManyUnnamed => capture_many_unnamed(i, &mut iter)?,
-                    CaptureVariants::NumberedUnnamed { sections } => capture_numbered_unnamed(i, &mut iter, *sections)?,
-                    CaptureVariants::Named(name) => capture_named(i, &mut iter, &name, &mut matches )?,
-                    CaptureVariants::ManyNamed(name) => capture_many_named(i, &mut iter, &name, &mut matches )?,
-                    CaptureVariants::NumberedNamed { sections, name } => capture_numbered_named(i, &mut iter, &name, *sections, &mut matches)?
+                    CaptureVariant::Unnamed => capture_unnamed(i, &mut iter)?,
+                    CaptureVariant::ManyUnnamed => capture_many_unnamed(i, &mut iter)?,
+                    CaptureVariant::NumberedUnnamed { sections } => capture_numbered_unnamed(i, &mut iter, *sections)?,
+                    CaptureVariant::Named(name) => capture_named(i, &mut iter, &name, &mut matches )?,
+                    CaptureVariant::ManyNamed(name) => capture_many_named(i, &mut iter, &name, &mut matches )?,
+                    CaptureVariant::NumberedNamed { sections, name } => capture_numbered_named(i, &mut iter, &name, *sections, &mut matches)?
                 }
             },
         };

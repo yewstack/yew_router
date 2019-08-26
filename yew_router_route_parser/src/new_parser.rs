@@ -14,16 +14,16 @@ use std::hint::unreachable_unchecked;
 pub enum Token {
     Separator,
     Match(String), // Any string
-    Capture(CaptureVariants), // {_}
+    Capture(CaptureVariant), // {_}
     QueryBegin, // ?
     QuerySeparator, // &
-    QueryCapture{ident: String, value: CaptureOrMatch}, // x=y
+    QueryCapture{ident: String, capture_or_match: CaptureOrMatch}, // x=y
     FragmentBegin, // #
     Optional(Vec<Token>)
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum CaptureVariants {
+pub enum CaptureVariant {
     Unnamed, // {} - matches anything
     ManyUnnamed, // {*} - matches over multiple sections
     NumberedUnnamed{sections: usize}, // {4} - matches 4 sections
@@ -35,8 +35,10 @@ pub enum CaptureVariants {
 #[derive(Debug, Clone, PartialEq)]
 pub enum CaptureOrMatch {
     Match(String),
-    Capture(CaptureVariants)
+    Capture(CaptureVariant)
 }
+
+
 
 #[derive(Debug, Clone)]
 pub enum Error {
@@ -121,13 +123,19 @@ fn path_parser(i: &str) -> IResult<&str, Vec<Token>> {
 }
 
 
-
+/// Matches:
+/// * "?query=item"
+/// * "?query=item&query2=item"
+/// * "?query=item&query2=item&query3=item"
+/// * "?query={capture}"
+/// * "?query={capture}&query2=item"
+/// * etc...
 fn query_parser(i: &str) -> IResult<&str, Vec<Token>> {
     fn begin_query_parser(i: &str) -> IResult<&str, (Token, Token)> {
         tuple(
             (
                 query_begin_token,
-                query_capture
+                query
             )
         )(i)
     }
@@ -137,7 +145,7 @@ fn query_parser(i: &str) -> IResult<&str, Vec<Token>> {
             many0(tuple(
                 (
                     query_separator_token,
-                    query_capture
+                    query
                 )
             )),
             |tokens: Vec<(Token, Token)>| {
@@ -198,12 +206,12 @@ fn match_specific_token(i: &str) -> IResult<&str, Token> {
 fn capture(i: &str) -> IResult<&str, Token> {
     let capture_variants = alt(
         (
-            map(peek(tag("}")), |_| CaptureVariants::Unnamed), // just empty {}
-            map(preceded(tag("*:"), valid_ident_characters), |s| CaptureVariants::ManyNamed(s.to_string())),
-            map(tag("*"), |_| CaptureVariants::ManyUnnamed),
-            map(valid_ident_characters, |s| CaptureVariants::Named(s.to_string())),
-            map(separated_pair(digit1, tag(":"), valid_ident_characters), |(n, s)| CaptureVariants::NumberedNamed {sections: n.parse().expect("Should parse digits"), name: s.to_string()}),
-            map(digit1, |num: &str| CaptureVariants::NumberedUnnamed {sections: num.parse().expect("should parse digits" )})
+            map(peek(tag("}")), |_| CaptureVariant::Unnamed), // just empty {}
+            map(preceded(tag("*:"), valid_ident_characters), |s| CaptureVariant::ManyNamed(s.to_string())),
+            map(tag("*"), |_| CaptureVariant::ManyUnnamed),
+            map(valid_ident_characters, |s| CaptureVariant::Named(s.to_string())),
+            map(separated_pair(digit1, tag(":"), valid_ident_characters), |(n, s)| CaptureVariant::NumberedNamed {sections: n.parse().expect("Should parse digits"), name: s.to_string()}),
+            map(digit1, |num: &str| CaptureVariant::NumberedUnnamed {sections: num.parse().expect("should parse digits" )})
         )
     );
 
@@ -213,13 +221,16 @@ fn capture(i: &str) -> IResult<&str, Token> {
     )(i)
 }
 
-fn query_capture(i: &str) -> IResult<&str, Token> {
+/// matches "item=item" and "item={capture}"
+fn query(i: &str) -> IResult<&str, Token> {
     map(
         separated_pair(valid_ident_characters, tag("=",), capture_or_match),
-        |(ident, value)| Token::QueryCapture {ident: ident.to_string(), value}
+        |(ident, value)| Token::QueryCapture {ident: ident.to_string(), capture_or_match: value }
     )(i)
 }
 
+/// Matches either "item" or "{capture}"
+/// It returns a subset enum of Token.
 fn capture_or_match(i: &str) -> IResult<&str, CaptureOrMatch> {
     let (i, token) = alt((capture, match_specific_token))(i)?;
     let token = match token {
@@ -318,38 +329,38 @@ mod tests {
     #[test]
     fn capture_named_test() {
         let cap = capture("{hellothere}").unwrap();
-        assert_eq!(cap, ("", Token::Capture (CaptureVariants::Named("hellothere".to_string()))));
+        assert_eq!(cap, ("", Token::Capture (CaptureVariant::Named("hellothere".to_string()))));
     }
 
     #[test]
     fn capture_many_unnamed_test() {
         let cap = capture("{*}").unwrap();
-        assert_eq!(cap, ("", Token::Capture (CaptureVariants::ManyUnnamed)));
+        assert_eq!(cap, ("", Token::Capture (CaptureVariant::ManyUnnamed)));
     }
 
     #[test]
     fn capture_unnamed_test() {
         let cap = capture("{}").unwrap();
-        assert_eq!(cap, ("", Token::Capture (CaptureVariants::Unnamed)));
+        assert_eq!(cap, ("", Token::Capture (CaptureVariant::Unnamed)));
     }
 
     #[test]
     fn capture_numbered_unnamed_test() {
         let cap = capture("{5}").unwrap();
-        assert_eq!(cap, ("", Token::Capture (CaptureVariants::NumberedUnnamed {sections: 5})));
+        assert_eq!(cap, ("", Token::Capture (CaptureVariant::NumberedUnnamed {sections: 5})));
     }
 
     #[test]
     fn capture_numbered_named_test() {
         let cap = capture("{5:name}").unwrap();
-        assert_eq!(cap, ("", Token::Capture (CaptureVariants::NumberedNamed{sections: 5, name: "name".to_string()})));
+        assert_eq!(cap, ("", Token::Capture (CaptureVariant::NumberedNamed{sections: 5, name: "name".to_string()})));
     }
 
 
     #[test]
     fn capture_many_named() {
         let cap = capture("{*:name}").unwrap();
-        assert_eq!(cap, ("", Token::Capture (CaptureVariants::ManyNamed("name".to_string()))));
+        assert_eq!(cap, ("", Token::Capture (CaptureVariant::ManyNamed("name".to_string()))));
     }
 
 
@@ -403,7 +414,7 @@ mod tests {
             Token::Separator,
             Token::Match("hello".to_string()),
             Token::Separator,
-            Token::Capture(CaptureVariants::Named("there".to_string())),
+            Token::Capture(CaptureVariant::Named("there".to_string())),
         ]
         )
     }
@@ -415,9 +426,9 @@ mod tests {
             Token::Separator,
             Token::Match("hello".to_string()),
             Token::Separator,
-            Token::Capture(CaptureVariants::Named("there".to_string())),
+            Token::Capture(CaptureVariant::Named("there".to_string())),
             Token::Match("general".to_string()),
-            Token::Capture(CaptureVariants::Unnamed)
+            Token::Capture(CaptureVariant::Unnamed)
         ]
         )
     }

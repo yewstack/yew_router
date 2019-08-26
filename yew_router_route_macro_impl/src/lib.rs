@@ -1,6 +1,6 @@
 extern crate proc_macro;
 use proc_macro::{TokenStream};
-use yew_router_route_parser::{OptimizedToken, CaptureVariants};
+use yew_router_route_parser::{OptimizedToken, CaptureVariant};
 use quote::{quote, ToTokens};
 use syn::export::TokenStream2;
 use proc_macro_hack::proc_macro_hack;
@@ -135,7 +135,7 @@ pub fn route(input: TokenStream) -> TokenStream {
     let expanded = quote!{
         {
             use yew_router::path_matcher::PathMatcher as __PathMatcher;
-            use yew_router::path_matcher::CaptureVariants as __CaptureVariants;
+            use yew_router::path_matcher::CaptureVariant as __CaptureVariant;
             use yew_router::path_matcher::OptimizedToken as __OptimizedToken;
 
             #render_fn
@@ -192,12 +192,12 @@ impl ToTokens for ShadowCaptureVariant {
 
     fn to_tokens(&self, ts: &mut TokenStream2) {
         let t = match self {
-            ShadowCaptureVariant::Unnamed => TokenStream2::from(quote!{__CaptureVariants::Unnamed}),
-            ShadowCaptureVariant::ManyUnnamed => TokenStream2::from(quote!{__CaptureVariants::ManyUnnamed}),
-            ShadowCaptureVariant::NumberedUnnamed { sections } => TokenStream2::from(quote!{__CaptureVariants::NumberedUnnamed{#sections}}),
-            ShadowCaptureVariant::Named(name) => TokenStream2::from(quote!{__CaptureVariants::Named(#name.to_string())}),
-            ShadowCaptureVariant::ManyNamed(name) => TokenStream2::from(quote!{__CaptureVariants::ManyNamed(#name.to_string())}),
-            ShadowCaptureVariant::NumberedNamed { sections, name } => TokenStream2::from(quote!{__CaptureVariants::NumberedNamed{#sections, #name.to_string()}}),
+            ShadowCaptureVariant::Unnamed => TokenStream2::from(quote!{__CaptureVariant::Unnamed}),
+            ShadowCaptureVariant::ManyUnnamed => TokenStream2::from(quote!{__CaptureVariant::ManyUnnamed}),
+            ShadowCaptureVariant::NumberedUnnamed { sections } => TokenStream2::from(quote!{__CaptureVariant::NumberedUnnamed{#sections}}),
+            ShadowCaptureVariant::Named(name) => TokenStream2::from(quote!{__CaptureVariant::Named(#name.to_string())}),
+            ShadowCaptureVariant::ManyNamed(name) => TokenStream2::from(quote!{__CaptureVariant::ManyNamed(#name.to_string())}),
+            ShadowCaptureVariant::NumberedNamed { sections, name } => TokenStream2::from(quote!{__CaptureVariant::NumberedNamed{#sections, #name.to_string()}}),
         };
         ts.extend(t)
 
@@ -216,18 +216,18 @@ impl From<OptimizedToken> for ShadowOptimizedToken {
     }
 }
 
-impl From<CaptureVariants> for ShadowCaptureVariant {
+impl From<CaptureVariant> for ShadowCaptureVariant {
 
-    fn from(cv: CaptureVariants) -> Self {
-        use CaptureVariants as CV;
+    fn from(cv: CaptureVariant) -> Self {
+        use CaptureVariant as CV;
         use ShadowCaptureVariant as SCV;
         match cv {
             CV::Unnamed => SCV::Unnamed,
-            CaptureVariants::ManyUnnamed => SCV::ManyUnnamed,
-            CaptureVariants::NumberedUnnamed { sections } => SCV::NumberedUnnamed {sections},
-            CaptureVariants::Named(name) => SCV::Named(name),
-            CaptureVariants::ManyNamed(name) => SCV::ManyNamed(name),
-            CaptureVariants::NumberedNamed { sections, name } => SCV::NumberedNamed {sections, name}
+            CaptureVariant::ManyUnnamed => SCV::ManyUnnamed,
+            CaptureVariant::NumberedUnnamed { sections } => SCV::NumberedUnnamed {sections},
+            CaptureVariant::Named(name) => SCV::Named(name),
+            CaptureVariant::ManyNamed(name) => SCV::ManyNamed(name),
+            CaptureVariant::NumberedNamed { sections, name } => SCV::NumberedNamed {sections, name}
         }
 
     }

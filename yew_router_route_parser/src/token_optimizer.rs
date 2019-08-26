@@ -1,17 +1,23 @@
 use crate::new_parser::Token;
-use crate::new_parser::{CaptureVariants, CaptureOrMatch};
+use crate::new_parser::{CaptureVariant, CaptureOrMatch};
 
 
 #[derive(Debug, PartialEq)]
 pub enum OptimizedToken {
     /// Extraneous section-related tokens can be condensed into a match.
     Match(String),
-    Capture(CaptureVariants),
-//    QueryCapture {
-//        ident: String,
-//        value: CaptureVariants
-//    },
+    Capture(CaptureVariant),
     Optional(Vec<OptimizedToken>)
+}
+
+
+impl From<CaptureOrMatch> for OptimizedToken {
+    fn from(value: CaptureOrMatch) -> Self {
+        match value {
+            CaptureOrMatch::Match(m) => OptimizedToken::Match(m),
+            CaptureOrMatch::Capture(v) => OptimizedToken::Capture(v)
+        }
+    }
 }
 
 impl OptimizedToken {
@@ -26,6 +32,7 @@ impl OptimizedToken {
 }
 
 
+/// Tokens that can be coalesced to a OptimizedToken::Match are converted to strings here.
 fn token_to_string(token: &Token) -> &str {
     match token {
         Token::Separator => "/",
@@ -34,7 +41,6 @@ fn token_to_string(token: &Token) -> &str {
         Token::QuerySeparator => "&",
         Token::FragmentBegin => "#",
         Token::Capture {..} | Token::QueryCapture {..} | Token::Optional(_)=> {
-//            log::error!("Bout to crash!");
             unreachable!()
         }
     }
@@ -47,7 +53,9 @@ pub fn parse_str_and_optimize_tokens(i: &str) -> Result<Vec<OptimizedToken>, ()>
 }
 
 pub fn optimize_tokens(tokens: Vec<Token>) -> Vec<OptimizedToken> {
+    // The list of optimized tokens.
     let mut optimized = vec![];
+    // Stores consecutive Tokens that can be reduced down to a OptimizedToken::Match.
     let mut run = vec![];
 
     tokens.into_iter().for_each( |token| {
@@ -68,23 +76,18 @@ pub fn optimize_tokens(tokens: Vec<Token>) -> Vec<OptimizedToken> {
                     Token::Capture (variant) => {
                         optimized.push(OptimizedToken::Capture (variant))
                     },
-                    Token::QueryCapture {ident, value} => {
-                        let cap_or_match: OptimizedToken = match value {
-                            CaptureOrMatch::Match(m) => OptimizedToken::Match(m),
-                            CaptureOrMatch::Capture(v) => OptimizedToken::Capture(v)
-                        };
-                        optimized.extend(vec![OptimizedToken::Match(format!("{}=", ident)), cap_or_match])
-
-                    }//OptimizedToken::QueryCapture {ident, value},
+                    Token::QueryCapture {ident, capture_or_match} => {
+                        optimized.extend(vec![OptimizedToken::Match(format!("{}=", ident)), capture_or_match.into()])
+                    }
                     _ => {
                         log::error!("crashing time");
                         unreachable!()
                     }
                 };
-//                optimized.push(token);
             }
         }
     });
+    // empty the "run"
     if !run.is_empty() {
         let s: String = run.iter().map(token_to_string).collect();
         optimized.push(OptimizedToken::Match(s));

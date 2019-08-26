@@ -2,7 +2,7 @@
 //mod parser;
 pub mod new_parser;
 mod token_optimizer;
-pub use new_parser::CaptureVariants;
+pub use new_parser::CaptureVariant;
 pub use token_optimizer::{parse_str_and_optimize_tokens, optimize_tokens, OptimizedToken};
 
 
