@@ -108,16 +108,13 @@ pub fn route(input: TokenStream) -> TokenStream {
                     match ident_or_expr {
                         Either::Left(ident) => {
                             quote! {
-                                use yew_router::path_matcher::RenderFn as __RenderFn;
-                                let f: Box<dyn __RenderFn<_> > = Box::new(#ident);
+                                let f: Box<dyn yew_router::path_matcher::RenderFn<_>> = Box::new(#ident);
                                 let render_fn = Some(f);
                             }
                         },
                         Either::Right(expr) => {
                             quote! {
-
-                                use yew_router::path_matcher::RenderFn as __RenderFn;
-                                let f: Box<dyn __RenderFn<_>> = Box::new(#expr);
+                                let f: Box<dyn yew_router::path_matcher::RenderFn<_>> = Box::new(#expr);
                                 let render_fn = Some(f);
                             }
                         }

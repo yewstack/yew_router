@@ -1,6 +1,6 @@
-use crate::new_parser::Token;
-use crate::new_parser::{CaptureVariant, CaptureOrMatch};
-
+use crate::parser::Token;
+use crate::parser::{CaptureVariant, CaptureOrMatch};
+use crate::parser::parse;
 
 #[derive(Debug, PartialEq)]
 pub enum OptimizedToken {
@@ -48,7 +48,7 @@ fn token_to_string(token: &Token) -> &str {
 
 
 pub fn parse_str_and_optimize_tokens(i: &str) -> Result<Vec<OptimizedToken>, ()> {
-    let (_, tokens) = crate::new_parser::parse(i).map_err(|_| ())?;
+    let (_, tokens) = parse(i).map_err(|_| ())?;
     Ok(optimize_tokens(tokens))
 }
 

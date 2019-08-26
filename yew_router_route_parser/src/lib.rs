@@ -1,10 +1,10 @@
 
 //mod parser;
-pub mod new_parser;
 mod token_optimizer;
-pub use new_parser::CaptureVariant;
+pub use parser::CaptureVariant;
 pub use token_optimizer::{parse_str_and_optimize_tokens, optimize_tokens, OptimizedToken};
 
+pub mod parser;
 
 //#[cfg(feature = "path_matcher")]
 //mod path_matcher;

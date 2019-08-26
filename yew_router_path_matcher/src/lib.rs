@@ -6,7 +6,7 @@ mod match_paths;
 use nom::IResult;
 use std::collections::{HashMap, HashSet};
 use log::{trace};
-use yew_router_route_parser::{optimize_tokens, new_parser};
+use yew_router_route_parser::{optimize_tokens, parser};
 use yew::{Html, Component, Renderable};
 use std::marker::PhantomData;
 use std::fmt::{Debug, Formatter, Error};
@@ -64,7 +64,7 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
             CMP: Component + Renderable<CMP>,
             CMP::Properties: FromMatches
     {
-        let (_i, tokens) = new_parser::parse(i).map_err(|_| ())?;
+        let (_i, tokens) = parser::parse(i).map_err(|_| ())?;
         let pm = PathMatcher {
             tokens: optimize_tokens(tokens),
             render_fn: Some(Self::create_render_fn(cmp))
