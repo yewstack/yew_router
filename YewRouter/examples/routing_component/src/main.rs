@@ -1,7 +1,4 @@
-#![recursion_limit="512"]
-extern crate yew;
-extern crate yew_router;
-
+#![recursion_limit="1024"]
 mod b_component;
 mod a_component;
 mod c_component;
@@ -13,10 +10,9 @@ use yew_router::components::RouterLink;
 use yew_router::RouteInfo;
 use yew_router::route;
 
-
-use b_component::BModel;
-use a_component::AModel;
-use c_component::CModel;
+use crate::b_component::BModel;
+use crate::a_component::AModel;
+use crate::c_component::CModel;
 use std::collections::HashMap;
 
 

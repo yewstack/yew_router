@@ -18,6 +18,7 @@ pub enum Token {
     QuerySeparator, // &
     QueryCapture{ident: String, value: String}, // x=y
     FragmentBegin, // #
+    Optional(Box<Vec<Token>>)
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -275,6 +276,22 @@ fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
     }
 
     match_next_section_matchers(i, tokens)
+}
+
+
+
+fn ret_vec<F: Fn(&str) -> IResult<&str, Token>>(f: F) -> impl Fn(&str) -> IResult<&str, Vec<Token>> {
+    move |i: &str | {
+        (f)(i).map(|(i, t)| (i, vec![t]))
+    }
+}
+
+fn optional_section<F: Fn(&str) -> IResult<&str, Vec<Token>>>(f: F) -> impl Fn(&str) -> IResult<&str, Token> {
+    move |i: &str| -> IResult<&str, Token> {
+        let f = &f;
+        delimited(tag("("), f, tag(")"))(i)
+            .map(|(i,t)| (i, Token::Optional(Box::new(t))))
+    }
 }
 
 

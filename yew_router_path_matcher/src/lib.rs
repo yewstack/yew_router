@@ -1,19 +1,20 @@
 
 pub use yew_router_route_parser::{OptimizedToken, CaptureVariants, FromMatches, FromMatchesError};
 
+mod match_paths;
+
 use nom::IResult;
 use std::collections::{HashMap, HashSet};
-use nom::bytes::complete::{tag, take_until, is_not};
-use nom::sequence::{preceded, terminated};
-use nom::combinator::peek;
-use log::{trace, debug};
+use log::{trace};
 use yew_router_route_parser::{optimize_tokens, new_parser};
 use yew::{Html, Component, Renderable};
 use std::marker::PhantomData;
 use std::fmt::{Debug, Formatter, Error};
 use yew::virtual_dom::{VComp, VNode, vcomp::ScopeHolder};
 
-pub trait RenderFn<CTX: yew::Component>: Fn(&HashMap<&str, String>) -> Option<Html<CTX>> + objekt::Clone {}
+pub trait RenderFn<CTX: yew::Component>: Fn(&Matches) -> Option<Html<CTX>> + objekt::Clone {}
+
+pub type Matches<'a> = HashMap<&'a str, String>;
 
 impl <CTX, T> RenderFn<CTX> for T
     where
@@ -56,7 +57,6 @@ fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
 
 
 
-
 impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
 
     pub fn try_from<CMP>(i: &str, cmp: PhantomData<CMP>) -> Result<Self, ()>
@@ -89,169 +89,8 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
 
 
     // TODO, should find some way to support '/' characters in fragment. In the transform function, it could keep track of the seen hash begin yet, and transform captures based on that.
-    pub fn match_path<'a>(&self, mut i: &'a str) -> IResult<&'a str, HashMap<&str, String>> {
-        debug!("Attempting to match path: {:?} using: {:?}", i, self);
-
-        let mut iter = self.tokens
-            .iter()
-            .peekable();
-
-        let mut matches: HashMap<&str, String> = HashMap::new();
-
-        while let Some(token) = iter.next() {
-            i = match token {
-                OptimizedToken::Match(literal) => {
-                    trace!("Matching literal: {}", literal);
-                    tag(literal.as_str())(i)?.0
-                },
-
-                OptimizedToken::Capture (variant) => {
-                    match variant {
-                        CaptureVariants::Unnamed => {
-                            log::trace!("Matching Unnamed");
-                            if let Some(peaked_next_token) = iter.peek() {
-                                let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
-                                terminated(valid_capture_characters, peek(tag(delimiter)))(i)?.0
-                            } else {
-                                if i.len() == 0 {
-                                    i // Match even if nothing is left
-                                } else if i == "/" {
-                                    "" // Trailing '/' is allowed
-                                } else {
-                                    valid_capture_characters(i)?.0
-                                }
-                            }
-                        },
-                        CaptureVariants::ManyUnnamed => {
-                            trace!("Matching ManyUnnamed");
-                            if let Some(peaked_next_token) = iter.peek() {
-                                let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
-                                take_until(delimiter)(i)?.0
-                            } else {
-                                if i.len() == 0 {
-                                    i // Match even if nothing is left
-                                } else {
-                                    valid_many_capture_characters(i)?.0
-                                }
-                            }
-                        }
-                        CaptureVariants::NumberedUnnamed { sections } => {
-                            log::trace!("Matching NumberedUnnamed ({})", sections);
-                            let mut sections = *sections;
-                            if let Some(peaked_next_token) = iter.peek() {
-                                while sections > 0 {
-                                    if sections > 1 {
-                                        i = terminated(valid_capture_characters, tag("/"))(i)?.0;
-                                    } else {
-                                        // Don't consume the next character on the last section
-                                        let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("should be in sequence");
-                                        i = terminated(valid_capture_characters, peek(tag(delimiter)))(i)?.0;
-                                    }
-                                    sections -= 1;
-                                }
-                            } else {
-                                while sections > 0 {
-                                    if sections > 1 {
-                                        i = terminated(valid_capture_characters, tag("/"))(i)?.0;
-                                    } else {
-                                        // Don't consume the next character on the last section
-                                        i = valid_capture_characters(i)?.0;
-                                    }
-                                    sections -= 1;
-                                }
-                            }
-                            i
-                        }
-                        CaptureVariants::Named(capture_key) => {
-                            log::trace!("Matching Named ({})", capture_key);
-                            if let Some(peaked_next_token) = iter.peek() {
-                                let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("should be in sequence");
-                                let (ii, captured) = terminated(valid_capture_characters, peek(tag(delimiter)))(i)?;
-                                matches.insert(&capture_key, captured.to_string());
-                                ii
-                            } else {
-                                let (ii, captured) = valid_capture_characters(i)?;
-                                matches.insert(&capture_key, captured.to_string());
-                                ii
-                            }
-                        }
-                        CaptureVariants::ManyNamed(capture_key) => {
-                            log::trace!("Matching NumberedUnnamed ({})", capture_key);
-                            if let Some(peaked_next_token) = iter.peek() {
-                                let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
-                                let (ii, c) = take_until(delimiter)(i)?;
-                                matches.insert(&capture_key, c.to_string());
-                                ii
-                            } else {
-                                if i.len() == 0 {
-                                    matches.insert(&capture_key, "".to_string()); // Is this a thing I want?
-                                    i // Match even if nothing is left
-                                } else {
-                                    let (ii, c) = valid_many_capture_characters(i)?;
-                                    matches.insert(&capture_key, c.to_string());
-                                    ii
-                                }
-                            }
-                        }
-                        CaptureVariants::NumberedNamed { sections, name } => {
-                            log::trace!("Matching NumberedNamed ({}, {})", sections, name);
-                            let mut sections = *sections;
-                            let mut captured = "".to_string();
-                            if let Some(peaked_next_token) = iter.peek() {
-                                while sections > 0 {
-                                    if sections > 1 {
-                                        let (ii, c) = terminated(valid_capture_characters, tag("/"))(i)?;
-                                        i = ii;
-                                        captured += c;
-                                        captured += "/";
-                                    } else {
-                                        // Don't consume the next character on the last section
-                                        let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("should be in sequence");
-                                        let (ii, c) = terminated(valid_capture_characters, peek(tag(delimiter)))(i)?;
-                                        i = ii;
-                                        captured += c;
-                                    }
-                                    sections -= 1;
-                                    println!("{}", i);
-                                }
-                            } else {
-                                while sections > 0 {
-                                    if sections > 1 {
-                                        let (ii, c) = terminated(valid_capture_characters, tag("/"))(i)?;
-                                        i = ii;
-                                        captured += c;
-                                    } else {
-                                        // Don't consume the next character on the last section
-                                        let (ii, c) = valid_capture_characters(i)?;
-                                        i = ii;
-                                        captured += c;
-                                    }
-                                    sections -= 1;
-                                    println!("{}", i);
-                                }
-                            }
-                            matches.insert(&name, captured);
-                            i
-                        }
-                    }
-                },
-                OptimizedToken::QueryCapture { ident,  value: capture_key} => {
-                    if let Some(peaked_next_token) = iter.peek() {
-                        let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("should be in sequence");
-                        let (ii, captured) = preceded(tag(format!("{}=", ident).as_str()), take_until(delimiter))(i)?; // TODO this should also probably prevent invalid characters
-                        matches.insert(&capture_key, captured.to_string());
-                        ii
-                    } else {
-                        let (ii, captured) = preceded(tag(format!("{}=", ident).as_str()), valid_capture_characters_in_query)(i)?;
-                        matches.insert(&capture_key, captured.to_string());
-                        ii
-                    }
-                },
-            };
-        }
-        debug!("Path Matched");
-
-        Ok((i, matches))
+    pub fn match_path<'a>(&self, i: &'a str) -> IResult<&'a str, Matches> {
+        match_paths::match_paths(&self.tokens, i)
     }
 
     /// Gets a set of all names that will be captured.
@@ -259,6 +98,7 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
     pub fn capture_names(&self) -> HashSet<&str> {
         self.tokens.iter().fold(HashSet::new(), |mut acc, token| {
             match token {
+                OptimizedToken::Optional(_) => unimplemented!("TODO need ability to recurse"),
                 OptimizedToken::Match(_) => {}
                 OptimizedToken::Capture(variant)  => {
                     match variant {
@@ -272,26 +112,11 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
             }
             acc
         })
-
     }
 }
 
 
-/// Characters that don't interfere with parsing logic for capturing characters
-fn valid_capture_characters(i: &str) -> IResult<&str, &str> {
-    const INVALID_CHARACTERS: &str = " */#&?{}=";
-    is_not(INVALID_CHARACTERS)(i)
-}
 
-fn valid_many_capture_characters(i: &str) -> IResult<&str, &str> {
-    const INVALID_CHARACTERS: &str = " #&?{}=";
-    is_not(INVALID_CHARACTERS)(i)
-}
-
-fn valid_capture_characters_in_query(i: &str) -> IResult<&str, &str> {
-    const INVALID_CHARACTERS: &str = " *#&?|{}=";
-    is_not(INVALID_CHARACTERS)(i)
-}
 
 
 
@@ -307,10 +132,10 @@ mod tests {
     impl Component for DummyC {
         type Message = ();
         type Properties = ();
-        fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        fn create(_props: Self::Properties, _link: ComponentLink<Self>) -> Self {
             unimplemented!()
         }
-        fn update(&mut self, msg: Self::Message) -> bool {
+        fn update(&mut self, _msg: Self::Message) -> bool {
             unimplemented!()
         }
     }
@@ -358,8 +183,8 @@ mod tests {
     fn simple_capture_with_no_trailing_separator() {
         let tokens = vec![Token::Separator, Token::Capture(CaptureVariants::Named("hello".to_string()))];
         let path_matcher = PathMatcher::<DummyC>::from(tokens);
-        let (_, dict) = path_matcher.match_path("/general_kenobi").expect("should parse");
-        assert_eq!(dict["hello"], "general_kenobi".to_string())
+        let (_, matches) = path_matcher.match_path("/general_kenobi").expect("should parse");
+        assert_eq!(matches["hello"], "general_kenobi".to_string())
     }
 
 
@@ -367,21 +192,21 @@ mod tests {
     fn match_with_trailing_match_any() {
         let tokens = vec![Token::Separator, Token::Match("a".to_string()), Token::Separator, Token::Capture(CaptureVariants::Unnamed)];
         let path_matcher = PathMatcher::<DummyC>::from(tokens);
-        let (_, dict) = path_matcher.match_path("/a/").expect("should parse");
+        let (_, _matches) = path_matcher.match_path("/a/").expect("should parse");
     }
 
     #[test]
     fn match_n() {
         let tokens = vec![Token::Separator,  Token::Capture(CaptureVariants::NumberedUnnamed {sections: 3}), Token::Separator, Token::Match("a".to_string())];
         let path_matcher = PathMatcher::<DummyC>::from(tokens);
-        let (_, dict) = path_matcher.match_path("/garbage1/garbage2/garbage3/a").expect("should parse");
+        let (_, _matches) = path_matcher.match_path("/garbage1/garbage2/garbage3/a").expect("should parse");
     }
 
     #[test]
     fn match_n_no_overrun() {
         let tokens = vec![Token::Separator,  Token::Capture(CaptureVariants::NumberedUnnamed {sections: 3})];
         let path_matcher = PathMatcher::<DummyC>::from(tokens);
-        let (s, dict) = path_matcher.match_path("/garbage1/garbage2/garbage3").expect("should parse");
+        let (s, _matches) = path_matcher.match_path("/garbage1/garbage2/garbage3").expect("should parse");
         assert_eq!(s.len(), 0)
     }
 
@@ -399,7 +224,7 @@ mod tests {
     fn match_many() {
         let tokens = vec![Token::Separator, Token::Capture(CaptureVariants::ManyUnnamed), Token::Separator, Token::Match("a".to_string())];
         let path_matcher = PathMatcher::<DummyC>::from(tokens);
-        let (_, matches) = path_matcher.match_path("/garbage1/garbage2/garbage3/a").expect("should parse");
+        let (_, _matches) = path_matcher.match_path("/garbage1/garbage2/garbage3/a").expect("should parse");
     }
 
     #[test]

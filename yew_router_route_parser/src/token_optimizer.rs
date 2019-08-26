@@ -10,7 +10,8 @@ pub enum OptimizedToken {
     QueryCapture {
         ident: String,
         value: String
-    }
+    },
+    Optional(Vec<OptimizedToken>)
 }
 
 impl OptimizedToken {
@@ -32,7 +33,7 @@ fn token_to_string(token: &Token) -> &str {
         Token::QueryBegin => "?",
         Token::QuerySeparator => "&",
         Token::FragmentBegin => "#",
-        Token::Capture {..} | Token::QueryCapture {..} => {
+        Token::Capture {..} | Token::QueryCapture {..} | Token::Optional(_)=> {
 //            log::error!("Bout to crash!");
             unreachable!()
         }
@@ -54,6 +55,9 @@ pub fn optimize_tokens(tokens: Vec<Token>) -> Vec<OptimizedToken> {
             Token::Separator | Token::Match(_) | Token::QueryBegin | Token::QuerySeparator | Token::FragmentBegin => {
                 run.push(token)
             }
+            Token::Optional(tokens) => {
+                optimized.push(OptimizedToken::Optional(optimize_tokens(*tokens.clone()))) // TODO, don't know if this is technically correct.
+            },
             Token::Capture (_) | Token:: QueryCapture {..} => {
                 if !run.is_empty() {
                     let s: String = run.iter().map(token_to_string).collect();

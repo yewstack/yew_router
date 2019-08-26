@@ -1,7 +1,7 @@
 
 use yew::prelude::*;
 use yew_router::components::router_button::RouterButton;
-use c_component::CModel;
+use crate::c_component::CModel;
 use yew::Properties;
 use yew_router::route_info::RouteInfo;
 use yew_router::{FromMatches};

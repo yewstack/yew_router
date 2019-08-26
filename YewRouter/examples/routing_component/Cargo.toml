@@ -3,6 +3,8 @@ name = "routing_component"
 version = "0.1.0"
 authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 
+edition="2018"
+
 [dependencies]
 #yew = { git = "https://github.com/yewstack/yew", branch = "master" }
 yew = { git = "https://github.com/jstarry/yew", branch = "component-children" }

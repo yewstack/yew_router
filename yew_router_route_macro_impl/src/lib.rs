@@ -168,6 +168,11 @@ impl ToTokens for ShadowOptimizedToken {
                     __OptimizedToken::QueryCapture{ident: #ident.to_string(), value: #value.to_string()}
                 })
             }
+            SOT::Optional(optional) => {
+                TokenStream2::from(quote!{
+                    __OptimizedToken::Optional(vec![#(#optional),*])
+                })
+            }
         };
         ts.extend(t)
     }
@@ -181,7 +186,8 @@ enum ShadowOptimizedToken {
     QueryCapture {
         ident: String,
         value: String
-    }
+    },
+    Optional(Vec<ShadowOptimizedToken>)
 }
 
 enum ShadowCaptureVariant {
@@ -216,7 +222,8 @@ impl From<OptimizedToken> for ShadowOptimizedToken {
         match ot {
             OT::Match(s) => SOT::Match(s),
             OT::Capture(variant) => SOT::Capture(variant.into()),
-            OT::QueryCapture { ident, value } => SOT::QueryCapture {ident, value}
+            OT::QueryCapture { ident, value } => SOT::QueryCapture {ident, value},
+            OptimizedToken::Optional(optional) => SOT::Optional(optional.into_iter().map(SOT::from).collect())
         }
     }
 }
