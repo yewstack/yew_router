@@ -69,3 +69,65 @@ pub fn capture_or_match(i: &str) -> IResult<&str, CaptureOrMatch> {
     };
     Ok((i, token))
 }
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+
+
+    #[test]
+    fn capture_named_test() {
+        let cap = capture("{hellothere}").unwrap();
+        assert_eq!(cap, ("", Token::Capture (CaptureVariant::Named("hellothere".to_string()))));
+    }
+
+    #[test]
+    fn capture_many_unnamed_test() {
+        let cap = capture("{*}").unwrap();
+        assert_eq!(cap, ("", Token::Capture (CaptureVariant::ManyUnnamed)));
+    }
+
+    #[test]
+    fn capture_unnamed_test() {
+        let cap = capture("{}").unwrap();
+        assert_eq!(cap, ("", Token::Capture (CaptureVariant::Unnamed)));
+    }
+
+    #[test]
+    fn capture_numbered_unnamed_test() {
+        let cap = capture("{5}").unwrap();
+        assert_eq!(cap, ("", Token::Capture (CaptureVariant::NumberedUnnamed {sections: 5})));
+    }
+
+    #[test]
+    fn capture_numbered_named_test() {
+        let cap = capture("{5:name}").unwrap();
+        assert_eq!(cap, ("", Token::Capture (CaptureVariant::NumberedNamed{sections: 5, name: "name".to_string()})));
+    }
+
+
+    #[test]
+    fn capture_many_named() {
+        let cap = capture("{*:name}").unwrap();
+        assert_eq!(cap, ("", Token::Capture (CaptureVariant::ManyNamed("name".to_string()))));
+    }
+
+    #[test]
+    fn rejects_invalid_ident() {
+        valid_ident_characters("+-Hello").expect_err("Should reject at +");
+    }
+
+    #[test]
+    fn accepts_valid_ident() {
+        valid_ident_characters("Hello").expect("Should accept");
+    }
+
+    #[test]
+    fn capture_consumes() {
+        capture("{aoeu").expect_err("Should not complete");
+    }
+
+
+}

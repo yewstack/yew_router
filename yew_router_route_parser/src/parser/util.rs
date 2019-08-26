@@ -27,6 +27,7 @@ pub fn optional_matches_v<'a, F>(f: F) -> impl Fn(&'a str) -> IResult<&'a str, V
     ret_vec(optional_matches(f))
 }
 
+#[allow(dead_code)]
 pub fn optional_match<'a, F>(f: F) -> impl Fn(&'a str) -> IResult<&'a str, Token>
     where
         F: Fn(&'a str) -> IResult<&'a str, Token>

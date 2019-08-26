@@ -4,7 +4,7 @@ use nom::sequence::{tuple, separated_pair};
 use nom::multi::many0;
 use nom::combinator::map;
 use nom::bytes::complete::tag;
-use crate::parser::core::{capture_or_match, match_specific_token, valid_ident_characters};
+use crate::parser::core::{capture_or_match, valid_ident_characters};
 
 
 fn query_begin_token(i: &str) -> IResult<&str, Token> {
