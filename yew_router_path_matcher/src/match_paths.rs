@@ -284,4 +284,26 @@ mod integration_test {
         let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path?query={capture}#test").expect("Should parse");
         match_paths(&x, "/a/path?query=thing#test").expect("should match");
     }
+
+
+    #[test]
+    fn match_fragment_optional() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("(#test)").expect("Should parse");
+        match_paths(&x, "#test").expect("should match");
+        match_paths(&x, "").expect("should match");
+    }
+    #[test]
+    fn match_fragment_pound_optional() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("#(test)").expect("Should parse");
+        match_paths(&x, "#test").expect("should match");
+        match_paths(&x, "#").expect("should match");
+    }
+
+    #[test]
+    fn match_fragment_optional_with_inner_optional_item() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("(#(test))").expect("Should parse");
+        match_paths(&x, "#test").expect("should match");
+        match_paths(&x, "").expect("should match");
+        match_paths(&x, "#").expect("should match");
+    }
 }

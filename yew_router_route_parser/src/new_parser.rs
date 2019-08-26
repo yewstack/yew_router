@@ -61,7 +61,7 @@ pub fn parse(i: &str) -> IResult<&str, Vec<Token>> {
             (
                 opt(path_parser),
                 opt(query_parser),
-                opt(framgent_parser)
+                opt(fragment_parser)
             )
         )),
         |(path, query, fragment): (Option<Vec<Token>>, Option<Vec<Token>>, Option<Vec<Token>>)| {
@@ -175,7 +175,8 @@ fn query_parser(i: &str) -> IResult<&str, Vec<Token>> {
     )(i)
 }
 
-fn framgent_parser(i: &str) -> IResult<&str, Vec<Token>> {
+/// #item
+fn simple_fragment_parser(i: &str) -> IResult<&str, Vec<Token>> {
     let (i, begin) = begin_fragment_token(i)?;
     let (i, mut section) = section_matchers(i)?;
     let mut v = vec![begin];
@@ -183,11 +184,33 @@ fn framgent_parser(i: &str) -> IResult<&str, Vec<Token>> {
     Ok((i, v))
 }
 
+/// #(item)
+fn fragment_parser_with_optional_item(i: &str) -> IResult<&str, Vec<Token>> {
+    let (i, begin) = begin_fragment_token(i)?;
+    let (i, optional) = optional_section(section_matchers)(i)?;
+    let v = vec![begin, optional];
+    Ok((i, v))
+}
+
+fn fragment_parser(i: &str) -> IResult<&str, Vec<Token>> {
+    fn inner_fragment_parser(i: &str) -> IResult<&str, Vec<Token>> {
+        alt((
+            simple_fragment_parser, // #item
+            fragment_parser_with_optional_item, // #(item)
+        ))(i)
+    }
+    alt((
+        inner_fragment_parser, // #item | #(item)
+        ret_vec(optional_section(inner_fragment_parser)) // (#(item)) | (#item)
+    ))(i)
+
+}
+
 
 /// Captures a string up to the point where a character not possible to be present in Rust's identifier is encountered.
 /// It prevents the first character from being a digit.
 pub fn valid_ident_characters(i: &str) -> IResult<&str, &str> {
-    const INVALID_CHARACTERS: &str = " -*/+#?&^@~`;,.|\\{}[]=\t\n";
+    const INVALID_CHARACTERS: &str = " -*/+#?&^@~`;,.|\\{}[]()=\t\n";
     let (i, next) = peek(take(1usize))(i)?; // Look at the first character
     if is_digit(next.bytes().next().unwrap()) {
         return Err(nom::Err::Error((i, ErrorKind::Digit))) // Digits not allowed
@@ -296,8 +319,6 @@ fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
                 } else {
                     Ok((i,tokens))
                 }
-
-
             },
             _ => unreachable!()
         }
@@ -308,13 +329,16 @@ fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
 
 
 
-fn ret_vec<F: Fn(&str) -> IResult<&str, Token>>(f: F) -> impl Fn(&str) -> IResult<&str, Vec<Token>> {
+fn ret_vec<'a, >(f: impl Fn(&'a str) -> IResult<&'a str, Token>) -> impl Fn(&'a str) -> IResult<&'a str, Vec<Token>> {
     move |i: &str | {
         (f)(i).map(|(i, t)| (i, vec![t]))
     }
 }
 
-fn optional_section<F: Fn(&str) -> IResult<&str, Vec<Token>>>(f: F) -> impl Fn(&str) -> IResult<&str, Token> {
+fn optional_section<'a, F>(f: F) -> impl Fn(&'a str) -> IResult<&'a str, Token>
+where
+    F: Fn(&'a str) -> IResult<&'a str, Vec<Token>>
+{
     move |i: &str| -> IResult<&str, Token> {
         let f = &f;
         delimited(tag("("), f, tag(")"))(i)
