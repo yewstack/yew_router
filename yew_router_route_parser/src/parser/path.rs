@@ -1,15 +1,15 @@
 use nom::IResult;
 use nom::branch::alt;
 use nom::sequence::tuple;
-use crate::parser::Token;
+use crate::parser::RouteParserToken;
 use nom::combinator::{map, opt};
 use nom::multi::many1;
 use nom::bytes::complete::tag;
 use crate::parser::core::{capture, match_specific};
 
 /// Handles either a leading '/' or  a '/thing'
-pub fn path_parser(i: &str) -> IResult<&str, Vec<Token>> {
-    fn inner_path_parser(i: &str) -> IResult<&str, (Token, Vec<Token>)> {
+pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
+    fn inner_path_parser(i: &str) -> IResult<&str, (RouteParserToken, Vec<RouteParserToken>)> {
         tuple(
             (
                 separator_token,
@@ -20,7 +20,7 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<Token>> {
 
     let many_inner_paths = map(
         many1(inner_path_parser),
-        |tokens: Vec<(Token, Vec<Token>)>| {
+        |tokens: Vec<(RouteParserToken, Vec<RouteParserToken>)>| {
             let new_capacity = tokens.capacity() * 2;
             tokens.into_iter().fold(Vec::with_capacity(new_capacity), |mut accumulator, mut element| {
                 accumulator.push(element.0);
@@ -49,27 +49,27 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<Token>> {
 }
 
 
-fn separator_token(i: &str) -> IResult<&str, Token> {
+fn separator_token(i: &str) -> IResult<&str, RouteParserToken> {
     map(
         tag("/"),
-        |_| Token::Separator
+        |_| RouteParserToken::Separator
     )(i)
 }
 
 
-pub fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
+pub fn section_matchers(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
 
-    let (i, token): (&str, Token) = alt((match_specific, capture))(i)?;
+    let (i, token): (&str, RouteParserToken) = alt((match_specific, capture))(i)?;
     let tokens = vec![token];
 
     /// You can't have two matching sections in a row, because there is nothing to indicate when
     /// one ends and the other begins.
     /// This function collects possible section matchers and prevents them auto-glob matchers
     /// from residing next to each other.
-    fn match_next_section_matchers(i: &str, mut tokens: Vec<Token>) -> IResult<&str, Vec<Token>> {
+    fn match_next_section_matchers(i: &str, mut tokens: Vec<RouteParserToken>) -> IResult<&str, Vec<RouteParserToken>> {
         let token = tokens.last().expect("Must be at least one token.");
         match token {
-            Token::Match(_) => {
+            RouteParserToken::Match(_) => {
                 let (i, t) = opt( capture)(i)?;
                 if let Some(new_t) = t {
                     tokens.push(new_t);
@@ -78,7 +78,7 @@ pub fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
                     Ok((i,tokens))
                 }
             },
-            Token::Capture(_) => {
+            RouteParserToken::Capture(_) => {
                 let (i, t) = opt(match_specific)(i)?;
                 if let Some(new_t) = t {
                     tokens.push(new_t);
@@ -103,7 +103,7 @@ mod test {
     fn path_must_start_with_separator() {
         path_parser("hello").expect_err("Should reject at absence of /");
         let parsed = super::super::parse("/hello").expect("should parse");
-        assert_eq!(parsed.1, vec![Token::Separator, Token::Match("hello".to_string())])
+        assert_eq!(parsed.1, vec![RouteParserToken::Separator, RouteParserToken::Match("hello".to_string())])
     }
 
     #[test]

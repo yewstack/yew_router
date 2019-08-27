@@ -10,8 +10,10 @@ mod path;
 mod query;
 mod fragment;
 
+/// Tokens generated from parsing a path matcher string.
+/// They will be optimized to another token type used to match URLs.
 #[derive(Debug, Clone, PartialEq)]
-pub enum Token {
+pub enum RouteParserToken {
     Separator,
     Match(String), // Any string
     Capture(CaptureVariant), // {_}
@@ -19,7 +21,7 @@ pub enum Token {
     QuerySeparator, // &
     QueryCapture{ident: String, capture_or_match: CaptureOrMatch}, // x=y
     FragmentBegin, // #
-    Optional(Vec<Token>)
+    Optional(Vec<RouteParserToken>)
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -55,7 +57,7 @@ impl ParseError<&str> for Error {
     }
 }
 
-pub fn parse(i: &str) -> IResult<&str, Vec<Token>> {
+pub fn parse(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
     alt((
         map(
             all_consuming(tuple(
@@ -65,7 +67,7 @@ pub fn parse(i: &str) -> IResult<&str, Vec<Token>> {
                     opt(fragment::fragment_parser)
                 )
             )),
-            |(path, query, fragment): (Option<Vec<Token>>, Option<Vec<Token>>, Option<Vec<Token>>)| {
+            |(path, query, fragment): (Option<Vec<RouteParserToken>>, Option<Vec<RouteParserToken>>, Option<Vec<RouteParserToken>>)| {
                 let mut tokens = Vec::new();
                 if let Some(mut t) = path {
                     tokens.append(&mut t)
@@ -90,20 +92,17 @@ mod tests {
     use super::*;
 
 
-//    #[test]
-//    fn match_any() {
-//        match_any_token("*").expect("Should match");
-//    }
+
 
 
 
     #[test]
     fn parse_can_handle_multiple_literals() {
         let parsed = parse("/hello/there").expect("should parse");
-        assert_eq!(parsed.1, vec![Token::Separator,
-                                  Token::Match("hello".to_string()),
-                                  Token::Separator,
-                                  Token::Match("there".to_string())]
+        assert_eq!(parsed.1, vec![RouteParserToken::Separator,
+                                  RouteParserToken::Match("hello".to_string()),
+                                  RouteParserToken::Separator,
+                                  RouteParserToken::Match("there".to_string())]
         );
     }
 
@@ -112,9 +111,9 @@ mod tests {
     #[test]
     fn parse_can_handle_trailing_path_separator() {
         let parsed = parse("/hello/").expect("should parse");
-        assert_eq!(parsed.1, vec![Token::Separator,
-                                  Token::Match("hello".to_string()),
-                                  Token::Separator]
+        assert_eq!(parsed.1, vec![RouteParserToken::Separator,
+                                  RouteParserToken::Match("hello".to_string()),
+                                  RouteParserToken::Separator]
         );
     }
 
@@ -122,10 +121,10 @@ mod tests {
     fn parse_can_capture_section() {
         let parsed = parse("/hello/{there}").expect("should parse");
         assert_eq!(parsed.1, vec![
-            Token::Separator,
-            Token::Match("hello".to_string()),
-            Token::Separator,
-            Token::Capture(CaptureVariant::Named("there".to_string())),
+            RouteParserToken::Separator,
+            RouteParserToken::Match("hello".to_string()),
+            RouteParserToken::Separator,
+            RouteParserToken::Capture(CaptureVariant::Named("there".to_string())),
         ]
         )
     }
@@ -134,12 +133,12 @@ mod tests {
     fn parse_can_handle_multiple_matches_per_section() {
         let parsed = parse("/hello/{there}general{}").expect("should parse");
         assert_eq!(parsed.1, vec![
-            Token::Separator,
-            Token::Match("hello".to_string()),
-            Token::Separator,
-            Token::Capture(CaptureVariant::Named("there".to_string())),
-            Token::Match("general".to_string()),
-            Token::Capture(CaptureVariant::Unnamed)
+            RouteParserToken::Separator,
+            RouteParserToken::Match("hello".to_string()),
+            RouteParserToken::Separator,
+            RouteParserToken::Capture(CaptureVariant::Named("there".to_string())),
+            RouteParserToken::Match("general".to_string()),
+            RouteParserToken::Capture(CaptureVariant::Unnamed)
         ]
         )
     }

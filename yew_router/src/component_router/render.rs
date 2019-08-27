@@ -55,6 +55,10 @@ pub fn render_s<T: for<'de> YewRouterState<'de>>(render: impl RenderFn<Router<T>
 
 
 
+/// A wrapper around a `RenderFn`.
+/// This render function determines if a given route will succeed,
+/// even after it has successfully matched a URL,
+/// as well as controlling what will be rendered if it routes successfully.
 pub struct Render<T: for<'de> YewRouterState<'de>>(pub(crate) Option<Box<dyn RenderFn<Router<T>>>>);
 
 impl <T: for<'de> YewRouterState<'de>> Default for Render<T> {

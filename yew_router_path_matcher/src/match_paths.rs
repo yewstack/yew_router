@@ -1,15 +1,15 @@
-use yew_router_route_parser::{CaptureVariant, OptimizedToken};
+use yew_router_route_parser::{CaptureVariant, MatcherToken};
 use nom::IResult;
 use crate::Matches;
 use nom::bytes::complete::{tag, take_until, is_not};
-use nom::sequence::{terminated, preceded};
+use nom::sequence::{terminated};
 use nom::combinator::{peek, opt};
 use log::{trace, debug};
 use std::iter::Peekable;
 use std::slice::Iter;
 use nom::error::ErrorKind;
 
-pub(super) fn match_paths<'a, 'b>(tokens: &'b [OptimizedToken], mut i: &'a str) -> IResult<&'a str, Matches<'b>> {
+pub(super) fn match_paths<'a, 'b>(tokens: &'b [MatcherToken], mut i: &'a str) -> IResult<&'a str, Matches<'b>> {
     trace!("Attempting to match path: {:?} using: {:?}", i, tokens);
 
     let mut iter = tokens
@@ -20,11 +20,11 @@ pub(super) fn match_paths<'a, 'b>(tokens: &'b [OptimizedToken], mut i: &'a str) 
 
     while let Some(token) = iter.next() {
         i = match token {
-            OptimizedToken::Match(literal) => {
+            MatcherToken::Match(literal) => {
                 trace!("Matching literal: {}", literal);
                 tag(literal.as_str())(i)?.0
             },
-            OptimizedToken::Optional(inner_tokens) => {
+            MatcherToken::Optional(inner_tokens) => {
                 match opt(|i|{
                     match_paths(&inner_tokens, i)
                 })(i) {
@@ -38,7 +38,7 @@ pub(super) fn match_paths<'a, 'b>(tokens: &'b [OptimizedToken], mut i: &'a str) 
                     _ => i // Do nothing if this fails
                 }
             }
-            OptimizedToken::Capture (variant) => {
+            MatcherToken::Capture (variant) => {
                 match variant {
                     CaptureVariant::Unnamed => capture_unnamed(i, &mut iter)?,
                     CaptureVariant::ManyUnnamed => capture_many_unnamed(i, &mut iter)?,
@@ -60,7 +60,7 @@ pub(super) fn match_paths<'a, 'b>(tokens: &'b [OptimizedToken], mut i: &'a str) 
 ///
 /// It will capture characters until a separator or other invalid character is encountered
 /// and the next string of characters is confirmed to be the next literal.
-fn capture_unnamed<'a>(i: &'a str, iter: &mut Peekable<Iter<OptimizedToken>>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
+fn capture_unnamed<'a>(i: &'a str, iter: &mut Peekable<Iter<MatcherToken>>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     log::trace!("Matching Unnamed");
     let ii = if let Some(peaked_next_token) = iter.peek() {
         let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
@@ -77,7 +77,7 @@ fn capture_unnamed<'a>(i: &'a str, iter: &mut Peekable<Iter<OptimizedToken>>) ->
     Ok(ii)
 }
 
-fn capture_many_unnamed<'a>(i: &'a str, iter: &mut Peekable<Iter<OptimizedToken>>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
+fn capture_many_unnamed<'a>(i: &'a str, iter: &mut Peekable<Iter<MatcherToken>>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     trace!("Matching ManyUnnamed");
     let ii = if let Some(peaked_next_token) = iter.peek() {
         let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
@@ -92,7 +92,7 @@ fn capture_many_unnamed<'a>(i: &'a str, iter: &mut Peekable<Iter<OptimizedToken>
     Ok(ii)
 }
 
-fn capture_numbered_unnamed<'a>(mut i: &'a str, iter: &mut Peekable<Iter<OptimizedToken>>, mut sections: usize) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
+fn capture_numbered_unnamed<'a>(mut i: &'a str, iter: &mut Peekable<Iter<MatcherToken>>, mut sections: usize) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     log::trace!("Matching NumberedUnnamed ({})", sections);
     if let Some(peaked_next_token) = iter.peek() {
         while sections > 0 {
@@ -119,7 +119,7 @@ fn capture_numbered_unnamed<'a>(mut i: &'a str, iter: &mut Peekable<Iter<Optimiz
     Ok(i)
 }
 
-fn capture_named<'a, 'b>(i: &'a str, iter: &mut Peekable<Iter<OptimizedToken>>, capture_key: &'b str, matches: &mut Matches<'b>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
+fn capture_named<'a, 'b>(i: &'a str, iter: &mut Peekable<Iter<MatcherToken>>, capture_key: &'b str, matches: &mut Matches<'b>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     log::trace!("Matching Named ({})", capture_key);
     if let Some(peaked_next_token) = iter.peek() {
         let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("should be in sequence");
@@ -134,7 +134,7 @@ fn capture_named<'a, 'b>(i: &'a str, iter: &mut Peekable<Iter<OptimizedToken>>, 
 }
 
 
-fn capture_many_named<'a, 'b>(i: &'a str, iter: &mut Peekable<Iter<OptimizedToken>>, capture_key: &'b str, matches: &mut Matches<'b>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
+fn capture_many_named<'a, 'b>(i: &'a str, iter: &mut Peekable<Iter<MatcherToken>>, capture_key: &'b str, matches: &mut Matches<'b>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     log::trace!("Matching NumberedUnnamed ({})", capture_key);
     if let Some(peaked_next_token) = iter.peek() {
         let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
@@ -153,7 +153,7 @@ fn capture_many_named<'a, 'b>(i: &'a str, iter: &mut Peekable<Iter<OptimizedToke
     }
 }
 
-fn capture_numbered_named<'a, 'b>(mut i: &'a str, iter: &mut Peekable<Iter<OptimizedToken>>, name: &'b str, mut sections: usize, matches: &mut Matches<'b>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
+fn capture_numbered_named<'a, 'b>(mut i: &'a str, iter: &mut Peekable<Iter<MatcherToken>>, name: &'b str, mut sections: usize, matches: &mut Matches<'b>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     log::trace!("Matching NumberedNamed ({}, {})", sections, name);
     let mut captured = "".to_string();
     if let Some(peaked_next_token) = iter.peek() {

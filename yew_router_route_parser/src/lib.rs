@@ -2,7 +2,7 @@
 //mod parser;
 mod token_optimizer;
 pub use parser::CaptureVariant;
-pub use token_optimizer::{parse_str_and_optimize_tokens, optimize_tokens, OptimizedToken};
+pub use token_optimizer::{parse_str_and_optimize_tokens, optimize_tokens, MatcherToken};
 
 pub mod parser;
 
@@ -42,6 +42,17 @@ impl Error for FromMatchesError {
 //    }
 }
 
+/// Used for constructing `Properties` from URL matches.
+///
+/// # Note
+/// FromMatches, as derived, is pretty dumb and unreliable.
+/// It is only suggested to derive FromMatches if the types in your struct are reliably convertible from `&str`.
+/// In practice, this means that `String`, and the numeric types are safe bets.
+///
+/// The derive relies on [FromStr](https://doc.rust-lang.org/std/str/trait.FromStr.html) for converting types.
+///
+/// # Suggestions
+/// * If you have one or more optional sections in your path matcher, you are best off implementing this yourself.
 pub trait FromMatches: Sized {
     /// Produces the props from the hashmap.
     /// It is expected that `TryFrom<String>` be implemented on all of the types contained within the props.

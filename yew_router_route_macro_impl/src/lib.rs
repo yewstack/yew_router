@@ -1,17 +1,13 @@
 extern crate proc_macro;
 use proc_macro::{TokenStream};
-use yew_router_route_parser::{OptimizedToken, CaptureVariant};
+use yew_router_route_parser::{MatcherToken, CaptureVariant};
 use quote::{quote, ToTokens};
 use syn::export::TokenStream2;
 use proc_macro_hack::proc_macro_hack;
-use syn::{Error, Type};
-
+use syn::{Error};
 use syn::parse::{Parse, ParseBuffer};
 use syn::parse_macro_input;
-use syn::Token;
-use syn::Expr;
-use syn::Ident;
-use syn::spanned::Spanned;
+//use syn::spanned::Spanned;
 
 struct S {
     /// The routing string
@@ -57,16 +53,16 @@ impl ToTokens for ShadowOptimizedToken {
         use ShadowOptimizedToken as SOT;
         let t: TokenStream2 = match self {
             SOT::Match(s) => {
-                TokenStream2::from(quote!{yew_router::path_matcher::OptimizedToken::Match(#s.to_string())})
+                TokenStream2::from(quote!{yew_router::path_matcher::MatcherToken::Match(#s.to_string())})
             }
             SOT::Capture ( variant ) => {
                 TokenStream2::from(quote!{
-                    yew_router::path_matcher::OptimizedToken::Capture(#variant)
+                    yew_router::path_matcher::MatcherToken::Capture(#variant)
                 })
             }
             SOT::Optional(optional) => {
                 TokenStream2::from(quote!{
-                    yew_router::path_matcher::OptimizedToken::Optional(vec![#(#optional),*])
+                    yew_router::path_matcher::MatcherToken::Optional(vec![#(#optional),*])
                 })
             }
         };
@@ -107,14 +103,14 @@ impl ToTokens for ShadowCaptureVariant {
     }
 }
 
-impl From<OptimizedToken> for ShadowOptimizedToken {
-    fn from(ot: OptimizedToken) -> Self {
-        use OptimizedToken as OT;
+impl From<MatcherToken> for ShadowOptimizedToken {
+    fn from(ot: MatcherToken) -> Self {
+        use MatcherToken as MT;
         use ShadowOptimizedToken as SOT;
         match ot {
-            OT::Match(s) => SOT::Match(s),
-            OT::Capture(variant) => SOT::Capture(variant.into()),
-            OptimizedToken::Optional(optional) => SOT::Optional(optional.into_iter().map(SOT::from).collect())
+            MT::Match(s) => SOT::Match(s),
+            MT::Capture(variant) => SOT::Capture(variant.into()),
+            MT::Optional(optional) => SOT::Optional(optional.into_iter().map(SOT::from).collect())
         }
     }
 }

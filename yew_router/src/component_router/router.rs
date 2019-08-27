@@ -23,7 +23,7 @@ use crate::component_router::route::Route;
 /// # Example
 /// ```
 /// use yew::prelude::*;
-/// use yew_router::{Router, Route, route, FromMatches};
+/// use yew_router::{Router, Route, route, FromMatches, render::component};
 ///
 /// pub struct AComponent {}
 ///
@@ -66,7 +66,7 @@ use crate::component_router::route::Route;
 ///     fn view(&self) -> Html<Self> {
 ///         html! {
 ///             <Router>
-///                 <Route path=route!("/a/{value}" => AComponent ) />
+///                 <Route path=route!("/a/{value}") render=component::<AComponent>() />
 ///             </Router>
 ///         }
 ///     }
