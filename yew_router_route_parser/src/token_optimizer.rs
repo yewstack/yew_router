@@ -1,6 +1,7 @@
 use crate::parser::RouteParserToken;
 use crate::parser::{CaptureVariant, CaptureOrMatch};
 use crate::parser::parse;
+use nom::error::VerboseError;
 
 /// Tokens used to determine how to match and capture sections from a URL.
 #[derive(Debug, PartialEq, Clone)]
@@ -48,8 +49,8 @@ fn token_to_string(token: &RouteParserToken) -> &str {
 }
 
 
-pub fn parse_str_and_optimize_tokens(i: &str) -> Result<Vec<MatcherToken>, ()> {
-    let tokens = parse(i).map_err(|_| ())?;
+pub fn parse_str_and_optimize_tokens(i: &str) -> Result<Vec<MatcherToken>, nom::Err<VerboseError<&str>>> {
+    let tokens = parse(i)?;
     Ok(optimize_tokens(tokens))
 }
 

@@ -10,7 +10,6 @@ use nom::sequence::{preceded, separated_pair, delimited};
 use nom::character::complete::digit1;
 use crate::parser::CaptureVariant;
 use crate::parser::CaptureOrMatch;
-use nom::error::ErrorKind::Digit;
 use nom::error::ParseError;
 
 
@@ -18,13 +17,17 @@ use nom::error::ParseError;
 /// It prevents the first character from being a digit.
 pub fn valid_ident_characters(i: &str) -> IResult<&str, &str, VerboseError<&str>> {
     const INVALID_CHARACTERS: &str = " -*/+#?&^@~`;,.|\\{}[]()=\t\n";
-    let (i, next) = peek(take(1usize))(i)?; // Look at the first character
-    if is_digit(next.bytes().next().unwrap()) {
-//        return Err(nom::Err(VerboseError::from("Digits not allowed"))) // Digits not allowed
-        return Err(nom::Err::Error(VerboseError::from_error_kind(i, ErrorKind::Digit)))
-    } else {
-        is_not(INVALID_CHARACTERS)(i)
-    }
+    context(
+        "valid ident",
+        |i: &str| {
+            let (i, next) = peek(take(1usize))(i)?; // Look at the first character
+            if is_digit(next.bytes().next().unwrap()) {
+                //        return Err(nom::Err(VerboseError::from("Digits not allowed"))) // Digits not allowed
+                return Err(nom::Err::Error(VerboseError::from_error_kind(i, ErrorKind::Digit)))
+            } else {
+                is_not(INVALID_CHARACTERS)(i)
+            }
+        })(i)
 }
 
 /// Captures groups of characters that will need to be matched exactly later.

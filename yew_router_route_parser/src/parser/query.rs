@@ -30,10 +30,10 @@ fn query_separator_token(i: &str) -> IResult<&str, RouteParserToken, VerboseErro
 /// Matches
 /// * "ident=item"
 fn query(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
-    map(
+    context("query", map(
         separated_pair(valid_ident_characters, tag("=",), capture_or_match),
         |(ident, value)| RouteParserToken::QueryCapture {ident: ident.to_string(), capture_or_match: value }
-    )(i)
+    ))(i)
 }
 
 /// Matches

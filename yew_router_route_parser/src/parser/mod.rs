@@ -1,4 +1,4 @@
-use nom::IResult;
+//! Parser that consumes a string and produces the first representation of the matcher.
 use nom::sequence::{tuple};
 use nom::combinator::{map, opt, all_consuming};
 use nom::error::{ParseError, ErrorKind, VerboseError};
@@ -83,7 +83,7 @@ pub fn parse(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseError<&st
         ),
         map(core::capture, |t| vec![t])
     ))(i)
-        .map(|(_, tokens)| tokens)
+        .map(|(_, tokens)| tokens) // because of all_consuming, there should either be an error, or a success, no intermediate remaining input.
 }
 
 
