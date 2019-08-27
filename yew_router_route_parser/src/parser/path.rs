@@ -6,10 +6,11 @@ use nom::combinator::{map, opt};
 use nom::multi::many1;
 use nom::bytes::complete::tag;
 use crate::parser::core::{capture, match_specific};
+use nom::error::VerboseError;
 
 /// Handles either a leading '/' or  a '/thing'
-pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
-    fn inner_path_parser(i: &str) -> IResult<&str, (RouteParserToken, Vec<RouteParserToken>)> {
+pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
+    fn inner_path_parser(i: &str) -> IResult<&str, (RouteParserToken, Vec<RouteParserToken>), VerboseError<&str>> {
         tuple(
             (
                 separator_token,
@@ -49,7 +50,7 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
 }
 
 
-fn separator_token(i: &str) -> IResult<&str, RouteParserToken> {
+fn separator_token(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
     map(
         tag("/"),
         |_| RouteParserToken::Separator
@@ -57,7 +58,7 @@ fn separator_token(i: &str) -> IResult<&str, RouteParserToken> {
 }
 
 
-pub fn section_matchers(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
+pub fn section_matchers(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
 
     let (i, token): (&str, RouteParserToken) = alt((match_specific, capture))(i)?;
     let tokens = vec![token];
@@ -66,7 +67,7 @@ pub fn section_matchers(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
     /// one ends and the other begins.
     /// This function collects possible section matchers and prevents them auto-glob matchers
     /// from residing next to each other.
-    fn match_next_section_matchers(i: &str, mut tokens: Vec<RouteParserToken>) -> IResult<&str, Vec<RouteParserToken>> {
+    fn match_next_section_matchers(i: &str, mut tokens: Vec<RouteParserToken>) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
         let token = tokens.last().expect("Must be at least one token.");
         match token {
             RouteParserToken::Match(_) => {
@@ -103,7 +104,7 @@ mod test {
     fn path_must_start_with_separator() {
         path_parser("hello").expect_err("Should reject at absence of /");
         let parsed = super::super::parse("/hello").expect("should parse");
-        assert_eq!(parsed.1, vec![RouteParserToken::Separator, RouteParserToken::Match("hello".to_string())])
+        assert_eq!(parsed, vec![RouteParserToken::Separator, RouteParserToken::Match("hello".to_string())])
     }
 
     #[test]

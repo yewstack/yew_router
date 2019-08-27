@@ -5,10 +5,10 @@ use crate::parser::path::section_matchers; // TODO possibly duplicate this funct
 use nom::branch::alt;
 use nom::combinator::map;
 use nom::bytes::complete::tag;
-use nom::error::context;
+use nom::error::{context, VerboseError};
 
 
-fn begin_fragment_token(i: &str) -> IResult<&str, RouteParserToken> {
+fn begin_fragment_token(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
     map(
         tag("#"),
         |_| RouteParserToken::FragmentBegin
@@ -16,7 +16,7 @@ fn begin_fragment_token(i: &str) -> IResult<&str, RouteParserToken> {
 }
 
 /// #item
-fn simple_fragment_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
+fn simple_fragment_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     let (i, begin) = begin_fragment_token(i)?;
     let (i, mut section) = section_matchers(i)?;
     let mut v = vec![begin];
@@ -25,7 +25,7 @@ fn simple_fragment_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
 }
 
 /// #(item)
-fn fragment_parser_with_optional_item(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
+fn fragment_parser_with_optional_item(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     let (i, begin) = begin_fragment_token(i)?;
     let (i, optional) = optional_matches(section_matchers)(i)?;
     let v = vec![begin, optional];
@@ -33,8 +33,8 @@ fn fragment_parser_with_optional_item(i: &str) -> IResult<&str, Vec<RouteParserT
 }
 
 /// #item | #(item) | (#(item)) | (#item)
-pub fn fragment_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
-    fn inner_fragment_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
+pub fn fragment_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
+    fn inner_fragment_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
         alt((
             context("fragment",simple_fragment_parser), // #item
             context("fragment optional item", fragment_parser_with_optional_item), // #(item)

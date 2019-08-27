@@ -57,7 +57,7 @@ impl ParseError<&str> for Error {
     }
 }
 
-pub fn parse(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<(&str, ErrorKind)>> {
+pub fn parse(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseError<&str>>> {
     alt((
         map(
             all_consuming(tuple(
@@ -100,7 +100,7 @@ mod tests {
     #[test]
     fn parse_can_handle_multiple_literals() {
         let parsed = parse("/hello/there").expect("should parse");
-        assert_eq!(parsed.1, vec![RouteParserToken::Separator,
+        assert_eq!(parsed, vec![RouteParserToken::Separator,
                                   RouteParserToken::Match("hello".to_string()),
                                   RouteParserToken::Separator,
                                   RouteParserToken::Match("there".to_string())]
@@ -112,7 +112,7 @@ mod tests {
     #[test]
     fn parse_can_handle_trailing_path_separator() {
         let parsed = parse("/hello/").expect("should parse");
-        assert_eq!(parsed.1, vec![RouteParserToken::Separator,
+        assert_eq!(parsed, vec![RouteParserToken::Separator,
                                   RouteParserToken::Match("hello".to_string()),
                                   RouteParserToken::Separator]
         );
@@ -121,7 +121,7 @@ mod tests {
     #[test]
     fn parse_can_capture_section() {
         let parsed = parse("/hello/{there}").expect("should parse");
-        assert_eq!(parsed.1, vec![
+        assert_eq!(parsed, vec![
             RouteParserToken::Separator,
             RouteParserToken::Match("hello".to_string()),
             RouteParserToken::Separator,
@@ -133,7 +133,7 @@ mod tests {
     #[test]
     fn parse_can_handle_multiple_matches_per_section() {
         let parsed = parse("/hello/{there}general{}").expect("should parse");
-        assert_eq!(parsed.1, vec![
+        assert_eq!(parsed, vec![
             RouteParserToken::Separator,
             RouteParserToken::Match("hello".to_string()),
             RouteParserToken::Separator,

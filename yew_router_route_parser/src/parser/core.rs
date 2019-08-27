@@ -2,7 +2,7 @@
 use nom::IResult;
 use nom::combinator::{peek, map};
 use nom::character::is_digit;
-use nom::error::ErrorKind;
+use nom::error::{ErrorKind, context, VerboseError};
 use nom::bytes::complete::{is_not, take, tag};
 use nom::branch::alt;
 use crate::parser::RouteParserToken;
@@ -10,25 +10,29 @@ use nom::sequence::{preceded, separated_pair, delimited};
 use nom::character::complete::digit1;
 use crate::parser::CaptureVariant;
 use crate::parser::CaptureOrMatch;
+use nom::error::ErrorKind::Digit;
+use nom::error::ParseError;
+
 
 /// Captures a string up to the point where a character not possible to be present in Rust's identifier is encountered.
 /// It prevents the first character from being a digit.
-pub fn valid_ident_characters(i: &str) -> IResult<&str, &str> {
+pub fn valid_ident_characters(i: &str) -> IResult<&str, &str, VerboseError<&str>> {
     const INVALID_CHARACTERS: &str = " -*/+#?&^@~`;,.|\\{}[]()=\t\n";
     let (i, next) = peek(take(1usize))(i)?; // Look at the first character
     if is_digit(next.bytes().next().unwrap()) {
-        return Err(nom::Err::Error((i, ErrorKind::Digit))) // Digits not allowed
+//        return Err(nom::Err(VerboseError::from("Digits not allowed"))) // Digits not allowed
+        return Err(nom::Err::Error(VerboseError::from_error_kind(i, ErrorKind::Digit)))
     } else {
         is_not(INVALID_CHARACTERS)(i)
     }
 }
 
 /// Captures groups of characters that will need to be matched exactly later.
-pub fn match_specific(i: &str) -> IResult<&str, RouteParserToken> {
-    map(
+pub fn match_specific(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
+    context("match", map(
         valid_ident_characters,
         |ident| RouteParserToken::Match(ident.to_string())
-    )(i)
+    ))(i)
 }
 
 
@@ -40,7 +44,7 @@ pub fn match_specific(i: &str) -> IResult<&str, RouteParserToken> {
 /// * {name}
 /// * {*:name}
 /// * {5:name}
-pub fn capture(i: &str) -> IResult<&str, RouteParserToken> {
+pub fn capture(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
     let capture_variants = alt(
         (
             map(peek(tag("}")), |_| CaptureVariant::Unnamed), // just empty {}
@@ -52,16 +56,16 @@ pub fn capture(i: &str) -> IResult<&str, RouteParserToken> {
         )
     );
 
-    map(
+    context("capture", map(
         delimited(tag("{"), capture_variants, tag("}")),
         RouteParserToken::Capture
-    )(i)
+    ))(i)
 }
 
 /// Matches either "item" or "{capture}"
 /// It returns a subset enum of Token.
-pub fn capture_or_match(i: &str) -> IResult<&str, CaptureOrMatch> {
-    let (i, token) = alt((capture, match_specific))(i)?;
+pub fn capture_or_match(i: &str) -> IResult<&str, CaptureOrMatch, VerboseError<&str>> {
+    let (i, token) = context("capture or match", alt((capture, match_specific)))(i)?;
     let token = match token {
         RouteParserToken::Capture(variant) => CaptureOrMatch::Capture(variant),
         RouteParserToken::Match(m) => CaptureOrMatch::Match(m),

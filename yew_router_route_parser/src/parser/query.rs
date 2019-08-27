@@ -8,11 +8,11 @@ use crate::parser::core::{capture_or_match, valid_ident_characters};
 use nom::branch::alt;
 
 use crate::parser::util::{optional_matches_v, ret_vec, optional_match};
-use nom::error::context;
+use nom::error::{context, VerboseError};
 
 
 /// Character used to start the first query.
-fn query_begin_token(i: &str) -> IResult<&str, RouteParserToken> {
+fn query_begin_token(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
     map(
         tag("?"),
         |_| RouteParserToken::QueryBegin
@@ -20,7 +20,7 @@ fn query_begin_token(i: &str) -> IResult<&str, RouteParserToken> {
 }
 
 /// Character used to separate queries
-fn query_separator_token(i: &str) -> IResult<&str, RouteParserToken> {
+fn query_separator_token(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
     map(
         tag("&"),
         |_| RouteParserToken::QuerySeparator
@@ -29,7 +29,7 @@ fn query_separator_token(i: &str) -> IResult<&str, RouteParserToken> {
 
 /// Matches
 /// * "ident=item"
-fn query(i: &str) -> IResult<&str, RouteParserToken> {
+fn query(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
     map(
         separated_pair(valid_ident_characters, tag("=",), capture_or_match),
         |(ident, value)| RouteParserToken::QueryCapture {ident: ident.to_string(), capture_or_match: value }
@@ -39,7 +39,7 @@ fn query(i: &str) -> IResult<&str, RouteParserToken> {
 /// Matches
 /// * ?ident=item
 /// * ?(ident=item)
-fn begin_query_parser_with_optionals(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
+fn begin_query_parser_with_optionals(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     context(
         "many optional queries ?()()()...",
         map(
@@ -56,7 +56,7 @@ fn begin_query_parser_with_optionals(i: &str) -> IResult<&str, Vec<RouteParserTo
     )(i)
 }
 
-fn begin_query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
+fn begin_query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     map(
         pair(
             query_begin_token,
@@ -75,7 +75,7 @@ fn begin_query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
 /// * &ident=item&ident=item
 /// * &ident=item&ident=item
 /// * ...
-fn rest_query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
+fn rest_query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     map(
         many0(tuple(
             (
@@ -94,7 +94,7 @@ fn rest_query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
     )(i)
 }
 
-fn rest_query_or_optional_rest_query(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
+fn rest_query_or_optional_rest_query(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     alt((
         context("optional & query parser", optional_matches_v(rest_query_parser)),
         context("& query parser", rest_query_parser)
@@ -108,7 +108,7 @@ fn rest_query_or_optional_rest_query(i: &str) -> IResult<&str, Vec<RouteParserTo
 /// * "?query={capture}"
 /// * "?query={capture}&query2=item"
 /// * etc...
-fn query_parser_impl(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
+fn query_parser_impl(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     map(
         pair(
             context("? query parser", begin_query_parser),
@@ -121,7 +121,7 @@ fn query_parser_impl(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
     )(i)
 }
 
-pub fn query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
+pub fn query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     alt((
         alt((
             query_parser_impl,
