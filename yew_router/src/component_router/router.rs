@@ -137,10 +137,7 @@ impl <T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T>
         self.props.children.iter()
             .filter_map(|route| -> Option<Html<Self>> {
                 let mut children = route.props.children.iter().peekable();
-                let render = match &route.props.render.0 {
-                    Some(r) => Some(objekt::clone_box(&r)),
-                    None => None
-                };
+                let render = route.props.render.clone().0;
 
                 route.props.path.match_path(&self.route)
                     .map(|(_rest, matches): (&str, std::collections::HashMap<&str, String>)| {

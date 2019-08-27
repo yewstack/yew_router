@@ -7,7 +7,6 @@ use yew::prelude::*;
 use yew_router::{Router, Route};
 use yew_router::components::RouterButton;
 use yew_router::components::RouterLink;
-use yew_router::RouteInfo;
 use yew_router::route;
 
 use crate::b_component::BModel;

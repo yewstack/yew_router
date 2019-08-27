@@ -4,6 +4,7 @@ use yew_router_path_matcher::{FromMatches, Matches, RenderFn};
 use yew::virtual_dom::vcomp::ScopeHolder;
 use crate::router::Router;
 use crate::component_router::YewRouterState;
+use std::rc::Rc;
 
 /// Creates a component using supplied props.
 fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
@@ -59,7 +60,8 @@ pub fn render_s<T: for<'de> YewRouterState<'de>>(render: impl RenderFn<Router<T>
 /// This render function determines if a given route will succeed,
 /// even after it has successfully matched a URL,
 /// as well as controlling what will be rendered if it routes successfully.
-pub struct Render<T: for<'de> YewRouterState<'de>>(pub(crate) Option<Box<dyn RenderFn<Router<T>>>>);
+#[derive(Clone)]
+pub struct Render<T: for<'de> YewRouterState<'de>>(pub(crate) Option<Rc<dyn RenderFn<Router<T>>>>);
 
 impl <T: for<'de> YewRouterState<'de>> Default for Render<T> {
     fn default() -> Self {
@@ -69,6 +71,6 @@ impl <T: for<'de> YewRouterState<'de>> Default for Render<T> {
 
 impl <T: for<'de> YewRouterState<'de>> Render<T> {
     pub fn new(render: impl RenderFn<Router<T>> + 'static) -> Self {
-        Render(Some(Box::new(render)))
+        Render(Some(Rc::new(render)))
     }
 }

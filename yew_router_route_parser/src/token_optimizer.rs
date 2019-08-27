@@ -65,7 +65,7 @@ pub fn optimize_tokens(tokens: Vec<RouteParserToken>) -> Vec<MatcherToken> {
                 run.push(token)
             }
             RouteParserToken::Optional(tokens) => {
-                optimized.push(MatcherToken::Optional(optimize_tokens(tokens.clone()))) // TODO, don't know if this is technically correct.
+                optimized.push(MatcherToken::Optional(optimize_tokens(tokens.clone())))
             },
             RouteParserToken::Capture (_) | RouteParserToken:: QueryCapture {..} => {
                 if !run.is_empty() {
