@@ -9,14 +9,7 @@ use super::Props;
 /// The Route's `to_route_string()` will be displayed as the href.
 pub struct RouterLink {
     router: Box<dyn Bridge<RouteAgent<()>>>,
-    // TODO make this hold a link and a optional state instead, so they can each independently be passed in as props.
-//    route: RouteInfo<()>,
     props: Props
-//    link: String,
-//    state: (),
-//    text: String,
-//    disabled: bool,
-//    class: String,
 }
 
 impl Component for RouterLink {
@@ -30,10 +23,6 @@ impl Component for RouterLink {
         RouterLink {
             router,
             props
-//            route: props.route,
-//            text: props.text,
-//            disabled: props.disabled,
-//            class: props.class,
         }
     }
 
@@ -53,10 +42,6 @@ impl Component for RouterLink {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-//        self.route = props.route;
-//        self.text = props.text;
-//        self.disabled = props.disabled;
-//        self.class = props.class;
         self.props = props;
         true
     }

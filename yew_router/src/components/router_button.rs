@@ -8,10 +8,6 @@ use super::Props;
 pub struct RouterButton {
     router: Box<dyn Bridge<RouteAgent<()>>>,
     props: Props,
-//    route: RouteInfo<()>,
-//    text: String,
-//    disabled: bool,
-//    class: String,
 }
 
 impl Component for RouterButton {
@@ -25,10 +21,6 @@ impl Component for RouterButton {
         RouterButton {
             router,
             props
-//            route: props.route,
-//            text: props.text,
-//            disabled: props.disabled,
-//            class: props.class,
         }
     }
 

@@ -7,10 +7,12 @@ use std::str::FromStr;
 use yew_router::path_matcher::FromMatchesError;
 use yew_router::path_matcher::FromMatches;
 use yew_router::route_agent::RouteRequest;
+use yew_router::route;
 
 pub struct BModel {
-    number: Option<usize>,
-    sub_path: Option<String>,
+//    number: Option<usize>,
+//    sub_path: Option<String>,
+    props: Props,
     router: Box<dyn Bridge<RouteAgent>>
 }
 
@@ -43,8 +45,9 @@ impl Component for BModel {
         router.send(RouteRequest::GetCurrentRoute);
 
         BModel {
-            number: props.number,
-            sub_path: props.sub_path,
+//            number: props.number,
+//            sub_path: props.sub_path,
+            props,
             router
         }
     }
@@ -59,11 +62,11 @@ impl Component for BModel {
 
                 // The path dictating that this component be instantiated must be provided
                 let route_string = "/b".to_string();
-                let route_string = match &self.sub_path {
-                    Some(sub_path) => route_string + "/" + &sub_path,
+                let route_string = match &self.props.sub_path {
+                    Some(sub_path) => route_string + "?sub_path=" + &sub_path,
                     None => route_string
                 };
-                let route_string = match &self.number.map(|x: usize | x.to_string()) {
+                let route_string = match &self.props.number.map(|x: usize | x.to_string()) {
                     Some(number) => route_string + "#" + &number,
                     None => route_string
                 };
@@ -77,27 +80,29 @@ impl Component for BModel {
                 self.router.send(RouteRequest::ChangeRouteNoBroadcast(route));
                 true
             }
-            Msg::HandleRoute(_route) => {
-                // Instead of each component selecting which parts of the path are important to it,
-                // it is also possible to match on the `route.to_route_string().as_str()` once
-                // and create enum variants representing the different children and pass them as props.
-//                self.sub_path = route.path_segments.get(1).map(String::clone);
-//                self.number = route.fragment.and_then(|x| usize::from_str_radix(&x, 10).ok());
-                // TODO this is broken
-
-                true
+            Msg::HandleRoute(route) => {
+                // When the route changes, you can opt to re-parse the route. and update the props.
+                // TODO I'm not sure about the utility of this if the router is passing updated props anyways.
+                let path_matcher = route!("/b(?sub_path={sub_path})(#{number})");
+                if let Ok((_, matches)) = path_matcher.match_path(&route.route){
+                    let props = Props::from_matches(&matches).unwrap();
+                    self.props = props;
+                    true
+                } else {
+                    false
+                }
             }
             Msg::Increment => {
-                let n = if let Some(number) = self.number{
+                let n = if let Some(number) = self.props.number{
                     number + 1
                 } else {
                     1
                 };
-                self.number = Some(n);
+                self.props.number = Some(n);
                 true
             }
             Msg::Decrement => {
-                let n: usize = if let Some(number) = self.number{
+                let n: usize = if let Some(number) = self.props.number{
                     if number > 0 {
                         number - 1
                     } else {
@@ -106,11 +111,11 @@ impl Component for BModel {
                 } else {
                     0
                 };
-                self.number = Some(n);
+                self.props.number = Some(n);
                 true
             }
             Msg::UpdateSubpath(path) => {
-                self.sub_path = Some(path);
+                self.props.sub_path = Some(path);
                 true
             }
         }
@@ -157,14 +162,14 @@ impl FromMatches for Props {
 
 impl BModel {
     fn display_number(&self) -> String {
-        if let Some(number) = self.number {
+        if let Some(number) = self.props.number {
             format!("Number: {}", number)
         } else {
             format!("Number: None")
         }
     }
     fn display_subpath_input(&self) -> Html<BModel> {
-        let sub_path = self.sub_path.clone();
+        let sub_path = self.props.sub_path.clone();
         html! {
             <input
                 placeholder="subpath",
