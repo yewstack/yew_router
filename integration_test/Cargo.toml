@@ -9,4 +9,4 @@ edition = "2018"
 [dependencies]
 #yew_router_route_parser = {path = "../yew_router_route_parser"}
 #yew_router_derive = {path = "../yew_router_derive"}
-yew_router = {path="../YewRouter"}
+yew_router = {path="../yew_router"}
