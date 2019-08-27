@@ -3,31 +3,60 @@ use nom::branch::alt;
 use nom::sequence::{tuple, pair};
 use crate::parser::RouteParserToken;
 use nom::combinator::{map, opt};
-use nom::multi::many1;
+use nom::multi::{many1, many0};
 use nom::bytes::complete::tag;
 use crate::parser::core::{capture, match_specific};
 use nom::error::{VerboseError, context};
+use crate::parser::util::optional_matches;
 
-/// Handles either a leading '/' or  a '/thing'
+/// * /
+/// * /item
+/// * /item/item
+/// * /item/item/item
+/// * /item(/item)
+/// * /item(/item)(/item) and so on
+/// * (/item)
+/// * (/item)(/item) and so on
 pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
-    fn inner_path_parser(i: &str) -> IResult<&str, (RouteParserToken, Vec<RouteParserToken>), VerboseError<&str>> {
-        context("separator and item", pair(
-            separator_token,
-            section_matchers
+    fn inner_path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
+        context("/ and item",
+            map(
+            pair(
+                separator_token,
+                section_matchers
+            ),
+            |(sep, mut sections)| {
+                let mut x = vec![sep];
+                x.append(&mut sections);
+                x
+            }
         ))(i)
     }
 
+    // /item/item/item
     let many_inner_paths = context(
         "many inner paths",
         map(
-            many1(inner_path_parser),
-            |tokens: Vec<(RouteParserToken, Vec<RouteParserToken>)>| {
-                let new_capacity = tokens.capacity() * 2;
-                tokens.into_iter().fold(Vec::with_capacity(new_capacity), |mut accumulator, mut element| {
-                    accumulator.push(element.0);
-                    accumulator.append(&mut element.1);
-                    accumulator
-                })
+            many0(inner_path_parser),
+            |tokens: Vec<Vec<RouteParserToken>>| {
+                tokens.into_iter().flatten().collect::<Vec<_>>()
+            }
+        )
+    );
+
+    // (/item)(/item)(/item)
+    let many_optional_inner_paths = context(
+        "many optional inner paths",
+            many0(optional_matches(inner_path_parser))
+    );
+
+    let many_optional_after_concrete_inner = context(
+        "many optional after concrete paths",
+        map(
+            pair(many_inner_paths, many_optional_inner_paths),
+            |(mut first, mut second)| {
+                first.append(&mut second);
+                first
             }
         )
     );
@@ -36,7 +65,7 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError
     context("path parser", alt(
         (
             map(
-                tuple((many_inner_paths, opt(separator_token))),
+                tuple((many_optional_after_concrete_inner, opt(separator_token))),
                 |(mut paths, ending_separator)| {
                     if let Some(end_sep) = ending_separator {
                         paths.push(end_sep)
@@ -108,9 +137,7 @@ mod test {
 
     #[test]
     fn path_must_start_with_separator() {
-        path_parser("hello").expect_err("Should reject at absence of /");
-        let parsed = super::super::parse("/hello").expect("should parse");
-        assert_eq!(parsed, vec![RouteParserToken::Separator, RouteParserToken::Match("hello".to_string())])
+        all_consuming(path_parser)("hello").expect_err("Should reject at absence of /");
     }
 
     #[test]
@@ -144,4 +171,34 @@ mod test {
         assert_eq!(e, Err::Error(error));
     }
 
+    #[test]
+    fn cant_have_double_slash() {
+        all_consuming(path_parser)("//)").expect_err("Should not validate");
+    }
+
+    #[test]
+    fn option_section() {
+        path_parser("/hello(/hello)").expect("Should validate");
+    }
+
+    #[test]
+    fn option_section_with_trailing_sep() {
+        path_parser("/hello(/hello)/").expect("Should validate");
+    }
+
+
+    #[test]
+    fn many_option_section() {
+        path_parser("/hello(/hello)(/hello)").expect("Should validate");
+    }
+
+    #[test]
+    fn option_section_can_start_matcher_string() {
+        path_parser("(/hello)").expect("Should validate");
+    }
+
+    #[test]
+    fn cant_alternate_optional_sections() {
+        all_consuming(path_parser)("/hello(/hello)/hello").expect_err("Should not validate");
+    }
 }

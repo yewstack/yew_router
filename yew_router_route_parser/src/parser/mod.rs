@@ -92,11 +92,6 @@ pub fn parse(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseError<&st
 mod tests {
     use super::*;
 
-
-
-
-
-
     #[test]
     fn parse_can_handle_multiple_literals() {
         let parsed = parse("/hello/there").expect("should parse");
