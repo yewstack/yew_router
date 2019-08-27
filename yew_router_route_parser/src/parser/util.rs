@@ -1,9 +1,10 @@
+//! Utilities for defining the parser.
 use nom::IResult;
 use crate::parser::Token;
 use nom::sequence::delimited;
 use nom::bytes::complete::tag;
 
-pub fn ret_vec<'a, >(f: impl Fn(&'a str) -> IResult<&'a str, Token>) -> impl Fn(&'a str) -> IResult<&'a str, Vec<Token>> {
+pub fn ret_vec<'a>(f: impl Fn(&'a str) -> IResult<&'a str, Token>) -> impl Fn(&'a str) -> IResult<&'a str, Vec<Token>> {
     move |i: &str | {
         (f)(i).map(|(i, t)| (i, vec![t]))
     }

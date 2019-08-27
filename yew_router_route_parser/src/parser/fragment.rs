@@ -1,7 +1,7 @@
 use nom::IResult;
 use crate::parser::Token;
 use crate::parser::util::{optional_matches, optional_matches_v};
-use crate::parser::path::section_matchers; // TODO possibly duplicate this function (loosen its requirements for this module)
+use crate::parser::path::section_matchers; // TODO possibly duplicate this function (loosen its requirements for this module eg. allow '/' characters.)
 use nom::branch::alt;
 use nom::combinator::map;
 use nom::bytes::complete::tag;

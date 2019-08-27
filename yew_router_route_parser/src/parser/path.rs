@@ -5,7 +5,7 @@ use crate::parser::Token;
 use nom::combinator::{map, opt};
 use nom::multi::many1;
 use nom::bytes::complete::tag;
-use crate::parser::core::{capture, match_specific_token};
+use crate::parser::core::{capture, match_specific};
 
 /// Handles either a leading '/' or  a '/thing'
 pub fn path_parser(i: &str) -> IResult<&str, Vec<Token>> {
@@ -59,7 +59,7 @@ fn separator_token(i: &str) -> IResult<&str, Token> {
 
 pub fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
 
-    let (i, token): (&str, Token) = alt((match_specific_token, capture))(i)?;
+    let (i, token): (&str, Token) = alt((match_specific, capture))(i)?;
     let tokens = vec![token];
 
     /// You can't have two matching sections in a row, because there is nothing to indicate when
@@ -79,7 +79,7 @@ pub fn section_matchers(i: &str) -> IResult<&str, Vec<Token>> {
                 }
             },
             Token::Capture(_) => {
-                let (i, t) = opt(match_specific_token)(i)?;
+                let (i, t) = opt(match_specific)(i)?;
                 if let Some(new_t) = t {
                     tokens.push(new_t);
                     match_next_section_matchers(i, tokens)

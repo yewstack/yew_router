@@ -23,8 +23,8 @@ pub fn valid_ident_characters(i: &str) -> IResult<&str, &str> {
     }
 }
 
-
-pub fn match_specific_token(i: &str) -> IResult<&str, Token> {
+/// Captures groups of characters that will need to be matched exactly later.
+pub fn match_specific(i: &str) -> IResult<&str, Token> {
     map(
         valid_ident_characters,
         |ident| Token::Match(ident.to_string())
@@ -61,7 +61,7 @@ pub fn capture(i: &str) -> IResult<&str, Token> {
 /// Matches either "item" or "{capture}"
 /// It returns a subset enum of Token.
 pub fn capture_or_match(i: &str) -> IResult<&str, CaptureOrMatch> {
-    let (i, token) = alt((capture, match_specific_token))(i)?;
+    let (i, token) = alt((capture, match_specific))(i)?;
     let token = match token {
         Token::Capture(variant) => CaptureOrMatch::Capture(variant),
         Token::Match(m) => CaptureOrMatch::Match(m),
