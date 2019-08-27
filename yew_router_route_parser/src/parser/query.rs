@@ -8,6 +8,7 @@ use crate::parser::core::{capture_or_match, valid_ident_characters};
 use nom::branch::alt;
 
 use crate::parser::util::{optional_matches_v, ret_vec, optional_match};
+use nom::error::context;
 
 
 /// Character used to start the first query.
@@ -39,16 +40,19 @@ fn query(i: &str) -> IResult<&str, RouteParserToken> {
 /// * ?ident=item
 /// * ?(ident=item)
 fn begin_query_parser_with_optionals(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
-    map(
-        pair(
-            query_begin_token,
-            alt((ret_vec(query), many1(optional_match(query))))
-        ),
-        |(begin, query)| {
-            let mut ret = vec![begin];
-            ret.extend(query);
-            ret
-        }
+    context(
+        "many optional queries ?()()()...",
+        map(
+            pair(
+                query_begin_token,
+                alt((ret_vec(query), many1(optional_match(query))))
+            ),
+            |(begin, query)| {
+                let mut ret = vec![begin];
+                ret.extend(query);
+                ret
+            }
+        )
     )(i)
 }
 
@@ -92,8 +96,8 @@ fn rest_query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
 
 fn rest_query_or_optional_rest_query(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
     alt((
-        optional_matches_v(rest_query_parser),
-        rest_query_parser
+        context("optional & query parser", optional_matches_v(rest_query_parser)),
+        context("& query parser", rest_query_parser)
     ))(i)
 }
 
@@ -107,7 +111,7 @@ fn rest_query_or_optional_rest_query(i: &str) -> IResult<&str, Vec<RouteParserTo
 fn query_parser_impl(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
     map(
         pair(
-            begin_query_parser,
+            context("? query parser", begin_query_parser),
             rest_query_or_optional_rest_query
         ),
         |(mut first, mut rest)| {

@@ -35,7 +35,7 @@ impl PathMatcher {
             CMP: Component + Renderable<CMP>,
             CMP::Properties: FromMatches
     {
-        let (_i, tokens) = parser::parse(i).map_err(|_| ())?;
+        let tokens = parser::parse(i).map_err(|_| ())?;
         let pm = PathMatcher {
             tokens: optimize_tokens(tokens),
         };

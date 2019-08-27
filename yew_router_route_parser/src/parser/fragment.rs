@@ -5,6 +5,7 @@ use crate::parser::path::section_matchers; // TODO possibly duplicate this funct
 use nom::branch::alt;
 use nom::combinator::map;
 use nom::bytes::complete::tag;
+use nom::error::context;
 
 
 fn begin_fragment_token(i: &str) -> IResult<&str, RouteParserToken> {
@@ -35,8 +36,8 @@ fn fragment_parser_with_optional_item(i: &str) -> IResult<&str, Vec<RouteParserT
 pub fn fragment_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
     fn inner_fragment_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
         alt((
-            simple_fragment_parser, // #item
-            fragment_parser_with_optional_item, // #(item)
+            context("fragment",simple_fragment_parser), // #item
+            context("fragment optional item", fragment_parser_with_optional_item), // #(item)
         ))(i)
     }
     alt((

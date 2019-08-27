@@ -49,7 +49,7 @@ fn token_to_string(token: &RouteParserToken) -> &str {
 
 
 pub fn parse_str_and_optimize_tokens(i: &str) -> Result<Vec<MatcherToken>, ()> {
-    let (_, tokens) = parse(i).map_err(|_| ())?;
+    let tokens = parse(i).map_err(|_| ())?;
     Ok(optimize_tokens(tokens))
 }
 

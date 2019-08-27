@@ -1,7 +1,7 @@
 use nom::IResult;
 use nom::sequence::{tuple};
 use nom::combinator::{map, opt, all_consuming};
-use nom::error::{ParseError, ErrorKind};
+use nom::error::{ParseError, ErrorKind, VerboseError};
 use nom::branch::alt;
 
 mod core;
@@ -57,7 +57,7 @@ impl ParseError<&str> for Error {
     }
 }
 
-pub fn parse(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
+pub fn parse(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<(&str, ErrorKind)>> {
     alt((
         map(
             all_consuming(tuple(
@@ -83,6 +83,7 @@ pub fn parse(i: &str) -> IResult<&str, Vec<RouteParserToken>> {
         ),
         map(core::capture, |t| vec![t])
     ))(i)
+        .map(|(_, tokens)| tokens)
 }
 
 

@@ -1,16 +1,9 @@
 
-//mod parser;
 mod token_optimizer;
 pub use parser::CaptureVariant;
 pub use token_optimizer::{parse_str_and_optimize_tokens, optimize_tokens, MatcherToken};
 
 pub mod parser;
-
-//#[cfg(feature = "path_matcher")]
-//mod path_matcher;
-//#[cfg(feature = "path_matcher")]
-//pub use path_matcher::PathMatcher;
-
 
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
