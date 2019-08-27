@@ -48,11 +48,11 @@ impl Renderable<AModel> for AModel {
                 <div>
                     <RouterButton:
                         text=String::from("Go to a/c"),
-                        route=RouteInfo::from("/a/c"),
+                        link="/a/c",
                     />
                     <RouterButton:
                         text=String::from("Go to a/d (Component does not exist)"),
-                        route=RouteInfo::from("/a/d"),
+                        link="/a/d",
                     />
                 </div>
                 <div>

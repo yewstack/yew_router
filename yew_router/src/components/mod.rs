@@ -12,8 +12,8 @@ use yew::Properties;
 /// Properties for Routing Components
 #[derive(Properties, Default, Clone, Debug, PartialEq)]
 pub struct Props {
-    // TODO make this hold a link and a optional state instead, so they can each independently be passed in as props.
-    pub route: RouteInfo<()>,
+    pub link: String,
+    pub state: Option<()>,
     pub text: String,
     pub disabled: bool,
     pub class: String,

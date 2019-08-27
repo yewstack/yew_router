@@ -10,10 +10,13 @@ use super::Props;
 pub struct RouterLink {
     router: Box<dyn Bridge<RouteAgent<()>>>,
     // TODO make this hold a link and a optional state instead, so they can each independently be passed in as props.
-    route: RouteInfo<()>,
-    text: String,
-    disabled: bool,
-    class: String,
+//    route: RouteInfo<()>,
+    props: Props
+//    link: String,
+//    state: (),
+//    text: String,
+//    disabled: bool,
+//    class: String,
 }
 
 impl Component for RouterLink {
@@ -26,10 +29,11 @@ impl Component for RouterLink {
 
         RouterLink {
             router,
-            route: props.route,
-            text: props.text,
-            disabled: props.disabled,
-            class: props.class,
+            props
+//            route: props.route,
+//            text: props.text,
+//            disabled: props.disabled,
+//            class: props.class,
         }
     }
 
@@ -37,18 +41,23 @@ impl Component for RouterLink {
         match msg {
             Msg::NoOp => false,
             Msg::Clicked => {
+                let route_info = RouteInfo {
+                    route: self.props.link.clone(),
+                    state: self.props.state.clone()
+                };
                 self.router
-                    .send(RouteRequest::ChangeRoute(self.route.clone()));
+                    .send(RouteRequest::ChangeRoute(route_info));
                 false
             }
         }
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        self.route = props.route;
-        self.text = props.text;
-        self.disabled = props.disabled;
-        self.class = props.class;
+//        self.route = props.route;
+//        self.text = props.text;
+//        self.disabled = props.disabled;
+//        self.class = props.class;
+        self.props = props;
         true
     }
 }
@@ -56,19 +65,19 @@ impl Component for RouterLink {
 impl Renderable<RouterLink> for RouterLink {
     fn view(&self) -> Html<RouterLink> {
         use stdweb::web::event::IEvent;
-        let target: &str = &self.route;
+        let target: &str = &self.props.link;
 
         html! {
             <a
-                class=self.class.clone(),
+                class=self.props.class.clone(),
                 onclick=|event | {
                     event.prevent_default();
                     Msg::Clicked
                 },
-                disabled=self.disabled,
+                disabled=self.props.disabled,
                 href=target,
             >
-                {&self.text}
+                {&self.props.text}
             </a>
         }
     }

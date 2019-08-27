@@ -17,7 +17,7 @@ pub struct BModel {
 #[derive(PartialEq, Properties)]
 pub struct Props {
     #[props(required)]
-    number: Option<usize>, // TODO remove these options
+    number: Option<usize>,
     #[props(required)]
     sub_path: Option<String>
 }

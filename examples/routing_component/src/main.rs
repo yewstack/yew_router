@@ -51,15 +51,15 @@ impl Renderable<Model> for Model {
         html! {
             <div>
                 <nav class="menu",>
-                    <RouterButton: text=String::from("Go to A"), route=RouteInfo::from("/a/"), />
-                    <RouterLink: text=String::from("Go to B"), route=RouteInfo::from("/b/#"), />
-                    <RouterButton: text=String::from("Go to C"), route=RouteInfo::from("/c"), />
-                    <RouterButton: text=String::from("Go to A/C"), route=RouteInfo::from("/a/c"), />
-                    <RouterButton: text=String::from("Go to E"), route=RouteInfo::from("/e"), />
-                    <RouterButton: text=String::from("Go to E/C"), route=RouteInfo::from("/e/c"), />
-                    <RouterButton: text=String::from("Go to F (hello there)"), route=RouteInfo::from("/f/there"), />
-                    <RouterButton: text=String::from("Go to F (hello world)"), route=RouteInfo::from("/f/world"), />
-                    <RouterButton: text=String::from("Go to bad path"), route=RouteInfo::from("/a_bad_path"), />
+                    <RouterButton: text=String::from("Go to A"), link="/a/", />
+                    <RouterLink: text=String::from("Go to B"), link="/b/#", />
+                    <RouterButton: text=String::from("Go to C"), link="/c", />
+                    <RouterButton: text=String::from("Go to A/C"), link="/a/c", />
+                    <RouterButton: text=String::from("Go to E"), link="/e", />
+                    <RouterButton: text=String::from("Go to E/C"), link="/e/c", />
+                    <RouterButton: text=String::from("Go to F (hello there)"), link="/f/there", />
+                    <RouterButton: text=String::from("Go to F (hello world)"), link="/f/world", />
+                    <RouterButton: text=String::from("Go to bad path"), link="/a_bad_path", />
                 </nav>
                 <div>
                     <Router>

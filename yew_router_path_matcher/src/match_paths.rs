@@ -29,7 +29,6 @@ pub(super) fn match_paths<'a, 'b>(tokens: &'b [MatcherToken], mut i: &'a str) ->
                     match_paths(&inner_tokens, i)
                 })(i) {
                     Ok((ii, inner_matches)) => {
-                        //TODO needs some tests to verify if the following is right (handling of i)
                         if let Some(inner_matches) = inner_matches {
                             matches.extend(inner_matches);
                         }

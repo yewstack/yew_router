@@ -5,11 +5,11 @@ use yew::virtual_dom::vcomp::ScopeHolder;
 use crate::router::Router;
 use crate::component_router::YewRouterState;
 
-// TODO this is duplicated also in path matcher.
+/// Creates a component using supplied props.
 fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
     props: COMP::Properties,
 ) -> Html<CONTEXT> {
-    let vcomp_scope: ScopeHolder<_> = Default::default(); // TODO, I don't exactly know what this does, I may want a scope holder directly tied to the current context?
+    let vcomp_scope: ScopeHolder<_> = Default::default();
     VNode::VComp(VComp::new::<COMP>(props, vcomp_scope))
 }
 

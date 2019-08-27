@@ -7,10 +7,11 @@ use super::Props;
 
 pub struct RouterButton {
     router: Box<dyn Bridge<RouteAgent<()>>>,
-    route: RouteInfo<()>,
-    text: String,
-    disabled: bool,
-    class: String,
+    props: Props,
+//    route: RouteInfo<()>,
+//    text: String,
+//    disabled: bool,
+//    class: String,
 }
 
 impl Component for RouterButton {
@@ -23,10 +24,11 @@ impl Component for RouterButton {
 
         RouterButton {
             router,
-            route: props.route,
-            text: props.text,
-            disabled: props.disabled,
-            class: props.class,
+            props
+//            route: props.route,
+//            text: props.text,
+//            disabled: props.disabled,
+//            class: props.class,
         }
     }
 
@@ -34,17 +36,18 @@ impl Component for RouterButton {
         match msg {
             Msg::NoOp => false,
             Msg::Clicked => {
+                let route_info = RouteInfo {
+                    route: self.props.link.clone(),
+                    state: self.props.state.clone()
+                };
                 self.router
-                    .send(RouteRequest::ChangeRoute(self.route.clone()));
+                    .send(RouteRequest::ChangeRoute(route_info));
                 false
             }
         }
     }
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        self.route = props.route;
-        self.text = props.text;
-        self.disabled = props.disabled;
-        self.class = props.class;
+        self.props = props;
         true
     }
 }
@@ -53,11 +56,11 @@ impl Renderable<RouterButton> for RouterButton {
     fn view(&self) -> Html<RouterButton> {
         html! {
             <button
-                class=self.class.clone(),
+                class=self.props.class.clone(),
                 onclick=|_| Msg::Clicked,
-                disabled=self.disabled,
+                disabled=self.props.disabled,
             >
-                {&self.text}
+                {&self.props.text}
             </button>
         }
     }

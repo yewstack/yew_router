@@ -9,6 +9,7 @@ use log::{trace};
 use yew_router_route_parser::{optimize_tokens, parser};
 use yew::{Html, Component, Renderable};
 
+// TODO remove this objekt stuff, replace any point where this needs cloning with an RC
 pub trait RenderFn<CTX: yew::Component>: Fn(&Matches) -> Option<Html<CTX>> + objekt::Clone {}
 
 pub type Matches<'a> = HashMap<&'a str, String>;
