@@ -19,7 +19,7 @@ fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
 ///
 /// #Note
 /// Allows specification of the router type.
-pub fn component_s<T,U>() -> Option<Render<U>>
+pub fn component_s<T,U>() -> Render<U>
     where
         T: Component + Renderable<T>,
         <T as Component>::Properties: FromMatches,
@@ -33,7 +33,7 @@ pub fn component_s<T,U>() -> Option<Render<U>>
 
 /// Creates a render that creates the specified component if its
 /// props can be created from the provided matches.
-pub fn component<T>() -> Option<Render<()>>
+pub fn component<T>() -> Render<()>
     where
         T: Component + Renderable<T>,
         <T as Component>::Properties: FromMatches,
@@ -41,14 +41,30 @@ pub fn component<T>() -> Option<Render<()>>
     component_s::<T, ()>()
 }
 
+/// Shorthand for [Render::new()](structs.Render.html#new).
+pub fn render(render: impl RenderFn<Router<()>> + 'static) -> Render<()> {
+    Render::new(render)
+}
+
+
+/// Shorthand for [Render::new()](structs.Render.html#new).
+pub fn render_s<T: for<'de> YewRouterState<'de>>(render: impl RenderFn<Router<T>> + 'static) -> Render<T> {
+    Render::new(render)
+}
 
 
 
 
-pub struct Render<T: for<'de> YewRouterState<'de>>(pub(crate) Box<dyn RenderFn<Router<T>>>);
+pub struct Render<T: for<'de> YewRouterState<'de>>(pub(crate) Option<Box<dyn RenderFn<Router<T>>>>);
+
+impl <T: for<'de> YewRouterState<'de>> Default for Render<T> {
+    fn default() -> Self {
+        Render(None)
+    }
+}
 
 impl <T: for<'de> YewRouterState<'de>> Render<T> {
-    pub fn new(render: impl RenderFn<Router<T>> + 'static) -> Option<Self> {
-        Some(Render(Box::new(render)))
+    pub fn new(render: impl RenderFn<Router<T>> + 'static) -> Self {
+        Render(Some(Box::new(render)))
     }
 }

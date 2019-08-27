@@ -15,7 +15,7 @@ use crate::a_component::AModel;
 use crate::c_component::CModel;
 
 use yew_router::render::component;
-use yew_router::render::Render;
+use yew_router::render::render;
 use yew_router::path_matcher::Matches;
 
 fn main() {
@@ -73,13 +73,13 @@ impl Renderable<Model> for Model {
                              {"Hello there from the E \"child\""}
                         </Route>
                         <Route path=route!("/f/{capture}")
-                            render=Render::new(|matches: &Matches| {
+                            render=render(|matches: &Matches| {
                                 Some(html!{
                                     {format!("hello {}", matches[&"capture"])}
                                 })
                             })
                         />
-                        <Route path=route!("{*:any}") render=Render::new(|matches: &Matches| {
+                        <Route path=route!("{*:any}") render=render(|matches: &Matches| {
                             Some(html!{{format!("404, page not found for '{}'", matches["any"])}})
                         }) />
                     </Router>

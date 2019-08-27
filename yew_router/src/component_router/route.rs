@@ -18,7 +18,7 @@ pub struct Route<T: for<'de> YewRouterState<'de>> {
 pub struct RouteProps<T: for<'de> YewRouterState<'de>> {
     #[props(required)]
     pub path: PathMatcher,
-    pub render: Option<Render<T>>,
+    pub render: Render<T>,
     pub children: Children<Router<T>>
 }
 
