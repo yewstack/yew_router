@@ -8,11 +8,11 @@ I'm currently working towards getting this library in a releasable state.
 ```rust
 html!{
     <Router>
-        <Route path=route!("/a/{}" => AComponent) />
+        <Route path=route!("/a/{}") render=component::<AComponent>()) />
         <Route path=route!("/b") >
             <BComponent />
         </Route>
-        <Route path=route!("/c/{capture}", |matches| {
+        <Route path=route!("/c/{capture}" render=Render::new(|matches: &Matches| {
             Some(html!{{matches["capture"}})
         }) />
     </Router>
