@@ -7,6 +7,7 @@ use yew_router::route_info::RouteInfo;
 use yew_router::{FromMatches};
 use yew_router::{Router, Route};
 use yew_router::route;
+use yew_router::render::component;
 
 pub struct AModel {
 }
@@ -56,7 +57,7 @@ impl Renderable<AModel> for AModel {
                 </div>
                 <div>
                     <Router>
-                        <Route path=route!("/{}/c" => CModel) />
+                        <Route path=route!("/{}/c") render=component::<CModel>() />
                     </Router>
                 </div>
             </div>

@@ -137,8 +137,8 @@ impl <T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T>
         self.props.children.iter()
             .filter_map(|route| -> Option<Html<Self>> {
                 let mut children = route.props.children.iter().peekable();
-                let render = match &route.props.path.render_fn {
-                    Some(r) => Some(objekt::clone_box(&**r)),
+                let render = match &route.props.render {
+                    Some(r) => Some(objekt::clone_box(&*r.0)),
                     None => None
                 };
 

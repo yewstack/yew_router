@@ -1,7 +1,9 @@
 pub mod router;
 pub mod route;
+pub mod render;
 
 use crate::route_agent::RouterState;
+
 
 /// Alias to [Router<()>](struct.Router.html)
 ///
@@ -16,6 +18,13 @@ pub type Router = router::Router<()>;
 /// Because most end users will not use the ability to store state,
 /// this alias is used to make the most common type of utilization of route easier to type and read.
 pub type Route = route::Route<()>;
+
+/// Alias to [Render<()>](struct.Render.html)
+///
+/// # Note
+/// Because most end users will not use the ability to store state,
+/// this alias is used to make the most common type of utilization of render function wrappers easier to type and read.
+pub type Render = render::Render<()>;
 
 
 /// Any state that can be managed by the `Router` must meet the criteria of this trait.

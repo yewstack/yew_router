@@ -13,10 +13,10 @@ use syn::Expr;
 use syn::Ident;
 use syn::spanned::Spanned;
 
-enum Either<T, U> {
-    Left(T),
-    Right(U)
-}
+//enum Either<T, U> {
+//    Left(T),
+//    Right(U)
+//}
 
 
 /// Parses either:
@@ -28,53 +28,51 @@ enum Either<T, U> {
 struct S {
     /// The routing string
     s: String,
-    /// The render target, either a Component, whose props will be synthesized from the routing string,
-    /// or a function that can render Html
-    target: Option<Either<Type, Either<Ident, Expr>>>
+//    target: Option<Either<Type, Either<Ident, Expr>>>
 }
 impl Parse for S {
     fn parse(input: &ParseBuffer) -> Result<Self, Error> {
         let s = input.parse::<syn::LitStr>()?;
         // The specification of a type must be preceded by a "=>"
-        let lookahead = input.lookahead1();
-        let target: Option<Either<Type, Either<Ident, Expr>>> = if lookahead.peek(Token![=>]) {
-            input.parse::<syn::token::FatArrow>()
-                .ok()
-                .map(|_| {
-                    input.parse::<Type>()
-                        .map(Either::Left)
-                })
-                .transpose()?
-        } else if lookahead.peek(Token![,]){
-            input.parse::<syn::token::Comma>()
-                .ok()
-                .map(|_| {
-                    // attempt to match an ident first
-                    input.parse::<syn::Ident>()
-                        .map(Either::Left)
-                        .or_else(|_| {
-                            // Then attempt to get it from an expression
-                            input.parse::<syn::Expr>()
-                                .and_then(|expr| {
-                                    match &expr {
-                                        Expr::Closure(_) | Expr::Block(_) | Expr::MethodCall(_) | Expr::Call(_) | Expr::Path(_) => Ok(expr),
-                                        Expr::__Nonexhaustive => panic!("nonexhaustive"),
-                                        _ => Err(Error::new(expr.span(), "Must be a Component's Type, a Fn(&HashMap<String, String> -> Option<Html<_>>, or expression that can resolve to such a function."))
-                                    }
-                                })
-                                .map(Either::Right)
-                        })
-                        .map(Either::Right)
-                })
-                .transpose()?
-        } else {
-            None
-        };
+//        let lookahead = input.lookahead1();
+//        let target: Option<Either<Type, Either<Ident, Expr>>> = if lookahead.peek(Token![=>]) {
+//            input.parse::<syn::token::FatArrow>()
+//                .ok()
+//                .map(|_| {
+//                    input.parse::<Type>()
+//                        .map(Either::Left)
+//                })
+//                .transpose()?
+//        } else if lookahead.peek(Token![,]){
+//            input.parse::<syn::token::Comma>()
+//                .ok()
+//                .map(|_| {
+//                    // attempt to match an ident first
+//                    input.parse::<syn::Ident>()
+//                        .map(Either::Left)
+//                        .or_else(|_| {
+//                            // Then attempt to get it from an expression
+//                            input.parse::<syn::Expr>()
+//                                .and_then(|expr| {
+//                                    match &expr {
+//                                        Expr::Closure(_) | Expr::Block(_) | Expr::MethodCall(_) | Expr::Call(_) | Expr::Path(_) => Ok(expr),
+//                                        Expr::__Nonexhaustive => panic!("nonexhaustive"),
+//                                        _ => Err(Error::new(expr.span(), "Must be a Component's Type, a Fn(&HashMap<String, String> -> Option<Html<_>>, or expression that can resolve to such a function."))
+//                                    }
+//                                })
+//                                .map(Either::Right)
+//                        })
+//                        .map(Either::Right)
+//                })
+//                .transpose()?
+//        } else {
+//            None
+//        };
 
         Ok(
             S {
                 s: s.value(),
-                target
+//                target
             }
         )
     }
@@ -84,7 +82,7 @@ impl Parse for S {
 #[proc_macro_hack]
 pub fn route(input: TokenStream) -> TokenStream {
     let s = parse_macro_input!(input as S);
-    let target = s.target;
+//    let target = s.target;
     let s: String = s.s;
 
     // Do the parsing at compile time so the user knows if their matcher is malformed.
@@ -94,46 +92,46 @@ pub fn route(input: TokenStream) -> TokenStream {
         .into_iter()
         .map(ShadowOptimizedToken::from);
 
-
-    let render_fn = match target {
-        Some(target) => {
-            match target {
-                Either::Left(ty) => {
-                    quote! {
-                        let phantom: std::marker::PhantomData<#ty> = std::marker::PhantomData;
-                        let render_fn = Some(yew_router::path_matcher::PathMatcher::<yew_router::Router>::create_render_fn::<#ty>(phantom));
-                    }
-                }
-                Either::Right(ident_or_expr) => {
-                    match ident_or_expr {
-                        Either::Left(ident) => {
-                            quote! {
-                                let f: Box<dyn yew_router::path_matcher::RenderFn<_>> = Box::new(#ident);
-                                let render_fn = Some(f);
-                            }
-                        },
-                        Either::Right(expr) => {
-                            quote! {
-                                let f: Box<dyn yew_router::path_matcher::RenderFn<_>> = Box::new(#expr);
-                                let render_fn = Some(f);
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        None => quote!{
-            let render_fn = None;
-        }
-    };
+//
+//    let render_fn = match target {
+//        Some(target) => {
+//            match target {
+//                Either::Left(ty) => {
+//                    quote! {
+//                        let phantom: std::marker::PhantomData<#ty> = std::marker::PhantomData;
+//                        let render_fn = Some(yew_router::path_matcher::PathMatcher::<yew_router::Router>::create_render_fn::<#ty>(phantom));
+//                    }
+//                }
+//                Either::Right(ident_or_expr) => {
+//                    match ident_or_expr {
+//                        Either::Left(ident) => {
+//                            quote! {
+//                                let f: Box<dyn yew_router::path_matcher::RenderFn<_>> = Box::new(#ident);
+//                                let render_fn = Some(f);
+//                            }
+//                        },
+//                        Either::Right(expr) => {
+//                            quote! {
+//                                let f: Box<dyn yew_router::path_matcher::RenderFn<_>> = Box::new(#expr);
+//                                let render_fn = Some(f);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        },
+//        None => quote!{
+//            let render_fn = None;
+//        }
+//    };
 
     let expanded = quote!{
         {
-            #render_fn
+//            #render_fn
 
             yew_router::path_matcher::PathMatcher {
                 tokens : vec![#(#t),*],
-                render_fn
+//                render_fn
             }
         }
     };

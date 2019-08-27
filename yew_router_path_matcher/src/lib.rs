@@ -18,29 +18,29 @@ pub type Matches<'a> = HashMap<&'a str, String>;
 
 impl <CTX, T> RenderFn<CTX> for T
     where
-    T: Fn(&HashMap<&str, String>) -> Option<Html<CTX>> + objekt::Clone,
+    T: Fn(&Matches) -> Option<Html<CTX>> + objekt::Clone,
     CTX: yew::Component
 {}
 
 /// Attempts to match routes, transform the route to Component props and render that Component.
 ///
 /// The CTX refers to the context of the parent rendering this (The Router).
-pub struct PathMatcher<CTX: Component + Renderable<CTX>> {
+pub struct PathMatcher {
     pub tokens: Vec<OptimizedToken>,
-    pub render_fn: Option<Box<dyn RenderFn<CTX>>> // Having Router specified here would make dependency issues appear.
+//    pub render_fn: Option<Box<dyn RenderFn<CTX>>> // Having Router specified here would make dependency issues appear.
 }
 
-impl <CTX: Component + Renderable<CTX>> PartialEq for PathMatcher<CTX> {
+impl PartialEq for PathMatcher {
     fn eq(&self, other: &Self) -> bool {
-        self.tokens.eq(&other.tokens) && std::ptr::eq(&self.render_fn, &other.render_fn)
+        self.tokens.eq(&other.tokens) //&& std::ptr::eq(&self.render_fn, &other.render_fn)
     }
 }
 
-impl <CTX: Component + Renderable<CTX>> Debug for PathMatcher<CTX> {
+impl Debug for PathMatcher {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         f.debug_struct("PathMatcher")
             .field("tokens", &self.tokens)
-            .field("render_fn", &"Fn".to_string())
+//            .field("render_fn", &"Fn".to_string())
             .finish()
     }
 }
@@ -57,7 +57,7 @@ fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
 
 
 
-impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
+impl PathMatcher {
 
     pub fn try_from<CMP>(i: &str, cmp: PhantomData<CMP>) -> Result<Self, ()>
         where
@@ -67,25 +67,25 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
         let (_i, tokens) = parser::parse(i).map_err(|_| ())?;
         let pm = PathMatcher {
             tokens: optimize_tokens(tokens),
-            render_fn: Some(Self::create_render_fn(cmp))
+//            render_fn: Some(Self::create_render_fn(cmp))
         };
         Ok(pm)
     }
 
-    pub fn create_render_fn<CMP>(_: PhantomData<CMP>) -> Box<dyn RenderFn<CTX>>
-        where
-            CMP: Component + Renderable<CMP>,
-            CMP::Properties: FromMatches
-    {
-        Box::new(|matches: &HashMap<&str, String>| {
-            CMP::Properties::from_matches(matches)
-                .map(|properties| create_component::<CMP, CTX>(properties))
-                .map_err(|err| {
-                    trace!("Component could not be created from matches: {:?}", err);
-                })
-                .ok()
-        })
-    }
+//    pub fn create_render_fn<CMP>(_: PhantomData<CMP>) -> Box<dyn RenderFn<CTX>>
+//        where
+//            CMP: Component + Renderable<CMP>,
+//            CMP::Properties: FromMatches
+//    {
+//        Box::new(|matches: &HashMap<&str, String>| {
+//            CMP::Properties::from_matches(matches)
+//                .map(|properties| create_component::<CMP, CTX>(properties))
+//                .map_err(|err| {
+//                    trace!("Component could not be created from matches: {:?}", err);
+//                })
+//                .ok()
+//        })
+//    }
 
 
     // TODO, should find some way to support '/' characters in fragment. In the transform function, it could keep track of the seen hash begin yet, and transform captures based on that.
@@ -111,7 +111,6 @@ impl <CTX: Component + Renderable<CTX>> PathMatcher<CTX> {
         })
     }
 }
-
 
 
 

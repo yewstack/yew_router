@@ -56,7 +56,7 @@ fn begin_query_parser(i: &str) -> IResult<&str, Vec<Token>> {
     map(
         pair(
             query_begin_token,
-            (ret_vec(query))
+            ret_vec(query)
         ),
         |(begin, query)| {
             let mut ret = vec![begin];

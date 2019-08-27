@@ -13,8 +13,10 @@ use yew_router::route;
 use crate::b_component::BModel;
 use crate::a_component::AModel;
 use crate::c_component::CModel;
-use std::collections::HashMap;
 
+use yew_router::render::component;
+use yew_router::render::Render;
+use yew_router::path_matcher::Matches;
 
 fn main() {
     yew::initialize();
@@ -44,11 +46,7 @@ impl Component for Model {
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
 
-        let f = |matches: &HashMap<&str, String>| {
-            Some(html!{
-                {format!("hello {}", matches[&"capture"])}
-            })
-        };
+
 
         html! {
             <div>
@@ -65,17 +63,23 @@ impl Renderable<Model> for Model {
                 </nav>
                 <div>
                     <Router>
-                        <Route path=route!("/a/{}" => AModel) />
-                        <Route path=route!("/c" => CModel) />
-                        <Route path=route!("/b(?sub_path={sub_path})(#{number})" => BModel) />
-                        <Route path=route!("/e/c" => CModel)>
+                        <Route path=route!("/a/{}") render=component::<AModel>() />
+                        <Route path=route!("/c") render=component::<CModel>() />
+                        <Route path=route!("/b(?sub_path={sub_path})(#{number})") render=component::<BModel>()/>
+                        <Route path=route!("/e/c") render=component::<CModel>() >
                              {"Hello there from the other E \"child\""}
                         </Route>
                         <Route path=route!("/e")>
                              {"Hello there from the E \"child\""}
                         </Route>
-                        <Route path=route!("/f/{capture}", f)/>
-                        <Route path=route!("{*:any}", |matches| {
+                        <Route path=route!("/f/{capture}")
+                            render=Render::new(|matches: &Matches| {
+                                Some(html!{
+                                    {format!("hello {}", matches[&"capture"])}
+                                })
+                            })
+                        />
+                        <Route path=route!("{*:any}") render=Render::new(|matches: &Matches| {
                             Some(html!{{format!("404, page not found for '{}'", matches["any"])}})
                         }) />
                     </Router>

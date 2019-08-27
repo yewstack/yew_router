@@ -9,7 +9,7 @@ use std::iter::Peekable;
 use std::slice::Iter;
 use nom::error::ErrorKind;
 
-pub(super) fn match_paths<'a, 'b>(tokens: &'b Vec<OptimizedToken>, mut i: &'a str) -> IResult<&'a str, Matches<'b>> {
+pub(super) fn match_paths<'a, 'b>(tokens: &'b [OptimizedToken], mut i: &'a str) -> IResult<&'a str, Matches<'b>> {
     trace!("Attempting to match path: {:?} using: {:?}", i, tokens);
 
     let mut iter = tokens
@@ -26,7 +26,7 @@ pub(super) fn match_paths<'a, 'b>(tokens: &'b Vec<OptimizedToken>, mut i: &'a st
             },
             OptimizedToken::Optional(inner_tokens) => {
                 match opt(|i|{
-                    match_paths(inner_tokens, i)
+                    match_paths(&inner_tokens, i)
                 })(i) {
                     Ok((ii, inner_matches)) => {
                         //TODO needs some tests to verify if the following is right (handling of i)
