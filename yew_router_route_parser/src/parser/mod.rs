@@ -2,6 +2,7 @@ use nom::IResult;
 use nom::sequence::{tuple};
 use nom::combinator::{map, opt, all_consuming};
 use nom::error::{ParseError, ErrorKind};
+use nom::branch::alt;
 
 mod core;
 mod util;
@@ -55,28 +56,31 @@ impl ParseError<&str> for Error {
 }
 
 pub fn parse(i: &str) -> IResult<&str, Vec<Token>> {
-    map(
-        all_consuming(tuple(
-            (
-                opt(path::path_parser),
-                opt(query::query_parser),
-                opt(fragment::fragment_parser)
-            )
-        )),
-        |(path, query, fragment): (Option<Vec<Token>>, Option<Vec<Token>>, Option<Vec<Token>>)| {
-            let mut tokens = Vec::new();
-            if let Some(mut t) = path {
-                tokens.append(&mut t)
+    alt((
+        map(
+            all_consuming(tuple(
+                (
+                    opt(path::path_parser),
+                    opt(query::query_parser),
+                    opt(fragment::fragment_parser)
+                )
+            )),
+            |(path, query, fragment): (Option<Vec<Token>>, Option<Vec<Token>>, Option<Vec<Token>>)| {
+                let mut tokens = Vec::new();
+                if let Some(mut t) = path {
+                    tokens.append(&mut t)
+                }
+                if let Some(mut t) = query {
+                    tokens.append(&mut t)
+                }
+                if let Some(mut t) = fragment {
+                    tokens.append(&mut t)
+                }
+                tokens
             }
-            if let Some(mut t) = query {
-                tokens.append(&mut t)
-            }
-            if let Some(mut t) = fragment {
-                tokens.append(&mut t)
-            }
-            tokens
-        }
-    )(i)
+        ),
+        map(core::capture, |t| vec![t])
+    ))(i)
 }
 
 
@@ -160,7 +164,8 @@ mod tests {
         parse("/hello/{").expect_err("Should not complete");
     }
 
-
-
-
+    #[test]
+    fn can_match_in_first_section() {
+        parse("{any}").expect("Should validate");
+    }
 }

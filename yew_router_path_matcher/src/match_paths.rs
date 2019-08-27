@@ -10,7 +10,7 @@ use std::slice::Iter;
 use nom::error::ErrorKind;
 
 pub(super) fn match_paths<'a, 'b>(tokens: &'b Vec<OptimizedToken>, mut i: &'a str) -> IResult<&'a str, Matches<'b>> {
-    debug!("Attempting to match path: {:?} using: {:?}", i, tokens);
+    trace!("Attempting to match path: {:?} using: {:?}", i, tokens);
 
     let mut iter = tokens
         .iter()
@@ -305,5 +305,11 @@ mod integration_test {
         match_paths(&x, "#test").expect("should match");
         match_paths(&x, "").expect("should match");
         match_paths(&x, "#").expect("should match");
+    }
+
+    #[test]
+    fn capture_as_only_token() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("{any}").expect("Should parse");
+        match_paths(&x, "literally_anything").expect("should match");
     }
 }

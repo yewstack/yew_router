@@ -75,8 +75,6 @@ pub fn capture_or_match(i: &str) -> IResult<&str, CaptureOrMatch> {
 mod test {
     use super::*;
 
-
-
     #[test]
     fn capture_named_test() {
         let cap = capture("{hellothere}").unwrap();
@@ -128,6 +126,5 @@ mod test {
     fn capture_consumes() {
         capture("{aoeu").expect_err("Should not complete");
     }
-
 
 }

@@ -10,3 +10,4 @@ edition="2018"
 yew = { git = "https://github.com/jstarry/yew", branch = "component-children" }
 yew_router = {path = "../.."}
 web_logger = "0.1"
+log = "0.4.8"

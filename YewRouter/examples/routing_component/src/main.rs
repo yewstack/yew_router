@@ -61,12 +61,13 @@ impl Renderable<Model> for Model {
                     <RouterButton: text=String::from("Go to E/C"), route=RouteInfo::from("/e/c"), />
                     <RouterButton: text=String::from("Go to F (hello there)"), route=RouteInfo::from("/f/there"), />
                     <RouterButton: text=String::from("Go to F (hello world)"), route=RouteInfo::from("/f/world"), />
+                    <RouterButton: text=String::from("Go to bad path"), route=RouteInfo::from("/a_bad_path"), />
                 </nav>
                 <div>
                     <Router>
                         <Route path=route!("/a/{}" => AModel) />
                         <Route path=route!("/c" => CModel) />
-                        <Route path=route!("/b/{sub_path}" => BModel) />
+                        <Route path=route!("/b(?sub_path={sub_path})(#{number})" => BModel) />
                         <Route path=route!("/e/c" => CModel)>
                              {"Hello there from the other E \"child\""}
                         </Route>
@@ -74,6 +75,9 @@ impl Renderable<Model> for Model {
                              {"Hello there from the E \"child\""}
                         </Route>
                         <Route path=route!("/f/{capture}", f)/>
+                        <Route path=route!("{*:any}", |matches| {
+                            Some(html!{{format!("404, page not found for '{}'", matches["any"])}})
+                        }) />
                     </Router>
                 </div>
             </div>

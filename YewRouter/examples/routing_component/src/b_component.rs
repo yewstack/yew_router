@@ -53,12 +53,12 @@ impl Component for BModel {
         match msg {
             Msg::Navigate(msgs) => {
                 // Perform the wrapped updates first
-                for msg in msgs{
+                for msg in msgs {
                     self.update(msg);
                 }
 
                 // The path dictating that this component be instantiated must be provided
-                let route_string = "b".to_string();
+                let route_string = "/b".to_string();
                 let route_string = match &self.sub_path {
                     Some(sub_path) => route_string + "/" + &sub_path,
                     None => route_string
