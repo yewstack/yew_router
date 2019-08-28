@@ -214,7 +214,7 @@ fn valid_capture_characters_in_query(i: &str) -> IResult<&str, &str> {
 mod integration_test {
     use super::*;
 
-
+    use yew_router_route_parser;
 
     #[test]
     fn match_query_after_path() {
@@ -310,5 +310,46 @@ mod integration_test {
     fn capture_as_only_token() {
         let x = yew_router_route_parser::parse_str_and_optimize_tokens("{any}").expect("Should parse");
         match_paths(&x, "literally_anything").expect("should match");
+    }
+
+    #[test]
+    fn optional_path_first() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("(/thing)").expect("Should parse");
+        match_paths(&x, "").expect("should match");
+        match_paths(&x, "/thing").expect("should match");
+    }
+
+    #[test]
+    fn optional_path_after_item() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/first(/second)").expect("Should parse");
+        assert_eq!(x, vec![
+            MatcherToken::Match("/first".to_string()),
+            MatcherToken::Optional(vec![MatcherToken::Match("/second".to_string())])
+        ]);
+        match_paths(&x, "/first").expect("should match");
+        match_paths(&x, "/first/second").expect("should match");
+    }
+
+
+    #[test]
+    fn optional_path_any() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/first(/{})").expect("Should parse");
+        let expected = vec![
+            MatcherToken::Match("/first".to_string()),
+            MatcherToken::Optional(vec![MatcherToken::Match("/".to_string()), MatcherToken::Capture(CaptureVariant::Unnamed)]),
+        ];
+        assert_eq!(x, expected);
+        match_paths(&x, "/first").expect("should match");
+        match_paths(&x, "/first/second").expect("should match");
+    }
+
+
+    #[test]
+    fn optional_path_capture_all() {
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/{*}(/stuff)").expect("Should parse");
+//        match_paths(&x, "/some/garbage").expect("should match"); // TODO this finds the next section which is "/stuff", but it isn't in the input, so it never knows when to stop.
+        // TODO this may need a restriction to syntax (undesirable) or lookup_next_concrete_sequence() needs to be able to return a vec of the possible delimiters that stop a current scan.
+        // TODO Additionally, the returned derimiters need to be marked as optional, so that in the event that no other mandatory delimiters are present, it can match to the end instead.
+        match_paths(&x, "/some/garbage/stuff").expect("should match");
     }
 }

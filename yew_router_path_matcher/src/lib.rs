@@ -5,7 +5,6 @@ mod match_paths;
 
 use nom::IResult;
 use std::collections::{HashMap, HashSet};
-use log::{trace};
 use yew_router_route_parser::{optimize_tokens, parser};
 use yew::{Html, Component, Renderable};
 

@@ -25,13 +25,29 @@ impl From<CaptureOrMatch> for MatcherToken {
 impl MatcherToken {
     /// Helper method to get concrete literals out of Match variants.
     pub fn lookup_next_concrete_sequence(&self) -> Result<&str, ()> {
-        if let MatcherToken::Match(sequence) = self {
-            Ok(&sequence)
-        } else {
-            Err(())
+        match self {
+            MatcherToken::Match(sequence) => Ok(&sequence),
+            MatcherToken::Optional(inner) => {
+                // recurse into the optional section, looking for the first
+                // Match section to extract a string from.
+                inner.iter()
+                    .next()
+                    .ok_or_else(|| ())
+                    .and_then(MatcherToken::lookup_next_concrete_sequence)
+            }
+            _ => Err(())
         }
     }
 }
+
+/// TODO lookup_next_concrete_sequence replacement
+/// Take a peekable iterator.
+/// Until a top level Match is encountered, peek through optional sections.
+/// If a match is found, then move the list of delimiters into a take_till seeing if the current input slice is found in the list of decimeters.
+/// If a match is not found, then do the same, or accept as part of an alt() a take the rest of the input (as long as it is valid).
+/// return this take_till configuration and use that to terminate / capture the given string for the capture token.
+
+
 
 
 /// Tokens that can be coalesced to a OptimizedToken::Match are converted to strings here.
@@ -66,9 +82,16 @@ pub fn optimize_tokens(tokens: Vec<RouteParserToken>) -> Vec<MatcherToken> {
                 run.push(token)
             }
             RouteParserToken::Optional(tokens) => {
+                // Empty the run when a optional is encountered.
+                if !run.is_empty() {
+                    let s: String = run.iter().map(token_to_string).collect();
+                    optimized.push(MatcherToken::Match(s));
+                    run.clear()
+                }
                 optimized.push(MatcherToken::Optional(optimize_tokens(tokens.clone())))
             },
             RouteParserToken::Capture (_) | RouteParserToken:: QueryCapture {..} => {
+                // Empty the run when a capture is encountered.
                 if !run.is_empty() {
                     let s: String = run.iter().map(token_to_string).collect();
                     optimized.push(MatcherToken::Match(s));

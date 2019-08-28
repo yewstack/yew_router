@@ -3,7 +3,7 @@ use nom::branch::alt;
 use nom::sequence::{tuple, pair};
 use crate::parser::RouteParserToken;
 use nom::combinator::{map, opt};
-use nom::multi::{many1, many0};
+use nom::multi::{many0};
 use nom::bytes::complete::tag;
 use crate::parser::core::{capture, match_specific};
 use nom::error::{VerboseError, context};
@@ -25,9 +25,10 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError
                 separator_token,
                 section_matchers
             ),
-            |(sep, mut sections)| {
-                let mut x = vec![sep];
-                x.append(&mut sections);
+            |(sep, sections)| {
+                let mut x = Vec::with_capacity(sections.len() + 1);
+                x.push(sep);
+                x.extend(sections);
                 x
             }
         ))(i)
@@ -54,8 +55,8 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError
         "many optional after concrete paths",
         map(
             pair(many_inner_paths, many_optional_inner_paths),
-            |(mut first, mut second)| {
-                first.append(&mut second);
+            |(mut first, second)| {
+                first.extend(second);
                 first
             }
         )
@@ -65,11 +66,9 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError
     context("path parser", alt(
         (
             map(
-                tuple((many_optional_after_concrete_inner, opt(separator_token))),
+                pair(many_optional_after_concrete_inner, opt(separator_token)),
                 |(mut paths, ending_separator)| {
-                    if let Some(end_sep) = ending_separator {
-                        paths.push(end_sep)
-                    }
+                    paths.extend(ending_separator);
                     paths
                 }
             ),
@@ -189,7 +188,14 @@ mod test {
 
     #[test]
     fn many_option_section() {
-        path_parser("/hello(/hello)(/hello)").expect("Should validate");
+        let (_, tokens) = path_parser("/first(/second)(/third)").expect("Should validate");
+        let expected = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Match("first".to_string()),
+            RouteParserToken::Optional(vec![RouteParserToken::Separator, RouteParserToken::Match("second".to_string())]),
+            RouteParserToken::Optional(vec![RouteParserToken::Separator, RouteParserToken::Match("third".to_string())])
+        ];
+        assert_eq!(tokens, expected);
     }
 
     #[test]
