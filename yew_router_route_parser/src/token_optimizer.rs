@@ -2,6 +2,13 @@ use crate::parser::RouteParserToken;
 use crate::parser::{CaptureVariant, CaptureOrMatch};
 use crate::parser::parse;
 use nom::error::VerboseError;
+use std::iter::Peekable;
+use nom::IResult;
+use std::slice::Iter;
+use nom::bytes::complete::take_till1;
+use nom::combinator::{peek, rest, cond, map, map_opt};
+use crate::parser::util::alternative;
+use nom::branch::alt;
 
 /// Tokens used to determine how to match and capture sections from a URL.
 #[derive(Debug, PartialEq, Clone)]
@@ -22,30 +29,79 @@ impl From<CaptureOrMatch> for MatcherToken {
     }
 }
 
-impl MatcherToken {
-    /// Helper method to get concrete literals out of Match variants.
-    pub fn lookup_next_concrete_sequence(&self) -> Result<&str, ()> {
-        match self {
-            MatcherToken::Match(sequence) => Ok(&sequence),
-            MatcherToken::Optional(inner) => {
-                // recurse into the optional section, looking for the first
-                // Match section to extract a string from.
-                inner.iter()
-                    .next()
-                    .ok_or_else(|| ())
-                    .and_then(MatcherToken::lookup_next_concrete_sequence)
-            }
-            _ => Err(())
-        }
-    }
-}
-
-/// TODO lookup_next_concrete_sequence replacement
+/// Produces a parser combinator that searches for the next possible set of strings of
+/// characters used to terminate a forward search.
+///
 /// Take a peekable iterator.
 /// Until a top level Match is encountered, peek through optional sections.
 /// If a match is found, then move the list of delimiters into a take_till seeing if the current input slice is found in the list of decimeters.
 /// If a match is not found, then do the same, or accept as part of an alt() a take the rest of the input (as long as it is valid).
 /// return this take_till configuration and use that to terminate / capture the given string for the capture token.
+pub fn next_delimiters<'a>(mut iter:  Peekable<Iter<MatcherToken>>) -> impl Fn(&'a str) -> IResult<&'a str, &'a str>  {
+
+    enum MatchOrOptSequence<'a> {
+        Match(&'a str),
+        Optional(&'a str)
+    }
+    fn search_for_inner_sequence(matcher_token: &MatcherToken) -> Option<&str> {
+        match matcher_token {
+            MatcherToken::Match(sequence) => Some(&sequence),
+            MatcherToken::Optional(inner) => {
+                inner
+                    .iter()
+                    .filter_map(|inner_token| {
+                        if let Some(inner_sequence) = search_for_inner_sequence(inner_token) {
+                            Some(inner_sequence)
+                        } else {
+                            None
+                        }
+                    })
+                    .next()
+            }
+            MatcherToken::Capture(_) => None // TODO still may want to handle this
+        }
+    }
+
+    let mut sequences = vec![];
+    while let Some(next) = iter.next() {
+        match next {
+            MatcherToken::Match(sequence) =>  {
+                sequences.push(MatchOrOptSequence::Match(&sequence));
+                break;
+            }
+            MatcherToken::Optional(inner) => {
+                let sequence: &str = inner
+                    .iter()
+                    .filter_map(search_for_inner_sequence)
+                    .next()
+                    .expect("Should be in sequence");
+                sequences.push(MatchOrOptSequence::Optional(sequence))
+            }
+            _ => panic!("underlying parser should not allow token order not of match or optional")
+        }
+    }
+
+    let contains_optional = sequences.iter().any(|x| std::mem::discriminant(x) == std::mem::discriminant(&&MatchOrOptSequence::Optional("")));
+    log::trace!("next delimiter: contains optional: {}", contains_optional);
+    let delimiters: Vec<String> = sequences
+        .into_iter()
+        .map(|s| {
+            match s {
+                MatchOrOptSequence::Match(s) => s,
+                MatchOrOptSequence::Optional(s) => s
+            }
+        })
+        .map(String::from)
+        .collect();
+
+    log::trace!("delimiters in read_until_next_known_delimiter: {:?}", delimiters);
+
+    // if the sequence contains an optional section, it can attempt to match until the end.
+    map_opt (
+        alt((cond(true, alternative(delimiters)), cond(contains_optional, rest))),
+        |x| x
+    )
+}
 
 
 

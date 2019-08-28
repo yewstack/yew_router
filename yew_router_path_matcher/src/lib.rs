@@ -81,6 +81,16 @@ mod tests {
     use super::*;
     use yew_router_route_parser::parser::RouteParserToken;
 
+
+
+//    use std::sync::{Once, ONCE_INIT};
+//    static INIT: Once = ONCE_INIT;
+//    fn setup_logs() {
+//        INIT.call_once(|| {
+//            env_logger::init();
+//        });
+//    }
+
     impl From<Vec<RouteParserToken>> for PathMatcher {
         fn from(tokens: Vec<RouteParserToken>) -> Self {
             PathMatcher {
@@ -132,6 +142,7 @@ mod tests {
 
     #[test]
     fn match_n() {
+//        setup_logs();
         let tokens = vec![RouteParserToken::Separator, RouteParserToken::Capture(CaptureVariant::NumberedUnnamed {sections: 3}), RouteParserToken::Separator, RouteParserToken::Match("a".to_string())];
         let path_matcher = PathMatcher::from(tokens);
         let (_, _matches) = path_matcher.match_path("/garbage1/garbage2/garbage3/a").expect("should parse");

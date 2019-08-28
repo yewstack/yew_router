@@ -3,7 +3,10 @@ use nom::IResult;
 use crate::parser::RouteParserToken;
 use nom::sequence::delimited;
 use nom::bytes::complete::tag;
-use nom::error::{context, VerboseError};
+use nom::error::{context, VerboseError, ErrorKind, ParseError};
+use nom::multi::{fold_many1, many_till};
+use nom::combinator::{peek, not, map};
+use nom::character::complete::anychar;
 
 pub fn ret_vec<'a>(f: impl Fn(&'a str) -> IResult<&'a str, RouteParserToken, VerboseError<&'a str>>) -> impl Fn(&'a str) -> IResult<&'a str, Vec<RouteParserToken>, VerboseError<&'a str>> {
     move |i: &str | {
@@ -44,5 +47,79 @@ pub fn optional_match<'a, F>(f: F) -> impl Fn(&'a str) -> IResult<&'a str, Route
             delimited(tag("("), f, tag(")"))
         )(i)
             .map(|(i, t)| (i, RouteParserToken::Optional(vec![t])))
+    }
+}
+
+
+
+/// Similar to alt, but works on a vector of tags.
+pub fn alternative(alternatives: Vec<String>) -> impl Fn(&str) -> IResult<&str, & str> {
+    move |i: &str| {
+        for alternative in &alternatives {
+            match tag(alternative.as_str())(i) {
+                done@IResult::Ok(..) => {
+                    return done
+                },
+                _ => () // continue
+            }
+        }
+        Err(nom::Err::Error((i, ErrorKind::Tag))) // nothing found.
+    }
+}
+
+
+/// Consumes the input until the provided parser succeeds.
+/// The consumed input is returned in the form of an allocated string.
+/// # Note stop parser does not consume its input
+pub fn consume_until<'a, F>(stop_parser: F) -> impl FnOnce(&'a str) -> IResult<&'a str, String>
+where
+    F: Fn(&'a str) -> IResult<&'a str, &'a str>
+{
+    move |i: &str| {
+        map(
+            many_till(
+                anychar,
+                peek(stop_parser), // once this succeeds, stop folding.
+            ),
+            |(first, _stop)| {
+                log::trace!("consume until - first: {:?}, stop: {}", first, _stop);
+                first.into_iter().collect()
+            }
+        )(i)
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn consume_until_simple() {
+        let parser = consume_until(tag("z"));
+        let parsed = parser("abcz").expect("Should parse");
+        assert_eq!(parsed, ("z", "abc".to_string()))
+    }
+
+    #[test]
+    fn consume_until_fail() {
+        let parser = consume_until(tag("z"));
+        let e = parser("abc").expect_err("Should parse");
+        assert_eq!(e, nom::Err::Error(("", ErrorKind::Eof)))
+    }
+
+
+    #[test]
+    fn alternative_simple() {
+        let parser = alternative(vec!["c", "d", "abc"].into_iter().map(String::from).collect());
+        let parsed = parser("abcz").expect("Should parse");
+        assert_eq!(parsed, ("z", "abc"))
+    }
+
+    #[test]
+    fn alternative_and_consume_until() {
+        let parser = consume_until(alternative(vec!["c", "d", "abc"].into_iter().map(String::from).collect()));
+        let parsed = parser("first_stuff_abc").expect("should parse");
+        assert_eq!(parsed, ("abc", "first_stuff_".to_string()))
     }
 }

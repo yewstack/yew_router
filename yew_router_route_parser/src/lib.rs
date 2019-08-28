@@ -1,7 +1,7 @@
 
 mod token_optimizer;
 pub use parser::CaptureVariant;
-pub use token_optimizer::{parse_str_and_optimize_tokens, optimize_tokens, MatcherToken};
+pub use token_optimizer::{parse_str_and_optimize_tokens, optimize_tokens, MatcherToken, next_delimiters};
 
 pub mod parser;
 

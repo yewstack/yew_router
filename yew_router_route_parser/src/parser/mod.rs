@@ -5,7 +5,7 @@ use nom::error::{ParseError, ErrorKind, VerboseError};
 use nom::branch::alt;
 
 mod core;
-mod util;
+pub mod util;
 mod path;
 mod query;
 mod fragment;

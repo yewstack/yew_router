@@ -8,6 +8,7 @@ use log::{trace, debug};
 use std::iter::Peekable;
 use std::slice::Iter;
 use nom::error::ErrorKind;
+use yew_router_route_parser::parser::util::consume_until;
 
 pub(super) fn match_paths<'a, 'b>(tokens: &'b [MatcherToken], mut i: &'a str) -> IResult<&'a str, Matches<'b>> {
     trace!("Attempting to match path: {:?} using: {:?}", i, tokens);
@@ -21,7 +22,7 @@ pub(super) fn match_paths<'a, 'b>(tokens: &'b [MatcherToken], mut i: &'a str) ->
     while let Some(token) = iter.next() {
         i = match token {
             MatcherToken::Match(literal) => {
-                trace!("Matching literal: {}", literal);
+                trace!("Matching '{}' against literal: '{}'", i, literal);
                 tag(literal.as_str())(i)?.0
             },
             MatcherToken::Optional(inner_tokens) => {
@@ -62,8 +63,8 @@ pub(super) fn match_paths<'a, 'b>(tokens: &'b [MatcherToken], mut i: &'a str) ->
 fn capture_unnamed<'a>(i: &'a str, iter: &mut Peekable<Iter<MatcherToken>>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     log::trace!("Matching Unnamed");
     let ii = if let Some(peaked_next_token) = iter.peek() {
-        let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
-        terminated(valid_capture_characters, peek(tag(delimiter)))(i)?.0
+        let delimiter = yew_router_route_parser::next_delimiters(iter.clone());
+        terminated(valid_capture_characters, peek(delimiter))(i)?.0
     } else {
         if i.len() == 0 {
             i // Match even if nothing is left
@@ -79,8 +80,8 @@ fn capture_unnamed<'a>(i: &'a str, iter: &mut Peekable<Iter<MatcherToken>>) -> R
 fn capture_many_unnamed<'a>(i: &'a str, iter: &mut Peekable<Iter<MatcherToken>>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     trace!("Matching ManyUnnamed");
     let ii = if let Some(peaked_next_token) = iter.peek() {
-        let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
-        take_until(delimiter)(i)?.0
+        let delimiter = yew_router_route_parser::next_delimiters(iter.clone());
+        consume_until(delimiter)(i)?.0
     } else {
         if i.len() == 0 {
             i // Match even if nothing is left
@@ -99,8 +100,8 @@ fn capture_numbered_unnamed<'a>(mut i: &'a str, iter: &mut Peekable<Iter<Matcher
                 i = terminated(valid_capture_characters, tag("/"))(i)?.0;
             } else {
                 // Don't consume the next character on the last section
-                let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("should be in sequence");
-                i = terminated(valid_capture_characters, peek(tag(delimiter)))(i)?.0;
+                let delimiter = yew_router_route_parser::next_delimiters(iter.clone());
+                i = consume_until(delimiter)(i)?.0;
             }
             sections -= 1;
         }
@@ -121,9 +122,9 @@ fn capture_numbered_unnamed<'a>(mut i: &'a str, iter: &mut Peekable<Iter<Matcher
 fn capture_named<'a, 'b>(i: &'a str, iter: &mut Peekable<Iter<MatcherToken>>, capture_key: &'b str, matches: &mut Matches<'b>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     log::trace!("Matching Named ({})", capture_key);
     if let Some(peaked_next_token) = iter.peek() {
-        let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("should be in sequence");
-        let (ii, captured) = terminated(valid_capture_characters, peek(tag(delimiter)))(i)?;
-        matches.insert(capture_key, captured.to_string());
+        let delimiter = yew_router_route_parser::next_delimiters(iter.clone());
+        let (ii, captured) = consume_until(delimiter)(i)?;
+        matches.insert(capture_key, captured);
         Ok(ii)
     } else {
         let (ii, captured) = valid_capture_characters(i)?;
@@ -136,9 +137,9 @@ fn capture_named<'a, 'b>(i: &'a str, iter: &mut Peekable<Iter<MatcherToken>>, ca
 fn capture_many_named<'a, 'b>(i: &'a str, iter: &mut Peekable<Iter<MatcherToken>>, capture_key: &'b str, matches: &mut Matches<'b>) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     log::trace!("Matching NumberedUnnamed ({})", capture_key);
     if let Some(peaked_next_token) = iter.peek() {
-        let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("Should be in sequence");
-        let (ii, c) = take_until(delimiter)(i)?;
-        matches.insert(&capture_key, c.to_string());
+        let delimiter = yew_router_route_parser::next_delimiters(iter.clone());
+        let (ii, captured) = consume_until(delimiter)(i)?;
+        matches.insert(&capture_key, captured);
         Ok(ii)
     } else {
         if i.len() == 0 {
@@ -163,11 +164,10 @@ fn capture_numbered_named<'a, 'b>(mut i: &'a str, iter: &mut Peekable<Iter<Match
                 captured += c;
                 captured += "/";
             } else {
-                // Don't consume the next character on the last section
-                let delimiter = peaked_next_token.lookup_next_concrete_sequence().expect("should be in sequence");
-                let (ii, c) = terminated(valid_capture_characters, peek(tag(delimiter)))(i)?;
+                let delimiter = yew_router_route_parser::next_delimiters(iter.clone());
+                let (ii, c) = consume_until(delimiter)(i)?;
                 i = ii;
-                captured += c;
+                captured += &c;
             }
             sections -= 1;
             println!("{}", i);
@@ -200,7 +200,7 @@ fn valid_capture_characters(i: &str) -> IResult<&str, &str> {
 }
 
 fn valid_many_capture_characters(i: &str) -> IResult<&str, &str> {
-    const INVALID_CHARACTERS: &str = " #&?{}=";
+    const INVALID_CHARACTERS: &str = " #&?=";
     is_not(INVALID_CHARACTERS)(i)
 }
 
@@ -347,9 +347,13 @@ mod integration_test {
     #[test]
     fn optional_path_capture_all() {
         let x = yew_router_route_parser::parse_str_and_optimize_tokens("/{*}(/stuff)").expect("Should parse");
-//        match_paths(&x, "/some/garbage").expect("should match"); // TODO this finds the next section which is "/stuff", but it isn't in the input, so it never knows when to stop.
-        // TODO this may need a restriction to syntax (undesirable) or lookup_next_concrete_sequence() needs to be able to return a vec of the possible delimiters that stop a current scan.
-        // TODO Additionally, the returned derimiters need to be marked as optional, so that in the event that no other mandatory delimiters are present, it can match to the end instead.
+        let expected = vec![
+            MatcherToken::Match("/".to_string()),
+            MatcherToken::Capture(CaptureVariant::ManyUnnamed),
+            MatcherToken::Optional(vec![MatcherToken::Match("/stuff".to_string())])
+        ];
+        assert_eq!(x, expected);
+        match_paths(&x, "/some/garbage").expect("should match");
         match_paths(&x, "/some/garbage/stuff").expect("should match");
     }
 }
