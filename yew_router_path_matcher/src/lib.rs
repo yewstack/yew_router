@@ -58,9 +58,10 @@ impl PathMatcher {
             CMP::Properties: FromMatches
     {
         let tokens = parser::parse(i).map_err(|_| ())?;
+        let settings = MatcherSettings::default();
         let pm = PathMatcher {
-            tokens: optimize_tokens(tokens),
-            settings: MatcherSettings::default()
+            tokens: optimize_tokens(tokens, !settings.strict),
+            settings
         };
         Ok(pm)
     }
@@ -120,9 +121,10 @@ mod tests {
 
     impl From<Vec<RouteParserToken>> for PathMatcher {
         fn from(tokens: Vec<RouteParserToken>) -> Self {
+            let settings = MatcherSettings::default();
             PathMatcher {
-                tokens: optimize_tokens(tokens),
-                settings: MatcherSettings::default()
+                tokens: optimize_tokens(tokens, !settings.strict),
+                settings
             }
         }
     }

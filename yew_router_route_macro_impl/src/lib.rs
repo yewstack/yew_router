@@ -28,12 +28,11 @@ impl Parse for S {
 #[proc_macro_hack]
 pub fn route(input: TokenStream) -> TokenStream {
     let s = parse_macro_input!(input as S);
-//    let target = s.target;
     let s: String = s.s;
 
     // Do the parsing at compile time so the user knows if their matcher is malformed.
     // It will still be their responsibility to know that the corresponding Props can be acquired from a path matcher.
-    let t = yew_router_route_parser::parse_str_and_optimize_tokens(s.as_str())
+    let t = yew_router_route_parser::parse_str_and_optimize_tokens(s.as_str(), true)
         .expect("Invalid Path Matcher")
         .into_iter()
         .map(ShadowOptimizedToken::from);
