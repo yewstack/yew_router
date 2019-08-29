@@ -7,6 +7,7 @@ use nom::error::{context, VerboseError, ErrorKind, ParseError};
 use nom::multi::{fold_many1, many_till};
 use nom::combinator::{peek, not, map};
 use nom::character::complete::anychar;
+use std::rc::Rc;
 
 pub fn ret_vec<'a>(f: impl Fn(&'a str) -> IResult<&'a str, RouteParserToken, VerboseError<&'a str>>) -> impl Fn(&'a str) -> IResult<&'a str, Vec<RouteParserToken>, VerboseError<&'a str>> {
     move |i: &str | {
@@ -71,21 +72,22 @@ pub fn alternative(alternatives: Vec<String>) -> impl Fn(&str) -> IResult<&str, 
 /// Consumes the input until the provided parser succeeds.
 /// The consumed input is returned in the form of an allocated string.
 /// # Note stop parser does not consume its input
-pub fn consume_until<'a, F>(stop_parser: F) -> impl FnOnce(&'a str) -> IResult<&'a str, String>
+pub fn consume_until<'a, F>(stop_parser: F) -> impl Fn(&'a str) -> IResult<&'a str, String>
 where
     F: Fn(&'a str) -> IResult<&'a str, &'a str>
 {
+    // In order for the returned fn to be Fn instead of FnOnce, wrap the inner fn in an RC.
+    let f =  Rc::new(
+        many_till(
+            anychar,
+            peek(stop_parser), // once this succeeds, stop folding.
+        )
+    );
     move |i: &str| {
-        map(
-            many_till(
-                anychar,
-                peek(stop_parser), // once this succeeds, stop folding.
-            ),
-            |(first, _stop)| {
-                log::trace!("consume until - first: {:?}, stop: {}", first, _stop);
-                first.into_iter().collect()
-            }
-        )(i)
+        let (i, (first, _stop)): (&str, (Vec<char>, &str)) = (f)(i)?;
+        log::trace!("consume until - first: {:?}, stop: {}", first, _stop);
+        let ret = first.into_iter().collect();
+        Ok((i, ret))
     }
 }
 

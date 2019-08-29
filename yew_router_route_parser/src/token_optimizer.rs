@@ -132,42 +132,43 @@ pub fn optimize_tokens(tokens: Vec<RouteParserToken>) -> Vec<MatcherToken> {
     // Stores consecutive Tokens that can be reduced down to a OptimizedToken::Match.
     let mut run = vec![];
 
-    tokens.into_iter().for_each( |token| {
-        match &token {
-            RouteParserToken::Separator | RouteParserToken::Match(_) | RouteParserToken::QueryBegin | RouteParserToken::QuerySeparator | RouteParserToken::FragmentBegin => {
-                run.push(token)
-            }
-            RouteParserToken::Optional(tokens) => {
-                // Empty the run when a optional is encountered.
-                if !run.is_empty() {
-                    let s: String = run.iter().map(token_to_string).collect();
-                    optimized.push(MatcherToken::Match(s));
-                    run.clear()
+    tokens.into_iter()
+        .for_each( |token| {
+            match &token {
+                RouteParserToken::Separator | RouteParserToken::Match(_) | RouteParserToken::QueryBegin | RouteParserToken::QuerySeparator | RouteParserToken::FragmentBegin => {
+                    run.push(token)
                 }
-                optimized.push(MatcherToken::Optional(optimize_tokens(tokens.clone())))
-            },
-            RouteParserToken::Capture (_) | RouteParserToken:: QueryCapture {..} => {
-                // Empty the run when a capture is encountered.
-                if !run.is_empty() {
-                    let s: String = run.iter().map(token_to_string).collect();
-                    optimized.push(MatcherToken::Match(s));
-                    run.clear()
+                RouteParserToken::Optional(tokens) => {
+                    // Empty the run when a optional is encountered.
+                    if !run.is_empty() {
+                        let s: String = run.iter().map(token_to_string).collect();
+                        optimized.push(MatcherToken::Match(s));
+                        run.clear()
+                    }
+                    optimized.push(MatcherToken::Optional(optimize_tokens(tokens.clone())))
+                },
+                RouteParserToken::Capture (_) | RouteParserToken:: QueryCapture {..} => {
+                    // Empty the run when a capture is encountered.
+                    if !run.is_empty() {
+                        let s: String = run.iter().map(token_to_string).collect();
+                        optimized.push(MatcherToken::Match(s));
+                        run.clear()
+                    }
+                    match token {
+                        RouteParserToken::Capture (variant) => {
+                            optimized.push(MatcherToken::Capture (variant))
+                        },
+                        RouteParserToken::QueryCapture {ident, capture_or_match} => {
+                            optimized.extend(vec![MatcherToken::Match(format!("{}=", ident)), capture_or_match.into()])
+                        }
+                        _ => {
+                            log::error!("crashing time");
+                            unreachable!()
+                        }
+                    };
                 }
-                match token {
-                    RouteParserToken::Capture (variant) => {
-                        optimized.push(MatcherToken::Capture (variant))
-                    },
-                    RouteParserToken::QueryCapture {ident, capture_or_match} => {
-                        optimized.extend(vec![MatcherToken::Match(format!("{}=", ident)), capture_or_match.into()])
-                    }
-                    _ => {
-                        log::error!("crashing time");
-                        unreachable!()
-                    }
-                };
             }
-        }
-    });
+        });
     // empty the "run"
     if !run.is_empty() {
         let s: String = run.iter().map(token_to_string).collect();

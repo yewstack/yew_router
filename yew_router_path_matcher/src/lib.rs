@@ -2,11 +2,13 @@
 pub use yew_router_route_parser::{MatcherToken, CaptureVariant, FromMatches, FromMatchesError};
 
 mod match_paths;
+mod util;
 
 use nom::IResult;
 use std::collections::{HashMap, HashSet};
 use yew_router_route_parser::{optimize_tokens, parser};
 use yew::{Html, Component, Renderable};
+use nom::combinator::all_consuming;
 
 pub trait RenderFn<CTX: yew::Component>: Fn(&Matches) -> Option<Html<CTX>> {}
 
@@ -25,6 +27,27 @@ pub type Matches<'a> = HashMap<&'a str, String>;
 #[derive(Debug, PartialEq, Clone)]
 pub struct PathMatcher {
     pub tokens: Vec<MatcherToken>,
+    pub settings: MatcherSettings
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct MatcherSettings {
+    // TODO support this
+    /// No optional '/' insertion. Text will be matched as strictly as possible.
+    pub strict: bool,
+    /// A matcher must consume all of the input to succeed.
+    pub complete: bool,
+    /// All literal matches do not care about case.
+    pub case_insensitive: bool
+}
+impl Default for MatcherSettings {
+    fn default() -> Self {
+        MatcherSettings {
+            strict: false,
+            complete: true,
+            case_insensitive: false
+        }
+    }
 }
 
 impl PathMatcher {
@@ -37,13 +60,19 @@ impl PathMatcher {
         let tokens = parser::parse(i).map_err(|_| ())?;
         let pm = PathMatcher {
             tokens: optimize_tokens(tokens),
+            settings: MatcherSettings::default()
         };
         Ok(pm)
     }
 
+    // TODO see if more error handling can be done here.
     // TODO, should find some way to support '/' characters in fragment. In the transform function, it could keep track of the seen hash begin yet, and transform captures based on that.
-    pub fn match_path<'a>(&self, i: &'a str) -> IResult<&'a str, Matches> {
-        match_paths::match_paths(&self.tokens, i)
+    pub fn match_path<'a, 'b: 'a>(&'b self, i: &'a str) -> IResult<&'a str, Matches<'a>> {
+        if self.settings.complete {
+            match_paths::match_path(&self.tokens, &self.settings)(i)
+        } else {
+            all_consuming(match_paths::match_path(&self.tokens, &self.settings))(i)
+        }
     }
 
     /// Gets a set of all names that will be captured.
@@ -74,8 +103,6 @@ impl PathMatcher {
 
 
 
-
-
     #[cfg(test)]
 mod tests {
     use super::*;
@@ -95,6 +122,7 @@ mod tests {
         fn from(tokens: Vec<RouteParserToken>) -> Self {
             PathMatcher {
                 tokens: optimize_tokens(tokens),
+                settings: MatcherSettings::default()
             }
         }
     }

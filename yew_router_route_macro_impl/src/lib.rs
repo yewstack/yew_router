@@ -42,6 +42,7 @@ pub fn route(input: TokenStream) -> TokenStream {
         {
             yew_router::path_matcher::PathMatcher {
                 tokens : vec![#(#t),*],
+                settings: yew_router::path_matcher::MatcherSettings::default()
             }
         }
     };
