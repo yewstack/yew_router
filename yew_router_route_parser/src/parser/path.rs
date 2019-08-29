@@ -1,6 +1,6 @@
 use nom::IResult;
 use nom::branch::alt;
-use nom::sequence::{tuple, pair};
+use nom::sequence::{ pair};
 use crate::parser::RouteParserToken;
 use nom::combinator::{map, opt};
 use nom::multi::{many0};

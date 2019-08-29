@@ -3,9 +3,9 @@ use nom::IResult;
 use crate::parser::RouteParserToken;
 use nom::sequence::delimited;
 use nom::bytes::complete::tag;
-use nom::error::{context, VerboseError, ErrorKind, ParseError};
-use nom::multi::{fold_many1, many_till};
-use nom::combinator::{peek, not, map};
+use nom::error::{context, VerboseError, ErrorKind};
+use nom::multi::{many_till};
+use nom::combinator::{peek};
 use nom::character::complete::anychar;
 use std::rc::Rc;
 

@@ -50,7 +50,7 @@ impl Renderable<Model> for Model {
         html! {
             <div>
                 <nav class="menu",>
-                    <RouterButton: text=String::from("Go to A"), link="/a/", />
+                    <RouterButton: text=String::from("Go to A"), link="/A/", />
                     <RouterLink: text=String::from("Go to B"), link="/b/#", />
                     <RouterButton: text=String::from("Go to C"), link="/c", />
                     <RouterButton: text=String::from("Go to A/C"), link="/a/c", />
@@ -62,7 +62,7 @@ impl Renderable<Model> for Model {
                 </nav>
                 <div>
                     <Router>
-                        <Route path=route!("/a/{}") render=component::<AModel>() />
+                        <Route path=route!("/a/{}"  Strict CaseInsensitive) render=component::<AModel>() />
                         <Route path=route!("/c") render=component::<CModel>() />
                         <Route path=route!("/b(?sub_path={sub_path})(#{number})") render=component::<BModel>()/>
                         <Route path=route!("/e/c") render=component::<CModel>() >

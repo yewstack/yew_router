@@ -5,8 +5,8 @@ use nom::error::VerboseError;
 use std::iter::Peekable;
 use nom::IResult;
 use std::slice::Iter;
-use nom::bytes::complete::take_till1;
-use nom::combinator::{peek, rest, cond, map, map_opt};
+//use nom::bytes::complete::take_till1;
+use nom::combinator::{rest, cond, map_opt};
 use crate::parser::util::alternative;
 use nom::branch::alt;
 
