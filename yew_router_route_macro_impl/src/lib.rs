@@ -8,7 +8,7 @@ use syn::{Error};
 use syn::parse::{Parse, ParseBuffer};
 use syn::parse_macro_input;
 use std::collections::HashSet;
-//use syn::spanned::Spanned;
+use std::hash::Hash;
 
 struct S {
     /// The routing string
@@ -18,13 +18,34 @@ struct S {
     strict: bool
 }
 
-
+/// Custom keywords
 mod kw {
     syn::custom_keyword!(CaseInsensitive);
     syn::custom_keyword!(Incomplete);
     syn::custom_keyword!(Strict);
 }
 
+
+/// Collects 0 or more results from the parse_options.
+/// It prevents parsing the same token(s) (as specified in the vector of parsers) twice.
+fn many_unordered<T: Eq + Hash>(input: &ParseBuffer, mut parse_options: Vec<&dyn Fn(&ParseBuffer) -> Option<T>>) -> HashSet<T> {
+    let mut collected = HashSet::new();
+    while parse_options.len() > 0 {
+        let mut inserted = false;
+        'x : for (index, f) in parse_options.iter().enumerate() {
+            if let Some(keyword) = (f)(&input) {
+                collected.insert(keyword);
+                let _ = parse_options.remove(index);
+                inserted = true;
+                break 'x; // must break to make borrow checker approve the implicit mut borrow needed for remove.
+            }
+        }
+        if !inserted {
+            break
+        }
+    }
+    collected
+}
 
 impl Parse for S {
     fn parse(input: &ParseBuffer) -> Result<Self, Error> {
@@ -37,34 +58,12 @@ impl Parse for S {
             Strict
         }
 
-        let f1: Box<dyn Fn(&ParseBuffer) -> Option<Keyword>> = Box::new(|input: &ParseBuffer| {
-            input.parse::<kw::Strict>().ok().map(|_| Keyword::Strict)
-        });
-        let mut parse_options = vec![
-            f1,
-            Box::new(|input: &ParseBuffer| {
-                input.parse::<kw::Incomplete>().ok().map(|_| Keyword::Incomplete)
-            }),
-            Box::new(|input: &ParseBuffer| {
-                input.parse::<kw::CaseInsensitive>().ok().map(|_| Keyword::CaseInsensitive)
-            })
-        ];
+        let collected = many_unordered(input, vec![
+            &|input| input.parse::<kw::Strict>().ok().map(|_| Keyword::Strict),
+            &|input| input.parse::<kw::Incomplete>().ok().map(|_| Keyword::Incomplete),
+            &|input| input.parse::<kw::CaseInsensitive>().ok().map(|_| Keyword::CaseInsensitive)
+        ]);
 
-        let mut collected = HashSet::new();
-        while parse_options.len() > 0 {
-            let mut inserted = false;
-            'x : for (index, f) in parse_options.iter().enumerate() {
-                if let Some(keyword) = (f)(&input) {
-                    collected.insert(keyword);
-                    let _ = parse_options.remove(index);
-                    inserted = true;
-                    break 'x;
-                }
-            }
-            if !inserted {
-                break
-            }
-        }
         let incomplete = collected.contains(&Keyword::Incomplete);
         let strict = collected.contains(&Keyword::Strict);
         let case_insensitive = collected.contains(&Keyword::CaseInsensitive);
