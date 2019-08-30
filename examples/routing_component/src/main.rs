@@ -45,8 +45,6 @@ impl Component for Model {
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
 
-
-
         html! {
             <div>
                 <nav class="menu",>
@@ -62,23 +60,24 @@ impl Renderable<Model> for Model {
                 </nav>
                 <div>
                     <Router>
-                        <Route path=route!("/a/{}"  Strict CaseInsensitive) render=component::<AModel>() />
-                        <Route path=route!("/c") render=component::<CModel>() />
-                        <Route path=route!("/b(?sub_path={sub_path})(#{number})") render=component::<BModel>()/>
-                        <Route path=route!("/e/c") render=component::<CModel>() >
+                        <Route matcher=route!("/a/{}"  Strict CaseInsensitive) render=component::<AModel>() />
+                        <Route matcher=route!("/c") render=component::<CModel>() />
+                        <Route matcher=route!("/b(?sub_path={sub_path})(#{number})") render=component::<BModel>()/>
+                        <Route matcher=route!("/e/c") render=component::<CModel>() >
                              {"Hello there from the other E \"child\""}
                         </Route>
-                        <Route path=route!("/e")>
+                        <Route matcher=route!("/e")>
                              {"Hello there from the E \"child\""}
                         </Route>
-                        <Route path=route!("/f/{capture}")
+                        <Route
+                            matcher=route!("/f/{capture}")
                             render=render(|matches: &Matches| {
                                 Some(html!{
                                     {format!("hello {}", matches[&"capture"])}
                                 })
                             })
                         />
-                        <Route path=route!("{*:any}") render=render(|matches: &Matches| {
+                        <Route matcher=route!("{*:any}") render=render(|matches: &Matches| {
                             Some(html!{{format!("404, page not found for '{}'", matches["any"])}})
                         }) />
                     </Router>

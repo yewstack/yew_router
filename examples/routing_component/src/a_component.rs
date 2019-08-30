@@ -56,7 +56,7 @@ impl Renderable<AModel> for AModel {
                 </div>
                 <div>
                     <Router>
-                        <Route path=route!("/{}/c") render=component::<CModel>() />
+                        <Route matcher=route!("/{}/c") render=component::<CModel>() />
                     </Router>
                 </div>
             </div>

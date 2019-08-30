@@ -139,7 +139,7 @@ impl <T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T>
                 let mut children = route.props.children.iter().peekable();
                 let render = route.props.render.clone().0;
 
-                route.props.path.match_path(&self.route)
+                route.props.matcher.match_path(&self.route)
                     .map(|(_rest, matches): (&str, std::collections::HashMap<&str, String>)| {
 
                         match (render, children.peek()) {

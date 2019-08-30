@@ -29,7 +29,7 @@ pub struct Route<T: for<'de> YewRouterState<'de>> {
 pub struct RouteProps<T: for<'de> YewRouterState<'de>> {
     /// Matches the url and can extract sections as matches to be used by the `Render`.
     #[props(required)]
-    pub path: PathMatcher,
+    pub matcher: PathMatcher,
     /// Given matches matched from the URL, conditionally render the elements specified within.
     pub render: Render<T>,
     /// Will be rendered if it contains anything provided the `PathMatcher` matches the URL.

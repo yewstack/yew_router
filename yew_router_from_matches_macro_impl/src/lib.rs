@@ -4,8 +4,6 @@ use syn;
 use syn::{DeriveInput, Data, Fields, Field, Ident};
 use syn::parse_macro_input;
 use quote::quote;
-//use std::iter::{Map, Cloned};
-//use std::slice::Iter;
 
 #[proc_macro_derive(FromMatches)]
 pub fn from_matches(input: TokenStream) -> TokenStream {

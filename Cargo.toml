@@ -8,6 +8,7 @@ members = [
     "yew_router",
     "yew_router_path_matcher", # This is only separate from route_parser because of some obscure linker bug involving emscriptem in yew interfering with proc macro definitions.
     "integration_test",
-    "examples/routing_component"
+    "examples/routing_component",
+    "examples/guide"
 ]
 
