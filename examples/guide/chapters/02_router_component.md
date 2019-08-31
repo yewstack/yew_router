@@ -4,7 +4,7 @@ The `Router` component is used to contain `Route` components.
 The `Route` components allow you to specify which routes to match, and what to render when they do.
 
 
-### Logic
+## Logic
 The `Router`, when routing, wants to find a valid target.
 To do this, it will look at each of its child `Route` components.
 For each `Route` component, the `Router` will attempt to match its route string against the `Route`'s matcher.
@@ -31,3 +31,38 @@ If it returns `None`, then neither will be displayed and the `Router` will conti
 
 #### Neither
 If neither are provided, obviously nothing will be rendered, and the search for a target will continue.
+
+### Example
+```rust
+html! {
+    <Router>
+        <Route matcher=route!("/a") render=component::<AModel>() />
+        <Route matcher=route!("/b")> 
+            <BModel/>
+        </Route>
+        <Route matcher=route!("/c") /> // Will never render. 
+        <Route matcher=route!("/d") render=component::<DModel>() > // DModel will render above the EModel component.
+            <EModel />
+        </Route> 
+    </Router>
+}
+```
+
+
+## Ordering
+Since you can create `Route`s that have matchers that can both match a given route string, you should put the more specific one above the more general one.
+This ensures that the specific case has a chance to match first.
+
+Additionally, using `{*}` or `{*:name}` in the last `Route` is a good way to provide a default case.
+
+### Example
+```rust
+html! {
+    <Router>
+        <Route matcher=route!("/a/specific/path") render=component::<AModel>() />
+        <Route matcher=route!("/a/{}/{}") render=component::<BModel>() /> // will match any valid url that has 3 sections, and starts with `/a/` and is not `/a/specific/path`
+        <Route matcher=route!("/a/path/{}") render=component::<CModel>() /> // Will never match
+        <Route matcher=route!("{*}") render=component::<DModel>() /> // Will match anything that doesn't match above.
+    </Router>
+}
+```

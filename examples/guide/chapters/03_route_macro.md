@@ -1,21 +1,21 @@
 # route! macro
 
-### Terms
+## Terms
 * matcher string - The string provided to the `route!` macro. This string has a special syntax that defines how it matches route strings.
 * route string - The section of the URL containing some combination (not necessarily all) of path query and fragment.
 * matcher - The struct produced by the `route!` macro.
 * path - The part of the url containing characters separated by `/` characters.
 * query - The part of the url started by a `?` character, containing sections in the form `this=that`, with additional sections taking the form `&this=that`.
 * fragment - The part of the url started by a `#` and can contain unstructured text.
-* any - A section delimited by `{}` and controls capturing or skipping characters.
-  * capture - An any section that contains a alphabetical identifier within ( eg. `{capture}`). That identifier is used as the key when storing captured sections in the `Matches`.
-  * `Matches` - An alias to `HashMap<&str, String>`. Captured sections of the string are stored as values, with their keys being the names that appeared in the capture section.
-* optional - Denotes a part of the route string that does not have to match.
-* literal - A matching route string must these sections exactly. These are made up of text as well as special characters.
+* **any** - A section delimited by `{}` and controls capturing or skipping characters.
+  * **capture** - An any section that contains a alphabetical identifier within ( eg. `{capture}`). That identifier is used as the key when storing captured sections in the `Matches`.
+  * `Matches` - An alias to `HashMap<&str, String>`. Captured sections of the route string are stored as values, with their keys being the names that appeared in the capture section.
+* **optional** - Denotes a part of the route string that does not have to match.
+* **literal** - A matching route string must these sections exactly. These are made up of text as well as special characters.
 * special characters - ` /?&=#`, characters that are reserved for separating sections of the route string.
 * flags - extra keywords you can specify after the matcher string that determine how it will the matcher will behave.
 
-### Description
+## Description
 
 The `route!` macro is used to define a matcher for a `Route`.
 It accepts a matcher string and a few optional flags that determine how the matcher behaves.
@@ -35,7 +35,7 @@ Examples of URLs that the parser attempts to avoid parsing successfully include:
 
 To do this, the parser is made up of rules dictating where you can place any and optional sections.
 
-#### Optional
+### Optional
 The optional section, being relatively simple in its operation, is defined mostly by where you can and cannot place them.
 * The router first attempts to parse a path, then the query, then the fragment.
 Optional sections are not allowed to cross these boundaries.
@@ -57,10 +57,12 @@ You can't have a literal part come after an optional part.
   * `#(anything_you_want_here_bud)`
   * `(#anything_you_want_here_bud)`
   
-#### Any
+### Any
 Parts delimited by `{}` can match multiple characters and will match up until the point where the parser can identify the next literal, or if one cannot be found, the end of the route string.
 
 They can appear anywhere in paths, even between non-`/` characters like `/a/p{}ath`.
+They can appear in the right hand part of queries: `/path/?query={}`.
+And can be interspersed anywhere in a fragment: `#frag{}ment{}`.
 
 * There are many types of `{}` sections.
   * `{}` - This will match anything, but will be terminated by a special character `/` TODO are there other characters that can stop this matching?
@@ -70,13 +72,14 @@ They can appear anywhere in paths, even between non-`/` characters like `/a/p{}a
   * `{*:name}` - Will match anything up until the next specified literal and put the contents of its captures in the `Matches`.
   * `{3:name}` - Will consume the specified number of path sections and add those contents to the `Matches`.
   
-#### Flags
+### Flags
 
 * `CaseInsensitive` - This will make the literals specified in the matcher string match both the lower case and upper case variants of characters as they appear in the route string.
 * `Strict` - By default, as part of an optimization step, an optional `/` is appended to the end of the path if it doesn't already have one. Setting this flag turns that off.
-* `Complete` - You can create some ambiguous parsers using `{*}` or `{*:name}` followed by another `{}`. Enabling this flag enforces that the route string must be fully consumed by the matcher in order for a route to fully match.
+* `Incomplete` - By default, a route will not match unless the entire route string is matched. Enabling this flag allows the matcher to succeed as soon as all segments in the matcher are satisfied, without having to consume all of the route string.
 
-# Note
+
+## Note
 The exact semantics and allowed syntax of the matcher string aren't fully nailed down yet.
 It is likely to shift slightly over time.
 If you find any inconsistencies between this document and the implementation, opening an issue in the YewRouter project would be appreciated. 
