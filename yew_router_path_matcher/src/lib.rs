@@ -52,10 +52,8 @@ impl Default for MatcherSettings {
 
 impl PathMatcher {
 
-    pub fn try_from<CMP>(i: &str) -> Result<Self, ()> // TODO: Error handling
+    pub fn try_from(i: &str) -> Result<Self, ()> // TODO: Error handling
         where
-            CMP: Component + Renderable<CMP>,
-            CMP::Properties: FromMatches
     {
         let tokens = parser::parse(i).map_err(|_| ())?;
         let settings = MatcherSettings::default();

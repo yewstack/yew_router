@@ -1,13 +1,14 @@
 # Intro
 
 ## What is Yew Router?
-Yew Router is a router in the style of React Router.
-A router's job in the context of a frontend web application is to take part of a URL and determine what to render based on that.
+Yew Router is a router in the style of [React Router](https://reacttraining.com/react-router/web/guides/quick-start).
+A router's job in the context of a frontend web application is to take part of a URL and determine what HTML to render based on that.
 
-Yew router contains a service, an agent, routing components, and components for changing the route.
-You can choose to forgo using the router itself and just use the service or agent, although the `Router` provides a higher layer of abstraction over the same domain.
+
 
 ## Important Constructs
+Yew router contains a service, an agent, routing components, and components for changing the route.
+You can choose to forgo using the router itself and just use the service or agent, although the `Router` provides a higher layer of abstraction over the same domain.
 
 #### `route!` macro
 The `route!` macro allows you to specify a string that determines how the router will match part of a URL.

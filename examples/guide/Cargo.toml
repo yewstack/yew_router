@@ -7,3 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+yew = { git = "https://github.com/jstarry/yew", branch = "component-children" }
+yew_router = {path = "../../yew_router"}
+web_logger = "0.1"
+log = "0.4.8"
+pulldown-cmark = "0.5.3"
