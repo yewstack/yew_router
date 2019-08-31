@@ -70,9 +70,9 @@ impl PathMatcher {
     // TODO, should find some way to support '/' characters in fragment. In the transform function, it could keep track of the seen hash begin yet, and transform captures based on that.
     pub fn match_path<'a, 'b: 'a>(&'b self, i: &'a str) -> IResult<&'a str, Matches<'a>> {
         if self.settings.complete {
-            match_paths::match_path(&self.tokens, &self.settings)(i)
-        } else {
             all_consuming(match_paths::match_path(&self.tokens, &self.settings))(i)
+        } else {
+            match_paths::match_path(&self.tokens, &self.settings)(i)
         }
     }
 
