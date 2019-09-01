@@ -52,7 +52,7 @@ impl Renderable<Model> for Model {
                 <Page
                     uri="https://raw.githubusercontent.com/hgzimmerman/YewRouter/master/examples/guide/chapters/05_testing.md"
                     page_url="/testing"
-                    title="testing"
+                    title="Testing"
                 />
             </Guide>
         }

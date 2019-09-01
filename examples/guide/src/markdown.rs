@@ -147,7 +147,6 @@ fn make_tag<COMP>(t: Tag) -> VTag<COMP>
             el.add_class("font-weight-bold");
             el
         }
-//        Tag::Code => VTag::new("code"),
         Tag::Link(_lt, ref href, ref title) => {
             let mut el = VTag::new("a");
             el.add_attribute("href", href);
@@ -165,8 +164,8 @@ fn make_tag<COMP>(t: Tag) -> VTag<COMP>
             el
         }
         Tag::FootnoteDefinition(ref _footnote_id) => VTag::new("span"), // Footnotes are not rendered as anything special
-        Tag::HtmlBlock => VTag::new("yeet"),
-        Tag::Strikethrough => VTag::new("code") // TODO fix this?
+        Tag::HtmlBlock => VTag::new("yeet"), // TODO, what happens here??
+        Tag::Strikethrough => VTag::new("strike")
     }
 }
 

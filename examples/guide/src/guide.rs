@@ -65,25 +65,34 @@ impl Renderable<Guide> for Guide {
                     }
                 })
                 .next();
+            log::debug!("active uri: {:?}", active_markdown_uri);
 
             let mut list_items = self.props.children
                 .iter()
                 .map(|child| {
-                    render_page_list_item(child.props, route)
+                    let x = render_page_list_item(child.props, route);
+                    if let yew::virtual_dom::VNode::VTag(x) = &x {
+                        log::debug!("{:?}",
+                            x.attributes
+                        );
+                    }
+                    x
                 });
 
             html! {
-                <div style="">
-                    <div style="">
-                        <ul>
+                <div style="display: flex; overflow-y: hidden; height: 100%">
+                    <div style="min-width: 280px; border-right: 2px solid black; overflow-y: auto">
+                        <ul style="list-style: none; padding: 0; margin: 0">
                             {for list_items}
                         </ul>
                     </div>
+                    <div style="overflow-y: auto; padding-left: 6px">
                     {
                         html !{
                             <MarkdownWindow uri=active_markdown_uri />
                         }
                     }
+                    </div>
                 </div>
             }
         } else {
@@ -95,15 +104,15 @@ impl Renderable<Guide> for Guide {
 fn render_page_list_item(props: PageProps, route: &RouteInfo) -> Html<Guide> {
     let pm: PathMatcher = PathMatcher::try_from(&props.page_url).unwrap();
     if pm.match_path(route).is_ok() {
+        log::debug!("Found an active");
         html! {
-            <li>
-                {"***"}
+            <li style="padding-left: 4px; padding-right: 4px; padding-top: 6px; padding-bottom: 6px; background-color: lightgray;">
                 <RouterLink link=props.page_url text={props.title} />
             </li>
         }
     } else {
         html! {
-            <li>
+            <li style="padding-left: 4px; padding-right: 4px; padding-top: 6px; padding-bottom: 6px; background-color: white;">
                 <RouterLink link=props.page_url text={props.title} />
             </li>
         }
