@@ -15,7 +15,7 @@ components = ["router_agent"]
 
 [dependencies]
 log = "0.4"
-web_logger = "0.1"
+#web_logger = "0.2"
 serde = "1.0"
 serde_derive = "1.0"
 #yew = { git = "https://github.com/yewstack/yew", branch="master" }
