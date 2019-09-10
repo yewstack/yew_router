@@ -98,9 +98,8 @@ impl <T> Component for Router<T>
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         let callback = link.send_back(Msg::UpdateRoute);
-        let mut router_agent = RouteAgent::bridge(callback);
+        let router_agent = RouteAgent::bridge(callback);
 
-        router_agent.send(RouteRequest::GetCurrentRoute);
         Router {
             route: Default::default(), // This must be updated by immediately requesting a route update from the service bridge.
             props,
@@ -108,10 +107,10 @@ impl <T> Component for Router<T>
         }
     }
 
-//    fn mounted(&mut self) -> ShouldRender {
-//        self.router_agent.send(RouterRequest::GetCurrentRoute);
-//        false
-//    }
+    fn mounted(&mut self) -> ShouldRender {
+        self.router_agent.send(RouteRequest::GetCurrentRoute);
+        false
+    }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {

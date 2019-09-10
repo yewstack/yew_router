@@ -10,7 +10,7 @@ edition = "2018"
 yew_router_route_parser = {path="../yew_router_route_parser"}
 nom = "5.0.0"
 log = "0.4.8"
-yew = { git = "https://github.com/jstarry/yew", branch = "component-children"}
+yew = { git = "https://github.com/yewstack/yew", branch="master" }
 objekt = "0.1.2"
 
 [dev-dependencies]
