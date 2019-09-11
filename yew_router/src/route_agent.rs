@@ -19,6 +19,12 @@ use std::ops::{Deref, DerefMut};
 pub trait RouterState<'de>: RouteState + Serialize + Deserialize<'de> + Debug {}
 impl<'de, T> RouterState<'de> for T where T: RouteState + Serialize + Deserialize<'de> + Debug {}
 
+
+/// Non-instantiable type.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+pub enum Void {}
+impl Transferable for Void {}
+
 /// Message used for the RouteAgent.
 #[derive(Debug)]
 pub enum Msg<T>
@@ -84,7 +90,7 @@ where
     type Input = RouteRequest<T>;
     type Output = RouteInfo<T>;
 
-    fn create(link: AgentLink<Self>) -> Self {
+    fn create(link: AgentLink<RouteAgent<T>>) -> Self {
         let callback = link.send_back(Msg::BrowserNavigationRouteChanged);
         let mut route_service = RouteService::new();
         route_service.register_callback(callback);
@@ -174,7 +180,8 @@ pub struct RouteSenderAgent<T>
 where
     for<'de> T: RouterState<'de>,
 {
-    router_agent: Box<dyn Bridge<RouteAgent<T>>>,
+    /// This acts as a level of indirection.
+    router_agent: RouteAgentBridge<T>,
 }
 
 
@@ -183,16 +190,11 @@ impl <T: for<'de> RouterState<'de>>  Debug for RouteSenderAgent<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("RouteSenderAgent")
             .field("router_agent", &"-")
-//            .field("route_service", &self.route_service)
-//            .field("subscribers", &self.subscribers.len())
             .finish()
     }
 }
 
-/// Non-instantiable type.
-#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
-pub enum Void {}
-impl Transferable for Void {}
+
 
 impl<T> Agent for RouteSenderAgent<T>
 where
@@ -205,7 +207,7 @@ where
 
     fn create(link: AgentLink<Self>) -> Self {
         RouteSenderAgent {
-            router_agent: RouteAgent::bridge(link.send_back(|_| ())),
+            router_agent: RouteAgentBridge::new(link.send_back(|_| ())),
         }
     }
 
@@ -217,7 +219,7 @@ where
 }
 
 /// Alias to RouteSenderBridge<()>;
-pub type RouteSender = RouteSenderAgentBridge<()>;
+pub type RouteSenderBridge = RouteSenderAgentBridge<()>;
 
 /// A simplified interface to the router agent
 pub struct RouteSenderAgentBridge<T>(Box<dyn Bridge<RouteSenderAgent<T>>>)
@@ -250,6 +252,8 @@ where
 }
 
 
+/// Alias to RouteSenderBridge<()>;
+pub type RouteBridge = RouteAgentBridge<()>;
 
 /// A simplified interface to the router agent.
 pub struct RouteAgentBridge<T>(Box<dyn Bridge<RouteAgent<T>>>)

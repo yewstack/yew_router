@@ -1,6 +1,6 @@
 //! A component wrapping an <a/> tag that changes the route.
 use crate::route_info::RouteInfo;
-use crate::route_agent::{RouteRequest, RouteSender, Void};
+use crate::route_agent::{RouteRequest, RouteSenderBridge, Void};
 use yew::prelude::*;
 
 use super::Msg;
@@ -10,7 +10,7 @@ use super::Props;
 /// The Route's `to_route_string()` will be displayed as the href.
 #[derive(Debug)]
 pub struct RouterLink {
-    router: RouteSender,
+    router: RouteSenderBridge,
     props: Props
 }
 
@@ -20,7 +20,7 @@ impl Component for RouterLink {
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         let callback = link.send_back(|_: Void| Msg::NoOp);
-        let router = RouteSender::new(callback);
+        let router = RouteSenderBridge::new(callback);
         RouterLink {
             router,
             props

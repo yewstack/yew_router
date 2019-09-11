@@ -1,12 +1,11 @@
 //! Router Component.
 
 use crate::route_info::RouteInfo;
-use crate::route_agent::{RouteAgent, RouteRequest};
-use yew::Bridged;
+use crate::route_agent::{RouteRequest};
 use yew::{
     html,
     virtual_dom::VNode,
-    Bridge, Component, ComponentLink, Html, Properties, Renderable, ShouldRender,
+    Component, ComponentLink, Html, Properties, Renderable, ShouldRender,
 };
 use crate::YewRouterState;
 use log::{warn, trace};
@@ -16,6 +15,7 @@ use yew::virtual_dom::VChild;
 use yew_router_path_matcher::RenderFn;
 use std::rc::Rc;
 use std::fmt::{Debug, Formatter, Error as FmtError};
+use crate::route_agent::RouteAgentBridge;
 
 
 /// Rendering control flow component.
@@ -79,7 +79,7 @@ use std::fmt::{Debug, Formatter, Error as FmtError};
 pub struct Router<T: for<'de> YewRouterState<'de>> {
     route: RouteInfo<T>,
     props: Props<T>,
-    router_agent: Box<dyn Bridge<RouteAgent<T>>>,
+    router_agent: RouteAgentBridge<T>,
 }
 
 impl <T: for<'de> YewRouterState<'de>> Debug for Router<T> {
@@ -122,7 +122,7 @@ impl <T> Component for Router<T>
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         let callback = link.send_back(Msg::UpdateRoute);
-        let router_agent = RouteAgent::bridge(callback);
+        let router_agent = RouteAgentBridge::new(callback);
 
         Router {
             route: Default::default(), // This must be updated by immediately requesting a route update from the service bridge.

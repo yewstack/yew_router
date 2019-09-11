@@ -33,10 +33,8 @@ where
     }
 }
 
-impl<T> RouteService<T>
-where
-    T: RouteState,
-{
+
+impl <T> RouteService<T> {
     /// Creates the route service.
     pub fn new() -> RouteService<T> {
         let location = window()
@@ -48,36 +46,6 @@ where
             event_listener: None,
             phantom_data: PhantomData,
         }
-    }
-
-    /// Registers a callback to the route service.
-    /// Callbacks will be called when the History API experiences a change such as
-    /// popping a state off of its stack when the forward or back buttons are pressed.
-    pub fn register_callback(&mut self, callback: Callback<(String, T)>) {
-        self.event_listener = Some(window().add_event_listener(move |event: PopStateEvent| {
-            let state_value: Value = event.state();
-            let state: T = T::try_from(state_value).unwrap_or_default();
-
-            // Can't use the existing location, because this is a callback, and can't move it in here.
-            let location: Location = window().location().unwrap();
-            let route: String = Self::get_route_from_location(&location);
-
-            callback.emit((route.clone(), state))
-        }));
-    }
-
-    /// Sets the browser's url bar to contain the provided route,
-    /// and creates a history entry that can be navigated via the forward and back buttons.
-    /// The route should be a relative path that starts with a '/'.
-    /// A state object be stored with the url.
-    pub fn set_route(&mut self, route: &str, state: T) {
-        self.history.push_state(state, "", Some(route));
-    }
-
-    /// Replaces the route with another one removing the most recent history event and
-    /// creating another history event in its place.
-    pub fn replace_route(&mut self, route: &str, state: T) {
-        let _ = self.history.replace_state(state, "", Some(route));
     }
 
     #[inline]
@@ -112,4 +80,41 @@ where
     pub fn get_fragment(&self) -> String {
         self.location.hash().unwrap()
     }
+}
+
+impl<T> RouteService<T>
+where
+    T: RouteState,
+{
+
+    /// Registers a callback to the route service.
+    /// Callbacks will be called when the History API experiences a change such as
+    /// popping a state off of its stack when the forward or back buttons are pressed.
+    pub fn register_callback(&mut self, callback: Callback<(String, T)>) {
+        self.event_listener = Some(window().add_event_listener(move |event: PopStateEvent| {
+            let state_value: Value = event.state();
+            let state: T = T::try_from(state_value).unwrap_or_default();
+
+            // Can't use the existing location, because this is a callback, and can't move it in here.
+            let location: Location = window().location().unwrap();
+            let route: String = Self::get_route_from_location(&location);
+
+            callback.emit((route.clone(), state))
+        }));
+    }
+
+    /// Sets the browser's url bar to contain the provided route,
+    /// and creates a history entry that can be navigated via the forward and back buttons.
+    /// The route should be a relative path that starts with a '/'.
+    /// A state object be stored with the url.
+    pub fn set_route(&mut self, route: &str, state: T) {
+        self.history.push_state(state, "", Some(route));
+    }
+
+    /// Replaces the route with another one removing the most recent history event and
+    /// creating another history event in its place.
+    pub fn replace_route(&mut self, route: &str, state: T) {
+        let _ = self.history.replace_state(state, "", Some(route));
+    }
+
 }

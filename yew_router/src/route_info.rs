@@ -24,8 +24,8 @@ pub struct RouteInfo<T> {
 }
 
 impl<T> RouteInfo<T>
-where
-    T: RouteState,
+//where
+//    T: RouteState,
 {
     /// Gets the current route from the route service.
     ///

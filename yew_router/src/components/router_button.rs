@@ -1,6 +1,6 @@
 //! A component wrapping a <button/> tag that changes the route.
 use crate::route_info::RouteInfo;
-use crate::route_agent::{RouteRequest, RouteSender, Void};
+use crate::route_agent::{RouteRequest, RouteSenderBridge, Void};
 use yew::prelude::*;
 
 use super::Msg;
@@ -9,7 +9,7 @@ use super::Props;
 /// Changes the route when clicked.
 #[derive(Debug)]
 pub struct RouterButton {
-    router: RouteSender,
+    router: RouteSenderBridge,
     props: Props,
 }
 
@@ -19,7 +19,7 @@ impl Component for RouterButton {
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         let callback = link.send_back(|_: Void| Msg::NoOp);
-        let router = RouteSender::new(callback);
+        let router = RouteSenderBridge::new(callback);
 
         RouterButton {
             router,
