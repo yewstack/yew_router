@@ -17,7 +17,9 @@ impl<T> RouteState for T where T: Clone + Default + JsSerialize + TryFrom<Value>
 /// The representation of a route, segmented into different sections for easy access.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct RouteInfo<T> {
+    /// The route string
     pub route: String,
+    /// The state
     pub state: Option<T>,
 }
 

@@ -15,6 +15,7 @@ use crate::component_router::route::Route;
 use yew::virtual_dom::VChild;
 use yew_router_path_matcher::RenderFn;
 use std::rc::Rc;
+use std::fmt::{Debug, Formatter, Error as FmtError};
 
 
 /// Rendering control flow component.
@@ -81,8 +82,20 @@ pub struct Router<T: for<'de> YewRouterState<'de>> {
     router_agent: Box<dyn Bridge<RouteAgent<T>>>,
 }
 
+impl <T: for<'de> YewRouterState<'de>> Debug for Router<T> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
+        f.debug_struct("Router")
+            .field("route", &self.props)
+            .field("props", &self.props)
+            .field("router_agent", &"Bridge to RouteAgent")
+            .finish()
+    }
+}
+
 /// Message for Router.
+#[derive(Debug, Clone)]
 pub enum Msg<T> {
+    /// Updates the route
     UpdateRoute(RouteInfo<T>),
 }
 
@@ -91,6 +104,14 @@ pub enum Msg<T> {
 pub struct Props<T: for<'de> YewRouterState<'de>> {
     #[props(required)]
     children: ChildrenWithProps<Route<T>, Router<T>>
+}
+
+impl <T: for<'de> YewRouterState<'de>> Debug for Props<T> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
+        f.debug_struct("Props")
+            .field("children (length)", &self.children.len())
+            .finish()
+    }
 }
 
 impl <T> Component for Router<T>
@@ -154,6 +175,9 @@ impl <T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T>
 
 /// Tries to render a child.
 ///
+/// It will run the route string against the matcher provided by the `route_child`.
+/// If it matches, it will attempt to render content using either the render fn or the children..
+///
 /// # Arguments
 /// * route_child - The child attempting to be rendered.
 /// * route_string - The string representing the route.
@@ -166,10 +190,8 @@ fn try_render_child<T: for<'de> YewRouterState<'de>>(route_child: VChild<Route<T
     route_child.props.matcher
         .match_path(route_string)
         .map(|(_rest, matches): (&str, std::collections::HashMap<&str, String>)| {
-
             match render {
                 Some(render) => {
-
                     if children_present {
                         match (render)(&matches) {
                             Some(rendered) => {

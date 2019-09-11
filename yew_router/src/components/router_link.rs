@@ -1,5 +1,6 @@
+//! A component wrapping an <a/> tag that changes the route.
 use crate::route_info::RouteInfo;
-use crate::route_agent::{RouteAgent, RouteRequest};
+use crate::route_agent::{RouteRequest, RouteSender, Void};
 use yew::prelude::*;
 
 use super::Msg;
@@ -7,8 +8,9 @@ use super::Props;
 
 /// An anchor tag Component that when clicked, will navigate to the provided route.
 /// The Route's `to_route_string()` will be displayed as the href.
+#[derive(Debug)]
 pub struct RouterLink {
-    router: Box<dyn Bridge<RouteAgent<()>>>,
+    router: RouteSender,
     props: Props
 }
 
@@ -17,9 +19,8 @@ impl Component for RouterLink {
     type Properties = Props;
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-        let callback = link.send_back(|_route: RouteInfo<()>| Msg::NoOp);
-        let router = RouteAgent::bridge(callback);
-
+        let callback = link.send_back(|_: Void| Msg::NoOp);
+        let router = RouteSender::new(callback);
         RouterLink {
             router,
             props
@@ -54,7 +55,7 @@ impl Renderable<RouterLink> for RouterLink {
 
         html! {
             <a
-                class=self.props.class.clone(),
+                class=self.props.classes.clone(),
                 onclick=|event | {
                     event.prevent_default();
                     Msg::Clicked

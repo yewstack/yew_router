@@ -16,6 +16,7 @@ use std::marker::PhantomData;
 /// 'forward' and 'back' events.
 ///
 /// The `T` determines what route state can be stored in the route service.
+#[derive(Debug)]
 pub struct RouteService<T> {
     history: History,
     location: Location,

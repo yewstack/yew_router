@@ -7,24 +7,29 @@ use std::collections::HashSet;
 
 use serde::Deserialize;
 use serde::Serialize;
-use std::fmt::Debug;
+use std::fmt::{Debug, Formatter, Error as FmtError};
 
 use crate::route_info::RouteInfo;
 use crate::route_info::RouteState;
 use yew::callback::Callback;
 use log::trace;
+use std::ops::{Deref, DerefMut};
 
 /// Any state that can be used in the router agent must meet the criteria of this trait.
 pub trait RouterState<'de>: RouteState + Serialize + Deserialize<'de> + Debug {}
 impl<'de, T> RouterState<'de> for T where T: RouteState + Serialize + Deserialize<'de> + Debug {}
 
+/// Message used for the RouteAgent.
+#[derive(Debug)]
 pub enum Msg<T>
 where
     T: RouteState,
 {
+    /// Message for when the route is changed.
     BrowserNavigationRouteChanged((String, T)),
 }
 
+/// Input message type for interacting with the `RouteAgent'.
 #[derive(Serialize, Deserialize, Debug)]
 pub enum RouteRequest<T> {
     /// Replaces the most recent Route with a new one and alerts connected components to the route change.
@@ -44,10 +49,7 @@ pub enum RouteRequest<T> {
 
 impl<T> Transferable for RouteRequest<T> where for<'de> T: Serialize + Deserialize<'de> {}
 
-/// A simplified interface to the router agent
-pub struct RouteAgentBridge<T>(Box<dyn Bridge<RouteAgent<T>>>)
-where
-    for<'de> T: RouterState<'de>;
+
 
 /// The Router agent holds on to the RouteService singleton and mediates access to it.
 pub struct RouteAgent<T>
@@ -61,6 +63,17 @@ where
     /// the route change will be broadcast to all listening entities.
     subscribers: HashSet<HandlerId>,
 }
+
+impl <T: for<'de> RouterState<'de>>  Debug for RouteAgent<T> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
+        f.debug_struct("RouteAgent")
+            .field("link", &"-")
+            .field("route_service", &self.route_service)
+            .field("subscribers", &self.subscribers.len())
+            .finish()
+    }
+}
+
 
 impl<T> Agent for RouteAgent<T>
 where
@@ -152,28 +165,7 @@ where
     }
 }
 
-impl<T> RouteAgentBridge<T>
-where
-    for<'de> T: RouterState<'de>,
-{
-    pub fn new(callback: Callback<RouteInfo<T>>) -> Self {
-        let router_agent = RouteAgent::bridge(callback);
-        RouteAgentBridge(router_agent)
-    }
 
-    /// Experimental, may be removed
-    ///
-    /// Directly spawn a new Router
-    pub fn spawn(callback: Callback<RouteInfo<T>>) -> Self {
-        use yew::agent::Discoverer;
-        let router_agent = Context::spawn_or_join(callback);
-        RouteAgentBridge(router_agent)
-    }
-
-    pub fn send(&mut self, request: RouteRequest<T>) {
-        self.0.send(request)
-    }
-}
 
 /// A sender for the Router that doesn't send messages back to the component that connects to it.
 ///
@@ -185,8 +177,21 @@ where
     router_agent: Box<dyn Bridge<RouteAgent<T>>>,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Void;
+
+
+impl <T: for<'de> RouterState<'de>>  Debug for RouteSenderAgent<T> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
+        f.debug_struct("RouteSenderAgent")
+            .field("router_agent", &"-")
+//            .field("route_service", &self.route_service)
+//            .field("subscribers", &self.subscribers.len())
+            .finish()
+    }
+}
+
+/// Non-instantiable type.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
+pub enum Void {}
 impl Transferable for Void {}
 
 impl<T> Agent for RouteSenderAgent<T>
@@ -211,23 +216,91 @@ where
     }
 }
 
-pub type RouteSender = RouteSenderBridge<()>;
+/// Alias to RouteSenderBridge<()>;
+pub type RouteSender = RouteSenderAgentBridge<()>;
 
 /// A simplified interface to the router agent
-pub struct RouteSenderBridge<T>(Box<dyn Bridge<RouteSenderAgent<T>>>)
+pub struct RouteSenderAgentBridge<T>(Box<dyn Bridge<RouteSenderAgent<T>>>)
 where
     for<'de> T: RouterState<'de>;
 
-impl<T> RouteSenderBridge<T>
+
+impl <T: for<'de> RouterState<'de>> Debug for RouteSenderAgentBridge<T> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
+        f.debug_tuple("RouteSenderBridge")
+            .finish()
+    }
+}
+
+impl<T> RouteSenderAgentBridge<T>
 where
     for<'de> T: RouterState<'de>,
 {
+    /// Creates a new sender only bridge.
     pub fn new(callback: Callback<Void>) -> Self {
         let router_agent = RouteSenderAgent::bridge(callback);
-        RouteSenderBridge(router_agent)
+        RouteSenderAgentBridge(router_agent)
     }
 
+
+    /// Sends a `RouteRequest` Message.
     pub fn send(&mut self, request: RouteRequest<T>) {
         self.0.send(request)
+    }
+}
+
+
+
+/// A simplified interface to the router agent.
+pub struct RouteAgentBridge<T>(Box<dyn Bridge<RouteAgent<T>>>)
+    where
+        for<'de> T: RouterState<'de>;
+
+
+impl<T> RouteAgentBridge<T>
+    where
+            for<'de> T: RouterState<'de>,
+{
+    /// Creates a new bridge.
+    pub fn new(callback: Callback<RouteInfo<T>>) -> Self {
+        let router_agent = RouteAgent::bridge(callback);
+        RouteAgentBridge(router_agent)
+    }
+
+    /// Experimental, may be removed
+    ///
+    /// Directly spawn a new Router
+    pub fn spawn(callback: Callback<RouteInfo<T>>) -> Self {
+        use yew::agent::Discoverer;
+        let router_agent = Context::spawn_or_join(callback);
+        RouteAgentBridge(router_agent)
+    }
+
+    /// Sends a `RouteRequest` Message.
+    pub fn send(&mut self, request: RouteRequest<T>) {
+        self.0.send(request)
+    }
+}
+
+/// A wrapper around the bridge
+//pub (crate) struct RouteAgentBridge<T: for<'de> YewRouterState<'de>>(pub Box<dyn Bridge<RouteAgent<T>>>);
+
+impl <T: for<'de> RouterState<'de>> Debug for RouteAgentBridge<T> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
+        f.debug_tuple("RouteAgentBridge")
+            .finish()
+    }
+}
+
+impl <T: for<'de> RouterState<'de>> Deref for RouteAgentBridge<T> {
+    type Target = Box<dyn Bridge<RouteAgent<T>>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl <T: for<'de> RouterState<'de>> DerefMut for RouteAgentBridge<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }

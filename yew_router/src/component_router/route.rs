@@ -4,20 +4,19 @@ use yew::{Component, ComponentLink, ShouldRender, Properties, Children};
 use super::YewRouterState;
 use crate::component_router::router::Router;
 use crate::component_router::render::Render;
+use std::fmt::{Debug, Formatter, Error as FmtError};
 
 /// A nested component used inside of [Router](struct.Router.html) that can determine if a
 /// sub-component can be rendered.
+#[derive(Debug)]
 pub struct Route<T: for<'de> YewRouterState<'de>> {
     props: RouteProps<T>
 }
 
 
-
 /// Properties for Route.
 ///
 /// The path matcher must be specified.
-///
-/// Beyond that,
 ///
 /// If only a `render` is specified, it will display its contents if it returns `Some` after the
 /// path matcher succeeds in matching the URL.
@@ -34,6 +33,16 @@ pub struct RouteProps<T: for<'de> YewRouterState<'de>> {
     pub render: Render<T>,
     /// Will be rendered if it contains anything provided the `PathMatcher` matches the URL.
     pub children: Children<Router<T>>
+}
+
+impl <T: for<'de> YewRouterState<'de>> Debug for RouteProps<T> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
+        f.debug_struct("RouteProps")
+            .field("matcher", &self.matcher)
+            .field("render", &self.render)
+            .field("children (length)", &self.children.len())
+            .finish()
+    }
 }
 
 impl <T: for<'de> YewRouterState<'de>> Component for Route<T> {

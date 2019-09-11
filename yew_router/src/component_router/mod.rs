@@ -31,4 +31,3 @@ pub type Render = render::Render<()>;
 pub trait YewRouterState<'de>: RouterState<'de> + PartialEq {}
 
 impl<'de, T> YewRouterState<'de> for T where T: RouterState<'de> + PartialEq {}
-

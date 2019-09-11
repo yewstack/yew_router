@@ -1,3 +1,4 @@
+//! Wrapper around RenderFn that allows clones.
 use yew::{Component, Renderable, Html};
 use yew::virtual_dom::{VNode, VComp};
 use yew_router_path_matcher::{FromMatches, Matches, RenderFn};
@@ -5,6 +6,7 @@ use yew::virtual_dom::vcomp::ScopeHolder;
 use crate::router::Router;
 use crate::component_router::YewRouterState;
 use std::rc::Rc;
+use std::fmt::{Debug, Formatter, Error as FmtError};
 
 /// Creates a component using supplied props.
 fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
@@ -15,10 +17,10 @@ fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
 }
 
 
-/// Creates a render that creates the specified component if its
-/// props can be created from the provided matches.
+/// Creates a `Render` that creates the specified component if its
+/// props can be created from the provided matches using `FromMatches`.
 ///
-/// #Note
+/// # Note
 /// Allows specification of the router type.
 pub fn component_s<T,U>() -> Render<U>
     where
@@ -33,7 +35,7 @@ pub fn component_s<T,U>() -> Render<U>
 }
 
 /// Creates a render that creates the specified component if its
-/// props can be created from the provided matches.
+/// props can be created from the provided matches using `FromMatches`.
 pub fn component<T>() -> Render<()>
     where
         T: Component + Renderable<T>,
@@ -49,6 +51,9 @@ pub fn render(render: impl RenderFn<Router<()>> + 'static) -> Render<()> {
 
 
 /// Shorthand for [Render::new()](structs.Render.html#new).
+///
+/// # Note
+///// Allows specification of the router type.
 pub fn render_s<T: for<'de> YewRouterState<'de>>(render: impl RenderFn<Router<T>> + 'static) -> Render<T> {
     Render::new(render)
 }
@@ -70,7 +75,14 @@ impl <T: for<'de> YewRouterState<'de>> Default for Render<T> {
 }
 
 impl <T: for<'de> YewRouterState<'de>> Render<T> {
+    /// Wraps a `RenderFn` in an optional Rc pointer, producing a new `Render`.
     pub fn new(render: impl RenderFn<Router<T>> + 'static) -> Self {
         Render(Some(Rc::new(render)))
+    }
+}
+
+impl <T: for<'de> YewRouterState<'de>> Debug for Render<T> {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
+        f.write_str("Render")
     }
 }

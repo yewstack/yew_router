@@ -1,4 +1,16 @@
 #![recursion_limit="128"]
+//! Provides routing faculties for the Yew web framework.
+
+#![deny(
+    missing_docs,
+    missing_debug_implementations,
+    missing_copy_implementations,
+    trivial_casts,
+    trivial_numeric_casts,
+    unsafe_code,
+    unstable_features,
+    unused_qualifications
+)]
 
 pub mod route_service;
 
