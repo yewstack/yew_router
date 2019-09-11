@@ -12,6 +12,9 @@ use crate::YewRouterState;
 use log::{warn, trace};
 use yew::html::{ChildrenWithProps};
 use crate::component_router::route::Route;
+use yew::virtual_dom::VChild;
+use yew_router_path_matcher::RenderFn;
+use std::rc::Rc;
 
 
 /// Rendering control flow component.
@@ -131,41 +134,11 @@ impl <T> Component for Router<T>
 impl <T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T>
 {
     fn view(&self) -> VNode<Self> {
-
         trace!("Routing one of {} routes for  {:?}", self.props.children.iter().count(), &self.route);
+
         self.props.children.iter()
             .filter_map(|route| -> Option<Html<Self>> {
-                let mut children = route.props.children.iter().peekable();
-                let render = route.props.render.clone().0;
-
-                route.props.matcher.match_path(&self.route)
-                    .map(|(_rest, matches): (&str, std::collections::HashMap<&str, String>)| {
-
-                        match (render, children.peek()) {
-                            (Some(render), Some(_)) => {
-                                // If the component can't be created from the matches,
-                                // the nested children will be rendered anyways
-                                match (render)(&matches) {
-                                    Some(rendered) => {
-                                        Some(html!{
-                                            <>
-                                                {rendered}
-                                                {for children}
-                                            </>
-                                        })
-                                    }
-                                    None => Some(html!{{for children}})
-                                }
-                            },
-                            (Some(render), None)=> {
-                                render(&matches)
-                            }
-                            (None, Some(_)) => Some(html!{{for children}}),
-                            (None, None) => None
-                        }
-                    })
-                    .ok()
-                    .flatten_stable()
+                try_render_child(route, &self.route)
             })
             .next() // Take the first path that succeeds.
             .map(|x| -> Html<Self> {
@@ -177,6 +150,57 @@ impl <T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T>
                 html! { <></>}
             })
     }
+}
+
+/// Tries to render a child.
+///
+/// # Arguments
+/// * route_child - The child attempting to be rendered.
+/// * route_string - The string representing the route.
+fn try_render_child<T: for<'de> YewRouterState<'de>>(route_child: VChild<Route<T>, Router<T>>, route_string: &str) -> Option<Html<Router<T>>> {
+    let children_present: bool = !route_child.props.children.is_empty();
+
+    let children = route_child.props.children.iter();
+    let render: Option<Rc<dyn RenderFn<Router<T>>>> = route_child.props.render.clone().0;
+
+    route_child.props.matcher
+        .match_path(route_string)
+        .map(|(_rest, matches): (&str, std::collections::HashMap<&str, String>)| {
+
+            match render {
+                Some(render) => {
+
+                    if children_present {
+                        match (render)(&matches) {
+                            Some(rendered) => {
+                                Some(html! {
+                                    <>
+                                        {rendered}
+                                        {children.collect::<VNode<Router<T>>>()}
+                                    </>
+                                })
+                            }
+                            None => {
+                                // If the component can't be created from the matches,
+                                // the nested children will be rendered anyways
+                                Some(children.collect())
+                            }
+                        }
+                    } else {
+                        render(&matches)
+                    }
+                },
+                None => {
+                    if children_present {
+                        Some(children.collect())
+                    } else {
+                        None // Neither matched
+                    }
+                }
+            }
+        })
+        .ok()
+        .flatten_stable()
 }
 
 
