@@ -1,31 +1,25 @@
-
-use yew::prelude::*;
-use yew_router::components::router_button::RouterButton;
 use crate::c_component::CModel;
+use yew::prelude::*;
 use yew::Properties;
-use yew_router::{FromMatches};
-use yew_router::{Router, Route};
-use yew_router::route;
+use yew_router::components::router_button::RouterButton;
 use yew_router::render::component;
+use yew_router::route;
+use yew_router::FromMatches;
+use yew_router::{Route, Router};
 
-pub struct AModel {
-}
+pub struct AModel {}
 
 #[derive(PartialEq, Properties, FromMatches)]
-pub struct Props{}
+pub struct Props {}
 
-pub enum Msg {
-}
-
+pub enum Msg {}
 
 impl Component for AModel {
     type Message = Msg;
     type Properties = Props;
 
     fn create(_props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-
-        AModel {
-        }
+        AModel {}
     }
 
     fn update(&mut self, _msg: Self::Message) -> ShouldRender {
@@ -37,10 +31,8 @@ impl Component for AModel {
     }
 }
 
-
 impl Renderable<AModel> for AModel {
     fn view(&self) -> Html<Self> {
-
         html! {
             <div>
                 { "I am the A component"}
@@ -63,4 +55,3 @@ impl Renderable<AModel> for AModel {
         }
     }
 }
-

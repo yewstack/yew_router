@@ -1,19 +1,19 @@
-use yew::prelude::*;
-use std::usize;
-use yew::Properties;
-use yew_router::{RouteInfo, RouteAgent};
 use std::collections::HashMap;
 use std::str::FromStr;
-use yew_router::path_matcher::FromMatchesError;
+use std::usize;
+use yew::prelude::*;
+use yew::Properties;
 use yew_router::path_matcher::FromMatches;
-use yew_router::route_agent::RouteRequest;
+use yew_router::path_matcher::FromMatchesError;
 use yew_router::route;
+use yew_router::route_agent::RouteRequest;
+use yew_router::{RouteAgent, RouteInfo};
 
 pub struct BModel {
-//    number: Option<usize>,
-//    sub_path: Option<String>,
+    //    number: Option<usize>,
+    //    sub_path: Option<String>,
     props: Props,
-    router: Box<dyn Bridge<RouteAgent>>
+    router: Box<dyn Bridge<RouteAgent>>,
 }
 
 #[derive(PartialEq, Properties)]
@@ -21,7 +21,7 @@ pub struct Props {
     #[props(required)]
     number: Option<usize>,
     #[props(required)]
-    sub_path: Option<String>
+    sub_path: Option<String>,
 }
 
 pub enum Msg {
@@ -29,26 +29,24 @@ pub enum Msg {
     Increment,
     Decrement,
     UpdateSubpath(String),
-    HandleRoute(RouteInfo)
+    HandleRoute(RouteInfo),
 }
-
 
 impl Component for BModel {
     type Message = Msg;
     type Properties = Props;
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-
         let callback = link.send_back(|route: RouteInfo| Msg::HandleRoute(route));
         let mut router = RouteAgent::bridge(callback);
 
         router.send(RouteRequest::GetCurrentRoute);
 
         BModel {
-//            number: props.number,
-//            sub_path: props.sub_path,
+            //            number: props.number,
+            //            sub_path: props.sub_path,
             props,
-            router
+            router,
         }
     }
 
@@ -64,11 +62,11 @@ impl Component for BModel {
                 let route_string = "/b".to_string();
                 let route_string = match &self.props.sub_path {
                     Some(sub_path) => route_string + "?sub_path=" + &sub_path,
-                    None => route_string
+                    None => route_string,
                 };
-                let route_string = match &self.props.number.map(|x: usize | x.to_string()) {
+                let route_string = match &self.props.number.map(|x: usize| x.to_string()) {
                     Some(number) => route_string + "#" + &number,
-                    None => route_string
+                    None => route_string,
                 };
 
                 let route = RouteInfo::from(route_string);
@@ -77,14 +75,15 @@ impl Component for BModel {
                 // because the changes made here only affect the current component,
                 // so mutation might as well be contained to the core component update loop
                 // instead of being sent through the router.
-                self.router.send(RouteRequest::ChangeRouteNoBroadcast(route));
+                self.router
+                    .send(RouteRequest::ChangeRouteNoBroadcast(route));
                 true
             }
             Msg::HandleRoute(route) => {
                 // When the route changes, you can opt to re-parse the route. and update the props.
                 // TODO I'm not sure about the utility of this if the router is passing updated props anyways.
                 let path_matcher = route!("/b(?sub_path={sub_path})(#{number})");
-                if let Ok((_, matches)) = path_matcher.match_path(&route.route){
+                if let Ok((_, matches)) = path_matcher.match_path(&route.route) {
                     let props = Props::from_matches(&matches).unwrap();
                     self.props = props;
                     true
@@ -93,7 +92,7 @@ impl Component for BModel {
                 }
             }
             Msg::Increment => {
-                let n = if let Some(number) = self.props.number{
+                let n = if let Some(number) = self.props.number {
                     number + 1
                 } else {
                     1
@@ -102,7 +101,7 @@ impl Component for BModel {
                 true
             }
             Msg::Decrement => {
-                let n: usize = if let Some(number) = self.props.number{
+                let n: usize = if let Some(number) = self.props.number {
                     if number > 0 {
                         number - 1
                     } else {
@@ -126,7 +125,6 @@ impl Component for BModel {
     }
 }
 
-
 impl Renderable<BModel> for BModel {
     fn view(&self) -> Html<Self> {
         html! {
@@ -144,17 +142,16 @@ impl Renderable<BModel> for BModel {
     }
 }
 
-
-
 impl FromMatches for Props {
-
     fn from_matches(matches: &HashMap<&str, String>) -> Result<Self, FromMatchesError> {
-
-        let number = matches.get("number").map(|n: &String| usize::from_str(&n).map_err(|_| FromMatchesError::UnknownErr) ).transpose()?;
+        let number = matches
+            .get("number")
+            .map(|n: &String| usize::from_str(&n).map_err(|_| FromMatchesError::UnknownErr))
+            .transpose()?;
 
         let props = Props {
             number,
-            sub_path: matches.get("sub_path").cloned()
+            sub_path: matches.get("sub_path").cloned(),
         };
         Ok(props)
     }

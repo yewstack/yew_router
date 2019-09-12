@@ -5,11 +5,9 @@ use yew_router::FromMatches;
 pub struct CModel;
 
 #[derive(PartialEq, Properties, FromMatches)]
-pub struct Props{}
+pub struct Props {}
 
-pub enum Msg {
-}
-
+pub enum Msg {}
 
 impl Component for CModel {
     type Message = Msg;
@@ -28,10 +26,8 @@ impl Component for CModel {
     }
 }
 
-
 impl Renderable<CModel> for CModel {
     fn view(&self) -> Html<Self> {
-
         html! {
             <div>
                 {" I am the C component"}
@@ -39,4 +35,3 @@ impl Renderable<CModel> for CModel {
         }
     }
 }
-

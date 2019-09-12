@@ -1,21 +1,21 @@
-#![recursion_limit="1024"]
-mod b_component;
+#![recursion_limit = "1024"]
 mod a_component;
+mod b_component;
 mod c_component;
 
 use yew::prelude::*;
-use yew_router::{Router, Route};
 use yew_router::components::RouterButton;
 use yew_router::components::RouterLink;
 use yew_router::route;
+use yew_router::{Route, Router};
 
-use crate::b_component::BModel;
 use crate::a_component::AModel;
+use crate::b_component::BModel;
 use crate::c_component::CModel;
 
+use yew_router::path_matcher::Matches;
 use yew_router::render::component;
 use yew_router::render::render;
-use yew_router::path_matcher::Matches;
 
 fn main() {
     yew::initialize();
@@ -24,10 +24,7 @@ fn main() {
     yew::run_loop();
 }
 
-
 pub struct Model {}
-
-
 
 impl Component for Model {
     type Message = ();
@@ -44,7 +41,6 @@ impl Component for Model {
 
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
-
         html! {
             <div>
                 <nav class="menu",>
@@ -86,4 +82,3 @@ impl Renderable<Model> for Model {
         }
     }
 }
-
