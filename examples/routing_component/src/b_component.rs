@@ -37,7 +37,7 @@ impl Component for BModel {
     type Properties = Props;
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-        let callback = link.send_back(|route: RouteInfo| Msg::HandleRoute(route));
+        let callback = link.send_back( Msg::HandleRoute);
         let mut router = RouteAgent::bridge(callback);
 
         router.send(RouteRequest::GetCurrentRoute);
@@ -162,7 +162,7 @@ impl BModel {
         if let Some(number) = self.props.number {
             format!("Number: {}", number)
         } else {
-            format!("Number: None")
+            "Number: None".to_string()
         }
     }
     fn display_subpath_input(&self) -> Html<BModel> {

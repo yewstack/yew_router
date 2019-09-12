@@ -32,7 +32,7 @@ fn many_unordered<T: Eq + Hash>(
     mut parse_options: Vec<&dyn Fn(&ParseBuffer) -> Option<T>>,
 ) -> HashSet<T> {
     let mut collected = HashSet::new();
-    while parse_options.len() > 0 {
+    while !parse_options.is_empty() {
         let mut inserted = false;
         'x: for (index, f) in parse_options.iter().enumerate() {
             if let Some(keyword) = (f)(&input) {
@@ -131,15 +131,13 @@ impl ToTokens for ShadowOptimizedToken {
     fn to_tokens(&self, ts: &mut TokenStream2) {
         use ShadowOptimizedToken as SOT;
         let t: TokenStream2 = match self {
-            SOT::Match(s) => TokenStream2::from(
-                quote! {yew_router::path_matcher::MatcherToken::Match(#s.to_string())},
-            ),
-            SOT::Capture(variant) => TokenStream2::from(quote! {
+            SOT::Match(s) => quote! {yew_router::path_matcher::MatcherToken::Match(#s.to_string())},
+            SOT::Capture(variant) => quote! {
                 yew_router::path_matcher::MatcherToken::Capture(#variant)
-            }),
-            SOT::Optional(optional) => TokenStream2::from(quote! {
+            },
+            SOT::Optional(optional) => quote! {
                 yew_router::path_matcher::MatcherToken::Optional(vec![#(#optional),*])
-            }),
+            },
         };
         ts.extend(t)
     }
@@ -165,24 +163,12 @@ enum ShadowCaptureVariant {
 impl ToTokens for ShadowCaptureVariant {
     fn to_tokens(&self, ts: &mut TokenStream2) {
         let t = match self {
-            ShadowCaptureVariant::Unnamed => {
-                TokenStream2::from(quote! {yew_router::path_matcher::CaptureVariant::Unnamed})
-            }
-            ShadowCaptureVariant::ManyUnnamed => {
-                TokenStream2::from(quote! {yew_router::path_matcher::CaptureVariant::ManyUnnamed})
-            }
-            ShadowCaptureVariant::NumberedUnnamed { sections } => TokenStream2::from(
-                quote! {yew_router::path_matcher::CaptureVariant::NumberedUnnamed{#sections}},
-            ),
-            ShadowCaptureVariant::Named(name) => TokenStream2::from(
-                quote! {yew_router::path_matcher::CaptureVariant::Named(#name.to_string())},
-            ),
-            ShadowCaptureVariant::ManyNamed(name) => TokenStream2::from(
-                quote! {yew_router::path_matcher::CaptureVariant::ManyNamed(#name.to_string())},
-            ),
-            ShadowCaptureVariant::NumberedNamed { sections, name } => TokenStream2::from(
-                quote! {yew_router::path_matcher::CaptureVariant::NumberedNamed{#sections, #name.to_string()}},
-            ),
+            ShadowCaptureVariant::Unnamed => quote! {yew_router::path_matcher::CaptureVariant::Unnamed},
+            ShadowCaptureVariant::ManyUnnamed => quote! {yew_router::path_matcher::CaptureVariant::ManyUnnamed},
+            ShadowCaptureVariant::NumberedUnnamed { sections } => quote! {yew_router::path_matcher::CaptureVariant::NumberedUnnamed{#sections}},
+            ShadowCaptureVariant::Named(name) => quote! {yew_router::path_matcher::CaptureVariant::Named(#name.to_string())},
+            ShadowCaptureVariant::ManyNamed(name) => quote! {yew_router::path_matcher::CaptureVariant::ManyNamed(#name.to_string())},
+            ShadowCaptureVariant::NumberedNamed { sections, name } => quote! {yew_router::path_matcher::CaptureVariant::NumberedNamed{#sections, #name.to_string()}},
         };
         ts.extend(t)
     }
