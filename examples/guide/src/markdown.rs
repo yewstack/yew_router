@@ -1,14 +1,14 @@
 /// Original author of this code is [Nathan Ringo](https://github.com/remexre)
 /// Source: https://github.com/acmumn/mentoring/blob/master/web-client/src/view/markdown.rs
-use pulldown_cmark::{Alignment, Event, Parser, Tag, Options};
+use pulldown_cmark::{Alignment, Event, Options, Parser, Tag};
 use yew::virtual_dom::{VNode, VTag, VText};
 use yew::{html, Component, Html};
 
 /// Renders a string of Markdown to HTML with the default options (footnotes
 /// disabled, tables enabled).
 pub fn render_markdown<COMP>(src: &str) -> Html<COMP>
-    where
-        COMP: Component,
+where
+    COMP: Component,
 {
     let mut elems = vec![];
     let mut spine = vec![];
@@ -22,7 +22,6 @@ pub fn render_markdown<COMP>(src: &str) -> Html<COMP>
     }
 
     let options = Options::ENABLE_TABLES;
-
 
     for ev in Parser::new_ext(src, options) {
         match ev {
@@ -90,8 +89,8 @@ pub fn render_markdown<COMP>(src: &str) -> Html<COMP>
 }
 
 fn make_tag<COMP>(t: Tag) -> VTag<COMP>
-    where
-        COMP: Component,
+where
+    COMP: Component,
 {
     match t {
         Tag::Paragraph => VTag::new("p"),
@@ -164,8 +163,7 @@ fn make_tag<COMP>(t: Tag) -> VTag<COMP>
             el
         }
         Tag::FootnoteDefinition(ref _footnote_id) => VTag::new("span"), // Footnotes are not rendered as anything special
-        Tag::HtmlBlock => VTag::new("yeet"), // TODO, what happens here??
-        Tag::Strikethrough => VTag::new("strike")
+        Tag::HtmlBlock => VTag::new("yeet"),                            // TODO, what happens here??
+        Tag::Strikethrough => VTag::new("strike"),
     }
 }
-

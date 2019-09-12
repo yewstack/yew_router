@@ -33,8 +33,7 @@ where
     }
 }
 
-
-impl <T> RouteService<T> {
+impl<T> RouteService<T> {
     /// Creates the route service.
     pub fn new() -> RouteService<T> {
         let location = window()
@@ -86,7 +85,6 @@ impl<T> RouteService<T>
 where
     T: RouteState,
 {
-
     /// Registers a callback to the route service.
     /// Callbacks will be called when the History API experiences a change such as
     /// popping a state off of its stack when the forward or back buttons are pressed.
@@ -116,5 +114,4 @@ where
     pub fn replace_route(&mut self, route: &str, state: T) {
         let _ = self.history.replace_state(state, "", Some(route));
     }
-
 }

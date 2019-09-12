@@ -2,7 +2,6 @@ use yew::prelude::*;
 
 use guide::{Guide, Page};
 
-
 fn main() {
     yew::initialize();
     web_logger::init();
@@ -27,7 +26,7 @@ impl Component for Model {
 
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Model> {
-        html!{
+        html! {
             <Guide>
                 <Page
                     uri="https://raw.githubusercontent.com/hgzimmerman/YewRouter/master/examples/guide/chapters/01_intro.md"
@@ -58,4 +57,3 @@ impl Renderable<Model> for Model {
         }
     }
 }
-

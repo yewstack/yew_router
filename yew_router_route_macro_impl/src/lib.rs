@@ -1,21 +1,21 @@
 extern crate proc_macro;
-use proc_macro::{TokenStream};
-use yew_router_route_parser::{MatcherToken, CaptureVariant};
-use quote::{quote, ToTokens};
-use syn::export::TokenStream2;
+use proc_macro::TokenStream;
 use proc_macro_hack::proc_macro_hack;
-use syn::{Error};
-use syn::parse::{Parse, ParseBuffer};
-use syn::parse_macro_input;
+use quote::{quote, ToTokens};
 use std::collections::HashSet;
 use std::hash::Hash;
+use syn::export::TokenStream2;
+use syn::parse::{Parse, ParseBuffer};
+use syn::parse_macro_input;
+use syn::Error;
+use yew_router_route_parser::{CaptureVariant, MatcherToken};
 
 struct S {
     /// The routing string
     s: String,
     case_insensitive: bool,
     incomplete: bool,
-    strict: bool
+    strict: bool,
 }
 
 /// Custom keywords
@@ -25,14 +25,16 @@ mod kw {
     syn::custom_keyword!(Strict);
 }
 
-
 /// Collects 0 or more results from the parse_options.
 /// It prevents parsing the same token(s) (as specified in the vector of parsers) twice.
-fn many_unordered<T: Eq + Hash>(input: &ParseBuffer, mut parse_options: Vec<&dyn Fn(&ParseBuffer) -> Option<T>>) -> HashSet<T> {
+fn many_unordered<T: Eq + Hash>(
+    input: &ParseBuffer,
+    mut parse_options: Vec<&dyn Fn(&ParseBuffer) -> Option<T>>,
+) -> HashSet<T> {
     let mut collected = HashSet::new();
     while parse_options.len() > 0 {
         let mut inserted = false;
-        'x : for (index, f) in parse_options.iter().enumerate() {
+        'x: for (index, f) in parse_options.iter().enumerate() {
             if let Some(keyword) = (f)(&input) {
                 collected.insert(keyword);
                 let _ = parse_options.remove(index);
@@ -41,7 +43,7 @@ fn many_unordered<T: Eq + Hash>(input: &ParseBuffer, mut parse_options: Vec<&dyn
             }
         }
         if !inserted {
-            break
+            break;
         }
     }
     collected
@@ -55,27 +57,38 @@ impl Parse for S {
         enum Keyword {
             CaseInsensitive,
             Incomplete,
-            Strict
+            Strict,
         }
 
-        let collected = many_unordered(input, vec![
-            &|input| input.parse::<kw::Strict>().ok().map(|_| Keyword::Strict),
-            &|input| input.parse::<kw::Incomplete>().ok().map(|_| Keyword::Incomplete),
-            &|input| input.parse::<kw::CaseInsensitive>().ok().map(|_| Keyword::CaseInsensitive)
-        ]);
+        let collected = many_unordered(
+            input,
+            vec![
+                &|input| input.parse::<kw::Strict>().ok().map(|_| Keyword::Strict),
+                &|input| {
+                    input
+                        .parse::<kw::Incomplete>()
+                        .ok()
+                        .map(|_| Keyword::Incomplete)
+                },
+                &|input| {
+                    input
+                        .parse::<kw::CaseInsensitive>()
+                        .ok()
+                        .map(|_| Keyword::CaseInsensitive)
+                },
+            ],
+        );
 
         let incomplete = collected.contains(&Keyword::Incomplete);
         let strict = collected.contains(&Keyword::Strict);
         let case_insensitive = collected.contains(&Keyword::CaseInsensitive);
 
-        Ok(
-            S {
-                s: s.value(),
-                case_insensitive,
-                incomplete,
-                strict
-            }
-        )
+        Ok(S {
+            s: s.value(),
+            case_insensitive,
+            incomplete,
+            strict,
+        })
     }
 }
 
@@ -96,7 +109,7 @@ pub fn route(input: TokenStream) -> TokenStream {
     let strict = s.strict;
     let case_insensitive = s.case_insensitive;
 
-    let expanded = quote!{
+    let expanded = quote! {
         {
             let settings = yew_router::path_matcher::MatcherSettings {
                 strict: #strict,
@@ -118,19 +131,15 @@ impl ToTokens for ShadowOptimizedToken {
     fn to_tokens(&self, ts: &mut TokenStream2) {
         use ShadowOptimizedToken as SOT;
         let t: TokenStream2 = match self {
-            SOT::Match(s) => {
-                TokenStream2::from(quote!{yew_router::path_matcher::MatcherToken::Match(#s.to_string())})
-            }
-            SOT::Capture ( variant ) => {
-                TokenStream2::from(quote!{
-                    yew_router::path_matcher::MatcherToken::Capture(#variant)
-                })
-            }
-            SOT::Optional(optional) => {
-                TokenStream2::from(quote!{
-                    yew_router::path_matcher::MatcherToken::Optional(vec![#(#optional),*])
-                })
-            }
+            SOT::Match(s) => TokenStream2::from(
+                quote! {yew_router::path_matcher::MatcherToken::Match(#s.to_string())},
+            ),
+            SOT::Capture(variant) => TokenStream2::from(quote! {
+                yew_router::path_matcher::MatcherToken::Capture(#variant)
+            }),
+            SOT::Optional(optional) => TokenStream2::from(quote! {
+                yew_router::path_matcher::MatcherToken::Optional(vec![#(#optional),*])
+            }),
         };
         ts.extend(t)
     }
@@ -141,31 +150,41 @@ impl ToTokens for ShadowOptimizedToken {
 enum ShadowOptimizedToken {
     Match(String),
     Capture(ShadowCaptureVariant),
-    Optional(Vec<ShadowOptimizedToken>)
+    Optional(Vec<ShadowOptimizedToken>),
 }
 
 enum ShadowCaptureVariant {
-    Unnamed, // {} - matches anything
-    ManyUnnamed, // {*} - matches over multiple sections
-    NumberedUnnamed{sections: usize}, // {4} - matches 4 sections
+    Unnamed,                                         // {} - matches anything
+    ManyUnnamed,                                     // {*} - matches over multiple sections
+    NumberedUnnamed { sections: usize },             // {4} - matches 4 sections
     Named(String), // {name} - captures a section and adds it to the map with a given name
     ManyNamed(String), // {*:name} - captures over many sections and adds it to the map with a given name.
-    NumberedNamed{sections: usize, name: String} // {2:name} - captures a fixed number of sections with a given name.
+    NumberedNamed { sections: usize, name: String }, // {2:name} - captures a fixed number of sections with a given name.
 }
 
 impl ToTokens for ShadowCaptureVariant {
-
     fn to_tokens(&self, ts: &mut TokenStream2) {
         let t = match self {
-            ShadowCaptureVariant::Unnamed => TokenStream2::from(quote!{yew_router::path_matcher::CaptureVariant::Unnamed}),
-            ShadowCaptureVariant::ManyUnnamed => TokenStream2::from(quote!{yew_router::path_matcher::CaptureVariant::ManyUnnamed}),
-            ShadowCaptureVariant::NumberedUnnamed { sections } => TokenStream2::from(quote!{yew_router::path_matcher::CaptureVariant::NumberedUnnamed{#sections}}),
-            ShadowCaptureVariant::Named(name) => TokenStream2::from(quote!{yew_router::path_matcher::CaptureVariant::Named(#name.to_string())}),
-            ShadowCaptureVariant::ManyNamed(name) => TokenStream2::from(quote!{yew_router::path_matcher::CaptureVariant::ManyNamed(#name.to_string())}),
-            ShadowCaptureVariant::NumberedNamed { sections, name } => TokenStream2::from(quote!{yew_router::path_matcher::CaptureVariant::NumberedNamed{#sections, #name.to_string()}}),
+            ShadowCaptureVariant::Unnamed => {
+                TokenStream2::from(quote! {yew_router::path_matcher::CaptureVariant::Unnamed})
+            }
+            ShadowCaptureVariant::ManyUnnamed => {
+                TokenStream2::from(quote! {yew_router::path_matcher::CaptureVariant::ManyUnnamed})
+            }
+            ShadowCaptureVariant::NumberedUnnamed { sections } => TokenStream2::from(
+                quote! {yew_router::path_matcher::CaptureVariant::NumberedUnnamed{#sections}},
+            ),
+            ShadowCaptureVariant::Named(name) => TokenStream2::from(
+                quote! {yew_router::path_matcher::CaptureVariant::Named(#name.to_string())},
+            ),
+            ShadowCaptureVariant::ManyNamed(name) => TokenStream2::from(
+                quote! {yew_router::path_matcher::CaptureVariant::ManyNamed(#name.to_string())},
+            ),
+            ShadowCaptureVariant::NumberedNamed { sections, name } => TokenStream2::from(
+                quote! {yew_router::path_matcher::CaptureVariant::NumberedNamed{#sections, #name.to_string()}},
+            ),
         };
         ts.extend(t)
-
     }
 }
 
@@ -176,24 +195,24 @@ impl From<MatcherToken> for ShadowOptimizedToken {
         match ot {
             MT::Match(s) => SOT::Match(s),
             MT::Capture(variant) => SOT::Capture(variant.into()),
-            MT::Optional(optional) => SOT::Optional(optional.into_iter().map(SOT::from).collect())
+            MT::Optional(optional) => SOT::Optional(optional.into_iter().map(SOT::from).collect()),
         }
     }
 }
 
 impl From<CaptureVariant> for ShadowCaptureVariant {
-
     fn from(cv: CaptureVariant) -> Self {
         use CaptureVariant as CV;
         use ShadowCaptureVariant as SCV;
         match cv {
             CV::Unnamed => SCV::Unnamed,
             CaptureVariant::ManyUnnamed => SCV::ManyUnnamed,
-            CaptureVariant::NumberedUnnamed { sections } => SCV::NumberedUnnamed {sections},
+            CaptureVariant::NumberedUnnamed { sections } => SCV::NumberedUnnamed { sections },
             CaptureVariant::Named(name) => SCV::Named(name),
             CaptureVariant::ManyNamed(name) => SCV::ManyNamed(name),
-            CaptureVariant::NumberedNamed { sections, name } => SCV::NumberedNamed {sections, name}
+            CaptureVariant::NumberedNamed { sections, name } => {
+                SCV::NumberedNamed { sections, name }
+            }
         }
-
     }
 }

@@ -7,18 +7,17 @@ use std::collections::HashSet;
 
 use serde::Deserialize;
 use serde::Serialize;
-use std::fmt::{Debug, Formatter, Error as FmtError};
+use std::fmt::{Debug, Error as FmtError, Formatter};
 
 use crate::route_info::RouteInfo;
 use crate::route_info::RouteState;
-use yew::callback::Callback;
 use log::trace;
 use std::ops::{Deref, DerefMut};
+use yew::callback::Callback;
 
 /// Any state that can be used in the router agent must meet the criteria of this trait.
 pub trait RouterState<'de>: RouteState + Serialize + Deserialize<'de> + Debug {}
 impl<'de, T> RouterState<'de> for T where T: RouteState + Serialize + Deserialize<'de> + Debug {}
-
 
 /// Non-instantiable type.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug)]
@@ -27,8 +26,7 @@ impl Transferable for Void {}
 
 /// Message used for the RouteAgent.
 #[derive(Debug)]
-pub enum Msg<T>
-{
+pub enum Msg<T> {
     /// Message for when the route is changed.
     BrowserNavigationRouteChanged((String, T)),
 }
@@ -53,12 +51,10 @@ pub enum RouteRequest<T> {
 
 impl<T> Transferable for RouteRequest<T> where for<'de> T: Serialize + Deserialize<'de> {}
 
-
-
 /// The Router agent holds on to the RouteService singleton and mediates access to it.
 pub struct RouteAgent<T>
-where for<'de>
-      T: RouterState<'de>,
+where
+    for<'de> T: RouterState<'de>,
 {
     // In order to have the AgentLink<Self> below, apparently T must be constrained like this. Unfortunately, this means that everything related to an agent requires this constraint.
     link: AgentLink<RouteAgent<T>>,
@@ -69,7 +65,7 @@ where for<'de>
     subscribers: HashSet<HandlerId>,
 }
 
-impl <T: for<'de> RouterState<'de>>  Debug for RouteAgent<T> {
+impl<T: for<'de> RouterState<'de>> Debug for RouteAgent<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("RouteAgent")
             .field("link", &"-")
@@ -78,7 +74,6 @@ impl <T: for<'de> RouterState<'de>>  Debug for RouteAgent<T> {
             .finish()
     }
 }
-
 
 impl<T> Agent for RouteAgent<T>
 where
@@ -122,7 +117,8 @@ where
         match msg {
             RouteRequest::ReplaceRoute(route) => {
                 let route_string: String = route.route;
-                self.route_service.replace_route(&route_string, route.state.unwrap_or_default());
+                self.route_service
+                    .replace_route(&route_string, route.state.unwrap_or_default());
                 let route = RouteInfo::current_route(&self.route_service);
                 for sub in &self.subscribers {
                     self.link.response(*sub, route.clone());
@@ -130,12 +126,14 @@ where
             }
             RouteRequest::ReplaceRouteNoBroadcast(route) => {
                 let route_string: String = route.route;
-                self.route_service.replace_route(&route_string, route.state.unwrap_or_default());
+                self.route_service
+                    .replace_route(&route_string, route.state.unwrap_or_default());
             }
             RouteRequest::ChangeRoute(route) => {
                 let route_string: String = route.route;
                 // set the route
-                self.route_service.set_route(&route_string, route.state.unwrap_or_default());
+                self.route_service
+                    .set_route(&route_string, route.state.unwrap_or_default());
                 // get the new route. This will contain a default state object
                 let route = RouteInfo::current_route(&self.route_service);
                 // broadcast it to all listening components
@@ -145,7 +143,8 @@ where
             }
             RouteRequest::ChangeRouteNoBroadcast(route) => {
                 let route_string: String = route.route;
-                self.route_service.set_route(&route_string, route.state.unwrap_or_default());
+                self.route_service
+                    .set_route(&route_string, route.state.unwrap_or_default());
             }
             RouteRequest::GetCurrentRoute => {
                 let route = RouteInfo::current_route(&self.route_service);
@@ -170,8 +169,6 @@ where
     }
 }
 
-
-
 /// A sender for the Router that doesn't send messages back to the component that connects to it.
 ///
 /// This may be subject to change
@@ -183,17 +180,13 @@ where
     router_agent: RouteAgentBridge<T>,
 }
 
-
-
-impl <T: for<'de> RouterState<'de>>  Debug for RouteSenderAgent<T> {
+impl<T: for<'de> RouterState<'de>> Debug for RouteSenderAgent<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("RouteSenderAgent")
             .field("router_agent", &"-")
             .finish()
     }
 }
-
-
 
 impl<T> Agent for RouteSenderAgent<T>
 where
@@ -225,11 +218,9 @@ pub struct RouteSenderAgentBridge<T>(Box<dyn Bridge<RouteSenderAgent<T>>>)
 where
     for<'de> T: RouterState<'de>;
 
-
-impl <T: for<'de> RouterState<'de>> Debug for RouteSenderAgentBridge<T> {
+impl<T: for<'de> RouterState<'de>> Debug for RouteSenderAgentBridge<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
-        f.debug_tuple("RouteSenderBridge")
-            .finish()
+        f.debug_tuple("RouteSenderBridge").finish()
     }
 }
 
@@ -243,26 +234,23 @@ where
         RouteSenderAgentBridge(router_agent)
     }
 
-
     /// Sends a `RouteRequest` Message.
     pub fn send(&mut self, request: RouteRequest<T>) {
         self.0.send(request)
     }
 }
 
-
 /// Alias to RouteSenderBridge<()>;
 pub type RouteBridge = RouteAgentBridge<()>;
 
 /// A simplified interface to the router agent.
 pub struct RouteAgentBridge<T>(Box<dyn Bridge<RouteAgent<T>>>)
-    where
-        for<'de> T: RouterState<'de>;
-
+where
+    for<'de> T: RouterState<'de>;
 
 impl<T> RouteAgentBridge<T>
-    where
-            for<'de> T: RouterState<'de>,
+where
+    for<'de> T: RouterState<'de>,
 {
     /// Creates a new bridge.
     pub fn new(callback: Callback<RouteInfo<T>>) -> Self {
@@ -288,21 +276,20 @@ impl<T> RouteAgentBridge<T>
 /// A wrapper around the bridge
 //pub (crate) struct RouteAgentBridge<T: for<'de> YewRouterState<'de>>(pub Box<dyn Bridge<RouteAgent<T>>>);
 
-impl <T: for<'de> RouterState<'de>> Debug for RouteAgentBridge<T> {
+impl<T: for<'de> RouterState<'de>> Debug for RouteAgentBridge<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
-        f.debug_tuple("RouteAgentBridge")
-            .finish()
+        f.debug_tuple("RouteAgentBridge").finish()
     }
 }
 
-impl <T: for<'de> RouterState<'de>> Deref for RouteAgentBridge<T> {
+impl<T: for<'de> RouterState<'de>> Deref for RouteAgentBridge<T> {
     type Target = Box<dyn Bridge<RouteAgent<T>>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-impl <T: for<'de> RouterState<'de>> DerefMut for RouteAgentBridge<T> {
+impl<T: for<'de> RouterState<'de>> DerefMut for RouteAgentBridge<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }

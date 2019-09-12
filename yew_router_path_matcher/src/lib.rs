@@ -11,26 +11,26 @@
     unused_qualifications
 )]
 
-pub use yew_router_route_parser::{MatcherToken, CaptureVariant, FromMatches, FromMatchesError};
+pub use yew_router_route_parser::{CaptureVariant, FromMatches, FromMatchesError, MatcherToken};
 
 mod match_paths;
 mod util;
 
+use nom::combinator::all_consuming;
 use nom::IResult;
 use std::collections::{HashMap, HashSet};
+use yew::{Component, Html};
 use yew_router_route_parser::{optimize_tokens, parser};
-use yew::{Html, Component};
-use nom::combinator::all_consuming;
 
 /// Render function.
 pub trait RenderFn<CTX: Component>: Fn(&Matches) -> Option<Html<CTX>> {}
 
-
-impl <CTX, T> RenderFn<CTX> for T
-    where
+impl<CTX, T> RenderFn<CTX> for T
+where
     T: Fn(&Matches) -> Option<Html<CTX>>,
-    CTX: Component
-{}
+    CTX: Component,
+{
+}
 
 /// Matches contain keys corresponding to named capture sections,
 /// and values containing the content captured by those sections.
@@ -44,7 +44,7 @@ pub struct PathMatcher {
     /// Tokens used to determine how the matcher will match a route string.
     pub tokens: Vec<MatcherToken>,
     /// Settings
-    pub settings: MatcherSettings
+    pub settings: MatcherSettings,
 }
 
 /// Settings used for the matcher (and optimization of the parsed tokens that make up the matcher).
@@ -55,29 +55,27 @@ pub struct MatcherSettings {
     /// A matcher must consume all of the input to succeed.
     pub complete: bool,
     /// All literal matches do not care about case.
-    pub case_insensitive: bool
+    pub case_insensitive: bool,
 }
 impl Default for MatcherSettings {
     fn default() -> Self {
         MatcherSettings {
             strict: false,
             complete: true,
-            case_insensitive: false
+            case_insensitive: false,
         }
     }
 }
 
 impl PathMatcher {
-
     /// Attempt to create a PathMatcher from a "matcher string".
     pub fn try_from(i: &str) -> Result<Self, ()> // TODO: Error handling
-        where
-    {
+        where {
         let tokens = parser::parse(i).map_err(|_| ())?;
         let settings = MatcherSettings::default();
         let pm = PathMatcher {
             tokens: optimize_tokens(tokens, !settings.strict),
-            settings
+            settings,
         };
         Ok(pm)
     }
@@ -98,51 +96,52 @@ impl PathMatcher {
     /// This is useful in determining if a given struct will be able to be populated by a given path matcher before being given a concrete path to match.
     pub fn capture_names(&self) -> HashSet<&str> {
         fn capture_names_impl(tokens: &[MatcherToken]) -> HashSet<&str> {
-            tokens.iter().fold(HashSet::new(), |mut acc: HashSet<&str>, token| {
-                match token {
-                    MatcherToken::Optional(t) => {
-                        let captures = capture_names_impl(&t);
-                        acc.extend(captures)
-                    } ,
-                    MatcherToken::Match(_) => {}
-                    MatcherToken::Capture(variant)  => {
-                        match variant {
-                            CaptureVariant::ManyNamed(name) | CaptureVariant::Named(name) | CaptureVariant::NumberedNamed {name, ..} => {acc.insert(&name);},
-                            CaptureVariant::ManyUnnamed | CaptureVariant::Unnamed | CaptureVariant::NumberedUnnamed {..} => {}
+            tokens
+                .iter()
+                .fold(HashSet::new(), |mut acc: HashSet<&str>, token| {
+                    match token {
+                        MatcherToken::Optional(t) => {
+                            let captures = capture_names_impl(&t);
+                            acc.extend(captures)
                         }
-                    },
-                }
-                acc
-            })
+                        MatcherToken::Match(_) => {}
+                        MatcherToken::Capture(variant) => match variant {
+                            CaptureVariant::ManyNamed(name)
+                            | CaptureVariant::Named(name)
+                            | CaptureVariant::NumberedNamed { name, .. } => {
+                                acc.insert(&name);
+                            }
+                            CaptureVariant::ManyUnnamed
+                            | CaptureVariant::Unnamed
+                            | CaptureVariant::NumberedUnnamed { .. } => {}
+                        },
+                    }
+                    acc
+                })
         }
         capture_names_impl(&self.tokens)
     }
 }
 
-
-
-
-    #[cfg(test)]
+#[cfg(test)]
 mod tests {
     use super::*;
     use yew_router_route_parser::parser::RouteParserToken;
 
-
-
-//    use std::sync::{Once, ONCE_INIT};
-//    static INIT: Once = ONCE_INIT;
-//    fn setup_logs() {
-//        INIT.call_once(|| {
-//            env_logger::init();
-//        });
-//    }
+    //    use std::sync::{Once, ONCE_INIT};
+    //    static INIT: Once = ONCE_INIT;
+    //    fn setup_logs() {
+    //        INIT.call_once(|| {
+    //            env_logger::init();
+    //        });
+    //    }
 
     impl From<Vec<RouteParserToken>> for PathMatcher {
         fn from(tokens: Vec<RouteParserToken>) -> Self {
             let settings = MatcherSettings::default();
             PathMatcher {
                 tokens: optimize_tokens(tokens, !settings.strict),
-                settings
+                settings,
             }
         }
     }
@@ -156,77 +155,134 @@ mod tests {
 
     #[test]
     fn multiple_tokens() {
-        let tokens = vec![RouteParserToken::Separator, RouteParserToken::Match("hello".to_string()), RouteParserToken::Separator];
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Match("hello".to_string()),
+            RouteParserToken::Separator,
+        ];
 
         let path_matcher = PathMatcher::from(tokens);
         path_matcher.match_path("/hello/").expect("should parse");
     }
 
-
     #[test]
     fn simple_capture() {
-        let tokens = vec![RouteParserToken::Separator, RouteParserToken::Capture(CaptureVariant::Named("hello".to_string())), RouteParserToken::Separator];
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Capture(CaptureVariant::Named("hello".to_string())),
+            RouteParserToken::Separator,
+        ];
         let path_matcher = PathMatcher::from(tokens);
-        let (_, matches) = path_matcher.match_path("/general_kenobi/").expect("should parse");
+        let (_, matches) = path_matcher
+            .match_path("/general_kenobi/")
+            .expect("should parse");
         assert_eq!(matches["hello"], "general_kenobi".to_string())
     }
-
 
     #[test]
     fn simple_capture_with_no_trailing_separator() {
-        let tokens = vec![RouteParserToken::Separator, RouteParserToken::Capture(CaptureVariant::Named("hello".to_string()))];
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Capture(CaptureVariant::Named("hello".to_string())),
+        ];
         let path_matcher = PathMatcher::from(tokens);
-        let (_, matches) = path_matcher.match_path("/general_kenobi").expect("should parse");
+        let (_, matches) = path_matcher
+            .match_path("/general_kenobi")
+            .expect("should parse");
         assert_eq!(matches["hello"], "general_kenobi".to_string())
     }
 
-
     #[test]
     fn match_with_trailing_match_any() {
-        let tokens = vec![RouteParserToken::Separator, RouteParserToken::Match("a".to_string()), RouteParserToken::Separator, RouteParserToken::Capture(CaptureVariant::Unnamed)];
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Match("a".to_string()),
+            RouteParserToken::Separator,
+            RouteParserToken::Capture(CaptureVariant::Unnamed),
+        ];
         let path_matcher = PathMatcher::from(tokens);
         let (_, _matches) = path_matcher.match_path("/a/").expect("should parse");
     }
 
     #[test]
     fn match_n() {
-//        setup_logs();
-        let tokens = vec![RouteParserToken::Separator, RouteParserToken::Capture(CaptureVariant::NumberedUnnamed {sections: 3}), RouteParserToken::Separator, RouteParserToken::Match("a".to_string())];
+        //        setup_logs();
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Capture(CaptureVariant::NumberedUnnamed { sections: 3 }),
+            RouteParserToken::Separator,
+            RouteParserToken::Match("a".to_string()),
+        ];
         let path_matcher = PathMatcher::from(tokens);
-        let (_, _matches) = path_matcher.match_path("/garbage1/garbage2/garbage3/a").expect("should parse");
+        let (_, _matches) = path_matcher
+            .match_path("/garbage1/garbage2/garbage3/a")
+            .expect("should parse");
     }
 
     #[test]
     fn match_n_no_overrun() {
-        let tokens = vec![RouteParserToken::Separator, RouteParserToken::Capture(CaptureVariant::NumberedUnnamed {sections: 3})];
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Capture(CaptureVariant::NumberedUnnamed { sections: 3 }),
+        ];
         let path_matcher = PathMatcher::from(tokens);
-        let (s, _matches) = path_matcher.match_path("/garbage1/garbage2/garbage3").expect("should parse");
+        let (s, _matches) = path_matcher
+            .match_path("/garbage1/garbage2/garbage3")
+            .expect("should parse");
         assert_eq!(s.len(), 0)
     }
 
-
     #[test]
     fn match_n_named() {
-        let tokens = vec![RouteParserToken::Separator, RouteParserToken::Capture(CaptureVariant::NumberedNamed {sections: 3, name: "captured".to_string() }), RouteParserToken::Separator, RouteParserToken::Match("a".to_string())];
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Capture(CaptureVariant::NumberedNamed {
+                sections: 3,
+                name: "captured".to_string(),
+            }),
+            RouteParserToken::Separator,
+            RouteParserToken::Match("a".to_string()),
+        ];
         let path_matcher = PathMatcher::from(tokens);
-        let (_, matches) = path_matcher.match_path("/garbage1/garbage2/garbage3/a").expect("should parse");
-        assert_eq!(matches["captured"], "garbage1/garbage2/garbage3".to_string())
+        let (_, matches) = path_matcher
+            .match_path("/garbage1/garbage2/garbage3/a")
+            .expect("should parse");
+        assert_eq!(
+            matches["captured"],
+            "garbage1/garbage2/garbage3".to_string()
+        )
     }
-
 
     #[test]
     fn match_many() {
-        let tokens = vec![RouteParserToken::Separator, RouteParserToken::Capture(CaptureVariant::ManyUnnamed), RouteParserToken::Separator, RouteParserToken::Match("a".to_string())];
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Capture(CaptureVariant::ManyUnnamed),
+            RouteParserToken::Separator,
+            RouteParserToken::Match("a".to_string()),
+        ];
         let path_matcher = PathMatcher::from(tokens);
-        let (_, _matches) = path_matcher.match_path("/garbage1/garbage2/garbage3/a").expect("should parse");
+        let (_, _matches) = path_matcher
+            .match_path("/garbage1/garbage2/garbage3/a")
+            .expect("should parse");
     }
 
     #[test]
     fn match_many_named() {
-        let tokens = vec![RouteParserToken::Separator, RouteParserToken::Capture(CaptureVariant::ManyNamed("captured".to_string())), RouteParserToken::Separator, RouteParserToken::Match("a".to_string())];
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Capture(CaptureVariant::ManyNamed("captured".to_string())),
+            RouteParserToken::Separator,
+            RouteParserToken::Match("a".to_string()),
+        ];
         let path_matcher = PathMatcher::from(tokens);
-        let (_, matches) = path_matcher.match_path("/garbage1/garbage2/garbage3/a").expect("should parse");
-        assert_eq!(matches["captured"], "garbage1/garbage2/garbage3".to_string())
+        let (_, matches) = path_matcher
+            .match_path("/garbage1/garbage2/garbage3/a")
+            .expect("should parse");
+        assert_eq!(
+            matches["captured"],
+            "garbage1/garbage2/garbage3".to_string()
+        )
     }
 
 }

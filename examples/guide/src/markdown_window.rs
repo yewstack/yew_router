@@ -1,26 +1,26 @@
-use yew::prelude::*;
-use yew::services::FetchService;
-use yew::services::fetch::{Request, Response, FetchTask};
-use yew::format::{Text, Nothing};
-use yew::virtual_dom::VNode;
 use crate::markdown::render_markdown;
+use yew::format::{Nothing, Text};
+use yew::prelude::*;
+use yew::services::fetch::{FetchTask, Request, Response};
+use yew::services::FetchService;
+use yew::virtual_dom::VNode;
 
 pub struct MarkdownWindow {
     fetch_service: FetchService,
     fetch_task: Option<FetchTask>,
     markdown: Option<String>,
     props: MdProps,
-    link: ComponentLink<Self>
+    link: ComponentLink<Self>,
 }
 
 #[derive(Properties, Debug)]
 pub struct MdProps {
-    pub uri: Option<String>
+    pub uri: Option<String>,
 }
 
 pub enum Msg {
     MarkdownArrived(String),
-    MarkdownFetchFailed
+    MarkdownFetchFailed,
 }
 
 impl Component for MarkdownWindow {
@@ -33,7 +33,7 @@ impl Component for MarkdownWindow {
             fetch_task: None,
             markdown: None,
             props,
-            link
+            link,
         }
     }
 
@@ -47,9 +47,7 @@ impl Component for MarkdownWindow {
                 log::info!("fetching markdown succeeded");
                 self.markdown = Some(md)
             }
-            Msg::MarkdownFetchFailed => {
-                log::error!("fetching markdown failed")
-            }
+            Msg::MarkdownFetchFailed => log::error!("fetching markdown failed"),
         }
         true
     }
@@ -71,7 +69,7 @@ impl MarkdownWindow {
                 log::info!("Got response");
                 match response.body() {
                     Ok(text) => Msg::MarkdownArrived(text.clone()),
-                    _ => Msg::MarkdownFetchFailed
+                    _ => Msg::MarkdownFetchFailed,
                 }
             });
             self.fetch_task = Some(self.fetch_service.fetch(request, callback));
@@ -86,11 +84,7 @@ impl Renderable<MarkdownWindow> for MarkdownWindow {
                 render_markdown(md)
             }
         } else {
-            html!{}
+            html! {}
         }
-
     }
 }
-
-
-

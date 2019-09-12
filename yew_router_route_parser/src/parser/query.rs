@@ -1,73 +1,68 @@
-use nom::IResult;
-use crate::parser::RouteParserToken;
-use nom::sequence::{tuple, separated_pair, pair};
-use nom::multi::{many0, many1};
-use nom::combinator::map;
-use nom::bytes::complete::tag;
 use crate::parser::core::{capture_or_match, valid_ident_characters};
+use crate::parser::RouteParserToken;
 use nom::branch::alt;
+use nom::bytes::complete::tag;
+use nom::combinator::map;
+use nom::multi::{many0, many1};
+use nom::sequence::{pair, separated_pair, tuple};
+use nom::IResult;
 
-use crate::parser::util::{optional_matches_v, ret_vec, optional_match};
+use crate::parser::util::{optional_match, optional_matches_v, ret_vec};
 use nom::error::{context, VerboseError};
-
 
 /// Character used to start the first query.
 fn query_begin_token(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
-    map(
-        tag("?"),
-        |_| RouteParserToken::QueryBegin
-    )(i)
+    map(tag("?"), |_| RouteParserToken::QueryBegin)(i)
 }
 
 /// Character used to separate queries
 fn query_separator_token(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
-    map(
-        tag("&"),
-        |_| RouteParserToken::QuerySeparator
-    )(i)
+    map(tag("&"), |_| RouteParserToken::QuerySeparator)(i)
 }
 
 /// Matches
 /// * "ident=item"
 fn query(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
-    context("query", map(
-        separated_pair(valid_ident_characters, tag("=",), capture_or_match),
-        |(ident, value)| RouteParserToken::QueryCapture {ident: ident.to_string(), capture_or_match: value }
-    ))(i)
+    context(
+        "query",
+        map(
+            separated_pair(valid_ident_characters, tag("="), capture_or_match),
+            |(ident, value)| RouteParserToken::QueryCapture {
+                ident: ident.to_string(),
+                capture_or_match: value,
+            },
+        ),
+    )(i)
 }
 
 /// Matches
 /// * ?ident=item
 /// * ?(ident=item)
-fn begin_query_parser_with_optionals(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
+fn begin_query_parser_with_optionals(
+    i: &str,
+) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     context(
         "many optional queries ?()()()...",
         map(
             pair(
                 query_begin_token,
-                alt((ret_vec(query), many1(optional_match(query))))
+                alt((ret_vec(query), many1(optional_match(query)))),
             ),
             |(begin, query)| {
                 let mut ret = vec![begin];
                 ret.extend(query);
                 ret
-            }
-        )
+            },
+        ),
     )(i)
 }
 
 fn begin_query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
-    map(
-        pair(
-            query_begin_token,
-            ret_vec(query)
-        ),
-        |(begin, query)| {
-            let mut ret = vec![begin];
-            ret.extend(query);
-            ret
-        }
-    )(i)
+    map(pair(query_begin_token, ret_vec(query)), |(begin, query)| {
+        let mut ret = vec![begin];
+        ret.extend(query);
+        ret
+    })(i)
 }
 
 /// Matches:
@@ -77,27 +72,30 @@ fn begin_query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseEr
 /// * ...
 fn rest_query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     map(
-        many0(tuple(
-            (
-                query_separator_token,
-                query
-            )
-        )),
+        many0(tuple((query_separator_token, query))),
         |tokens: Vec<(RouteParserToken, RouteParserToken)>| {
             let new_capacity = tokens.capacity() * 2;
-            tokens.into_iter().fold(Vec::with_capacity(new_capacity), |mut accumulator, element| {
-                accumulator.push(element.0);
-                accumulator.push(element.1);
-                accumulator
-            })
-        }
+            tokens.into_iter().fold(
+                Vec::with_capacity(new_capacity),
+                |mut accumulator, element| {
+                    accumulator.push(element.0);
+                    accumulator.push(element.1);
+                    accumulator
+                },
+            )
+        },
     )(i)
 }
 
-fn rest_query_or_optional_rest_query(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
+fn rest_query_or_optional_rest_query(
+    i: &str,
+) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     alt((
-        context("optional & query parser", optional_matches_v(rest_query_parser)),
-        context("& query parser", rest_query_parser)
+        context(
+            "optional & query parser",
+            optional_matches_v(rest_query_parser),
+        ),
+        context("& query parser", rest_query_parser),
     ))(i)
 }
 
@@ -112,25 +110,22 @@ fn query_parser_impl(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseErr
     map(
         pair(
             context("? query parser", begin_query_parser),
-            rest_query_or_optional_rest_query
+            rest_query_or_optional_rest_query,
         ),
         |(mut first, mut rest)| {
             first.append(&mut rest);
             first
-        }
+        },
     )(i)
 }
 
 pub fn query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     alt((
-        alt((
-            query_parser_impl,
-            optional_matches_v(query_parser_impl)
-        )),
+        alt((query_parser_impl, optional_matches_v(query_parser_impl))),
         alt((
             begin_query_parser_with_optionals,
-            optional_matches_v(begin_query_parser_with_optionals)
-        ))
+            optional_matches_v(begin_query_parser_with_optionals),
+        )),
     ))(i)
 }
 
@@ -140,12 +135,12 @@ mod test {
     use nom::combinator::all_consuming;
 
     #[test]
-    fn single_match(){
+    fn single_match() {
         query_parser("?hello=there").expect("should match");
     }
 
     #[test]
-    fn single_capture(){
+    fn single_capture() {
         query_parser("?hello={there}").expect("should match");
     }
 
@@ -191,7 +186,8 @@ mod test {
 
     #[test]
     fn cant_have_second_query_after_optional_first_queries() {
-        all_consuming(query_parser)("?(query=this)(another=query)&other=thing").expect_err("should not parse");
+        all_consuming(query_parser)("?(query=this)(another=query)&other=thing")
+            .expect_err("should not parse");
     }
 
     #[test]

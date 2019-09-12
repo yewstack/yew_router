@@ -1,11 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use yew_router::FromMatches;
     use std::collections::HashMap;
+    use yew_router::FromMatches;
 
     #[test]
     fn derive_works() {
-
         #[derive(FromMatches)]
         #[allow(dead_code)]
         struct S {
@@ -30,4 +29,3 @@ mod tests {
         assert_eq!(x.there, "yote".to_string());
     }
 }
-

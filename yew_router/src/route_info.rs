@@ -6,9 +6,8 @@ use stdweb::unstable::TryFrom;
 use stdweb::JsSerialize;
 use stdweb::Value;
 
-use yew::agent::Transferable;
 use std::ops::Deref;
-
+use yew::agent::Transferable;
 
 /// Any state that can be stored by the History API must meet the criteria of this trait.
 pub trait RouteState: Clone + Default + JsSerialize + TryFrom<Value> + 'static {}
@@ -39,33 +38,27 @@ impl<T> RouteInfo<T>
             state: None,
         }
     }
-
 }
 
-impl<T> From<String> for RouteInfo<T>
-{
+impl<T> From<String> for RouteInfo<T> {
     fn from(string: String) -> RouteInfo<T> {
         RouteInfo {
             route: string,
-            state: None
+            state: None,
         }
-
     }
 }
 
-
-impl<T> From<&str> for RouteInfo<T>
-{
+impl<T> From<&str> for RouteInfo<T> {
     fn from(string: &str) -> RouteInfo<T> {
         RouteInfo {
             route: string.to_string(),
-            state: None
+            state: None,
         }
-
     }
 }
 
-impl <T> Deref for RouteInfo<T> {
+impl<T> Deref for RouteInfo<T> {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
@@ -74,4 +67,3 @@ impl <T> Deref for RouteInfo<T> {
 }
 
 impl<T> Transferable for RouteInfo<T> where for<'de> T: Serialize + Deserialize<'de> {}
-

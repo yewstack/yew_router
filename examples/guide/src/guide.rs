@@ -1,27 +1,26 @@
-
-use yew::prelude::*;
-use yew_router::{RouteAgent, RouteInfo};
-use yew::html::ChildrenWithProps;
-use yew::Properties;
-use yew_router::path_matcher::PathMatcher;
-use yew_router::components::RouterLink;
-use yew_router::route_agent::RouteRequest::GetCurrentRoute;
-use crate::page::{Page, PageProps};
 use crate::markdown_window::MarkdownWindow;
+use crate::page::{Page, PageProps};
+use yew::html::ChildrenWithProps;
+use yew::prelude::*;
+use yew::Properties;
+use yew_router::components::RouterLink;
+use yew_router::path_matcher::PathMatcher;
+use yew_router::route_agent::RouteRequest::GetCurrentRoute;
+use yew_router::{RouteAgent, RouteInfo};
 
 pub struct Guide {
     router_agent: Box<dyn Bridge<RouteAgent>>,
     route: Option<RouteInfo>,
-    props: GuideProps
+    props: GuideProps,
 }
 
 #[derive(Properties)]
 pub struct GuideProps {
-    children: ChildrenWithProps<Page, Guide>
+    children: ChildrenWithProps<Page, Guide>,
 }
 
 pub enum Msg {
-    UpdateRoute(RouteInfo)
+    UpdateRoute(RouteInfo),
 }
 
 impl Component for Guide {
@@ -34,7 +33,7 @@ impl Component for Guide {
         Guide {
             router_agent,
             route: None,
-            props
+            props,
         }
     }
 
@@ -56,7 +55,10 @@ impl Component for Guide {
 impl Renderable<Guide> for Guide {
     fn view(&self) -> Html<Guide> {
         if let Some(route) = &self.route {
-            let active_markdown_uri: Option<String> = self.props.children.iter()
+            let active_markdown_uri: Option<String> = self
+                .props
+                .children
+                .iter()
                 .filter_map(|child| {
                     if child.props.page_url == route.route {
                         Some(child.props.uri)
@@ -67,17 +69,13 @@ impl Renderable<Guide> for Guide {
                 .next();
             log::debug!("active uri: {:?}", active_markdown_uri);
 
-            let mut list_items = self.props.children
-                .iter()
-                .map(|child| {
-                    let x = render_page_list_item(child.props, route);
-                    if let yew::virtual_dom::VNode::VTag(x) = &x {
-                        log::debug!("{:?}",
-                            x.attributes
-                        );
-                    }
-                    x
-                });
+            let mut list_items = self.props.children.iter().map(|child| {
+                let x = render_page_list_item(child.props, route);
+                if let yew::virtual_dom::VNode::VTag(x) = &x {
+                    log::debug!("{:?}", x.attributes);
+                }
+                x
+            });
 
             html! {
                 <div style="display: flex; overflow-y: hidden; height: 100%">

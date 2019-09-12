@@ -1,18 +1,17 @@
 //! Route Component.
-use yew_router_path_matcher::{PathMatcher};
-use yew::{Component, ComponentLink, ShouldRender, Properties, Children};
 use super::YewRouterState;
-use crate::component_router::router::Router;
 use crate::component_router::render::Render;
-use std::fmt::{Debug, Formatter, Error as FmtError};
+use crate::component_router::router::Router;
+use std::fmt::{Debug, Error as FmtError, Formatter};
+use yew::{Children, Component, ComponentLink, Properties, ShouldRender};
+use yew_router_path_matcher::PathMatcher;
 
 /// A nested component used inside of [Router](struct.Router.html) that can determine if a
 /// sub-component can be rendered.
 #[derive(Debug)]
 pub struct Route<T: for<'de> YewRouterState<'de>> {
-    props: RouteProps<T>
+    props: RouteProps<T>,
 }
-
 
 /// Properties for Route.
 ///
@@ -32,10 +31,10 @@ pub struct RouteProps<T: for<'de> YewRouterState<'de>> {
     /// Given matches matched from the URL, conditionally render the elements specified within.
     pub render: Render<T>,
     /// Will be rendered if it contains anything provided the `PathMatcher` matches the URL.
-    pub children: Children<Router<T>>
+    pub children: Children<Router<T>>,
 }
 
-impl <T: for<'de> YewRouterState<'de>> Debug for RouteProps<T> {
+impl<T: for<'de> YewRouterState<'de>> Debug for RouteProps<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("RouteProps")
             .field("matcher", &self.matcher)
@@ -45,14 +44,12 @@ impl <T: for<'de> YewRouterState<'de>> Debug for RouteProps<T> {
     }
 }
 
-impl <T: for<'de> YewRouterState<'de>> Component for Route<T> {
+impl<T: for<'de> YewRouterState<'de>> Component for Route<T> {
     type Message = ();
     type Properties = RouteProps<T>;
 
     fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Route {
-            props
-        }
+        Route { props }
     }
 
     fn update(&mut self, _msg: Self::Message) -> bool {
@@ -64,4 +61,3 @@ impl <T: for<'de> YewRouterState<'de>> Component for Route<T> {
         true
     }
 }
-

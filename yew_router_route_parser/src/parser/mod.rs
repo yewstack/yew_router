@@ -1,14 +1,14 @@
 //! Parser that consumes a string and produces the first representation of the matcher.
-use nom::sequence::{tuple};
-use nom::combinator::{map, opt, all_consuming};
-use nom::error::{ParseError, ErrorKind, VerboseError};
 use nom::branch::alt;
+use nom::combinator::{all_consuming, map, opt};
+use nom::error::{ErrorKind, ParseError, VerboseError};
+use nom::sequence::tuple;
 
 mod core;
-pub mod util;
+mod fragment;
 mod path;
 mod query;
-mod fragment;
+pub mod util;
 
 /// Tokens generated from parsing a path matcher string.
 /// They will be optimized to another token type used to match URLs.
@@ -25,16 +25,16 @@ pub enum RouteParserToken {
     /// Match &
     QuerySeparator,
     /// Match x=y
-    QueryCapture{
+    QueryCapture {
         /// Identifier
         ident: String,
         /// Capture or match
-        capture_or_match: CaptureOrMatch
+        capture_or_match: CaptureOrMatch,
     },
     /// Match \#
     FragmentBegin,
     /// Optional section
-    Optional(Vec<RouteParserToken>)
+    Optional(Vec<RouteParserToken>),
 }
 
 /// Token representing various types of captures.
@@ -47,21 +47,21 @@ pub enum CaptureVariant {
     /// {*} - matches over multiple sections.
     ManyUnnamed,
     /// {4} - matches 4 sections.
-    NumberedUnnamed{
+    NumberedUnnamed {
         /// Number of sections to match.
-        sections: usize
+        sections: usize,
     },
     /// {name} - captures a section and adds it to the map with a given name.
     Named(String),
     /// {*:name} - captures over many sections and adds it to the map with a given name.
     ManyNamed(String),
     /// {2:name} - captures a fixed number of sections with a given name.
-    NumberedNamed{
+    NumberedNamed {
         /// Number of sections to match.
         sections: usize,
         /// The key to be entered in the `Matches` map.
-        name: String
-    }
+        name: String,
+    },
 }
 
 /// Either a Capture, or a Match
@@ -70,17 +70,14 @@ pub enum CaptureOrMatch {
     /// Match a specific string.
     Match(String),
     /// Match a capture variant.
-    Capture(CaptureVariant)
+    Capture(CaptureVariant),
 }
-
-
-
 
 /// General error type
 #[derive(Debug, Clone, Copy)]
 pub enum Error {
     /// Unspecified error
-    Unspecified
+    Unspecified,
 }
 
 impl ParseError<&str> for Error {
@@ -97,14 +94,16 @@ impl ParseError<&str> for Error {
 pub fn parse(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseError<&str>>> {
     alt((
         map(
-            all_consuming(tuple(
-                (
-                    opt(path::path_parser),
-                    opt(query::query_parser),
-                    opt(fragment::fragment_parser)
-                )
-            )),
-            |(path, query, fragment): (Option<Vec<RouteParserToken>>, Option<Vec<RouteParserToken>>, Option<Vec<RouteParserToken>>)| {
+            all_consuming(tuple((
+                opt(path::path_parser),
+                opt(query::query_parser),
+                opt(fragment::fragment_parser),
+            ))),
+            |(path, query, fragment): (
+                Option<Vec<RouteParserToken>>,
+                Option<Vec<RouteParserToken>>,
+                Option<Vec<RouteParserToken>>,
+            )| {
                 let mut tokens = Vec::new();
                 if let Some(mut t) = path {
                     tokens.append(&mut t)
@@ -116,14 +115,12 @@ pub fn parse(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseError<&st
                     tokens.append(&mut t)
                 }
                 tokens
-            }
+            },
         ),
-        map(core::capture, |t| vec![t])
+        map(core::capture, |t| vec![t]),
     ))(i)
-        .map(|(_, tokens)| tokens) // because of all_consuming, there should either be an error, or a success, no intermediate remaining input.
+    .map(|(_, tokens)| tokens) // because of all_consuming, there should either be an error, or a success, no intermediate remaining input.
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -132,51 +129,59 @@ mod tests {
     #[test]
     fn parse_can_handle_multiple_literals() {
         let parsed = parse("/hello/there").expect("should parse");
-        assert_eq!(parsed, vec![RouteParserToken::Separator,
-                                  RouteParserToken::Match("hello".to_string()),
-                                  RouteParserToken::Separator,
-                                  RouteParserToken::Match("there".to_string())]
+        assert_eq!(
+            parsed,
+            vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Match("hello".to_string()),
+                RouteParserToken::Separator,
+                RouteParserToken::Match("there".to_string())
+            ]
         );
     }
-
-
 
     #[test]
     fn parse_can_handle_trailing_path_separator() {
         let parsed = parse("/hello/").expect("should parse");
-        assert_eq!(parsed, vec![RouteParserToken::Separator,
-                                  RouteParserToken::Match("hello".to_string()),
-                                  RouteParserToken::Separator]
+        assert_eq!(
+            parsed,
+            vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Match("hello".to_string()),
+                RouteParserToken::Separator
+            ]
         );
     }
 
     #[test]
     fn parse_can_capture_section() {
         let parsed = parse("/hello/{there}").expect("should parse");
-        assert_eq!(parsed, vec![
-            RouteParserToken::Separator,
-            RouteParserToken::Match("hello".to_string()),
-            RouteParserToken::Separator,
-            RouteParserToken::Capture(CaptureVariant::Named("there".to_string())),
-        ]
+        assert_eq!(
+            parsed,
+            vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Match("hello".to_string()),
+                RouteParserToken::Separator,
+                RouteParserToken::Capture(CaptureVariant::Named("there".to_string())),
+            ]
         )
     }
 
     #[test]
     fn parse_can_handle_multiple_matches_per_section() {
         let parsed = parse("/hello/{there}general{}").expect("should parse");
-        assert_eq!(parsed, vec![
-            RouteParserToken::Separator,
-            RouteParserToken::Match("hello".to_string()),
-            RouteParserToken::Separator,
-            RouteParserToken::Capture(CaptureVariant::Named("there".to_string())),
-            RouteParserToken::Match("general".to_string()),
-            RouteParserToken::Capture(CaptureVariant::Unnamed)
-        ]
+        assert_eq!(
+            parsed,
+            vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Match("hello".to_string()),
+                RouteParserToken::Separator,
+                RouteParserToken::Capture(CaptureVariant::Named("there".to_string())),
+                RouteParserToken::Match("general".to_string()),
+                RouteParserToken::Capture(CaptureVariant::Unnamed)
+            ]
         )
     }
-
-
 
     #[test]
     fn parser_cant_contain_multiple_matches_in_a_row_0() {

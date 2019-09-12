@@ -1,4 +1,4 @@
-#![recursion_limit="128"]
+#![recursion_limit = "128"]
 //! Provides routing faculties for the Yew web framework.
 
 #![deny(
@@ -32,12 +32,12 @@ pub mod components;
 #[cfg(feature = "yew_router")]
 mod component_router;
 #[cfg(feature = "yew_router")]
-pub use component_router::{router, route, Route, Router, YewRouterState, render, render::component, Render};
+pub use component_router::{
+    render, render::component, route, router, Render, Route, Router, YewRouterState,
+};
 
 #[cfg(feature = "yew_router")]
 pub use yew_router_path_matcher as path_matcher;
 
-
 #[cfg(feature = "yew_router")]
 pub use yew_router_derive::{route, FromMatches};
-

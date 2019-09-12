@@ -1,22 +1,19 @@
 //! Router Component.
 
-use crate::route_info::RouteInfo;
-use crate::route_agent::{RouteRequest};
-use yew::{
-    html,
-    virtual_dom::VNode,
-    Component, ComponentLink, Html, Properties, Renderable, ShouldRender,
-};
-use crate::YewRouterState;
-use log::{warn, trace};
-use yew::html::{ChildrenWithProps};
 use crate::component_router::route::Route;
-use yew::virtual_dom::VChild;
-use yew_router_path_matcher::RenderFn;
-use std::rc::Rc;
-use std::fmt::{Debug, Formatter, Error as FmtError};
 use crate::route_agent::RouteAgentBridge;
-
+use crate::route_agent::RouteRequest;
+use crate::route_info::RouteInfo;
+use crate::YewRouterState;
+use log::{trace, warn};
+use std::fmt::{Debug, Error as FmtError, Formatter};
+use std::rc::Rc;
+use yew::html::ChildrenWithProps;
+use yew::virtual_dom::VChild;
+use yew::{
+    html, virtual_dom::VNode, Component, ComponentLink, Html, Properties, Renderable, ShouldRender,
+};
+use yew_router_path_matcher::RenderFn;
 
 /// Rendering control flow component.
 ///
@@ -82,7 +79,7 @@ pub struct Router<T: for<'de> YewRouterState<'de>> {
     router_agent: RouteAgentBridge<T>,
 }
 
-impl <T: for<'de> YewRouterState<'de>> Debug for Router<T> {
+impl<T: for<'de> YewRouterState<'de>> Debug for Router<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("Router")
             .field("route", &self.props)
@@ -103,10 +100,10 @@ pub enum Msg<T> {
 #[derive(Properties)]
 pub struct Props<T: for<'de> YewRouterState<'de>> {
     #[props(required)]
-    children: ChildrenWithProps<Route<T>, Router<T>>
+    children: ChildrenWithProps<Route<T>, Router<T>>,
 }
 
-impl <T: for<'de> YewRouterState<'de>> Debug for Props<T> {
+impl<T: for<'de> YewRouterState<'de>> Debug for Props<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("Props")
             .field("children (length)", &self.children.len())
@@ -114,8 +111,9 @@ impl <T: for<'de> YewRouterState<'de>> Debug for Props<T> {
     }
 }
 
-impl <T> Component for Router<T>
-    where T: for<'de> YewRouterState<'de>
+impl<T> Component for Router<T>
+where
+    T: for<'de> YewRouterState<'de>,
 {
     type Message = Msg<T>;
     type Properties = Props<T>;
@@ -152,15 +150,18 @@ impl <T> Component for Router<T>
     }
 }
 
-impl <T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T>
-{
+impl<T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T> {
     fn view(&self) -> VNode<Self> {
-        trace!("Routing one of {} routes for  {:?}", self.props.children.iter().count(), &self.route);
+        trace!(
+            "Routing one of {} routes for  {:?}",
+            self.props.children.iter().count(),
+            &self.route
+        );
 
-        self.props.children.iter()
-            .filter_map(|route| -> Option<Html<Self>> {
-                try_render_child(route, &self.route)
-            })
+        self.props
+            .children
+            .iter()
+            .filter_map(|route| -> Option<Html<Self>> { try_render_child(route, &self.route) })
             .next() // Take the first path that succeeds.
             .map(|x| -> Html<Self> {
                 trace!("Route matched.");
@@ -181,50 +182,54 @@ impl <T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T>
 /// # Arguments
 /// * route_child - The child attempting to be rendered.
 /// * route_string - The string representing the route.
-fn try_render_child<T: for<'de> YewRouterState<'de>>(route_child: VChild<Route<T>, Router<T>>, route_string: &str) -> Option<Html<Router<T>>> {
+fn try_render_child<T: for<'de> YewRouterState<'de>>(
+    route_child: VChild<Route<T>, Router<T>>,
+    route_string: &str,
+) -> Option<Html<Router<T>>> {
     let children_present: bool = !route_child.props.children.is_empty();
 
     let children = route_child.props.children.iter();
     let render: Option<Rc<dyn RenderFn<Router<T>>>> = route_child.props.render.clone().0;
 
-    route_child.props.matcher
+    route_child
+        .props
+        .matcher
         .match_path(route_string)
-        .map(|(_rest, matches): (&str, std::collections::HashMap<&str, String>)| {
-            match render {
-                Some(render) => {
-                    if children_present {
-                        match (render)(&matches) {
-                            Some(rendered) => {
-                                Some(html! {
+        .map(
+            |(_rest, matches): (&str, std::collections::HashMap<&str, String>)| {
+                match render {
+                    Some(render) => {
+                        if children_present {
+                            match (render)(&matches) {
+                                Some(rendered) => Some(html! {
                                     <>
                                         {rendered}
                                         {children.collect::<VNode<Router<T>>>()}
                                     </>
-                                })
+                                }),
+                                None => {
+                                    // If the component can't be created from the matches,
+                                    // the nested children will be rendered anyways
+                                    Some(children.collect())
+                                }
                             }
-                            None => {
-                                // If the component can't be created from the matches,
-                                // the nested children will be rendered anyways
-                                Some(children.collect())
-                            }
+                        } else {
+                            render(&matches)
                         }
-                    } else {
-                        render(&matches)
                     }
-                },
-                None => {
-                    if children_present {
-                        Some(children.collect())
-                    } else {
-                        None // Neither matched
+                    None => {
+                        if children_present {
+                            Some(children.collect())
+                        } else {
+                            None // Neither matched
+                        }
                     }
                 }
-            }
-        })
+            },
+        )
         .ok()
         .flatten_stable()
 }
-
 
 trait Flatten<T> {
     /// Because flatten is a nightly feature. I'm making a new variant of the function here for stable use.

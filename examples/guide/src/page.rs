@@ -9,7 +9,7 @@ pub struct PageProps {
     #[props(required)]
     pub page_url: String,
     #[props(required)]
-    pub title: String
+    pub title: String,
 }
 
 impl Component for Page {

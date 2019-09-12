@@ -1,9 +1,9 @@
 extern crate proc_macro;
-use proc_macro::{TokenStream};
-use syn;
-use syn::{DeriveInput, Data, Fields, Field, Ident};
-use syn::parse_macro_input;
+use proc_macro::TokenStream;
 use quote::quote;
+use syn;
+use syn::parse_macro_input;
+use syn::{Data, DeriveInput, Field, Fields, Ident};
 
 #[proc_macro_derive(FromMatches)]
 pub fn from_matches(input: TokenStream) -> TokenStream {
@@ -41,15 +41,9 @@ pub fn from_matches(input: TokenStream) -> TokenStream {
         .map(|i: Ident| i.to_string())
         .collect::<Vec<_>>();
 
-    let idents = fields
-        .iter()
-        .cloned()
-        .map(|f: Field| f.ident.unwrap());
+    let idents = fields.iter().cloned().map(|f: Field| f.ident.unwrap());
     let idents2 = idents.clone();
-    let types = fields
-        .iter()
-        .cloned()
-        .map(|f| f.ty);
+    let types = fields.iter().cloned().map(|f| f.ty);
 
     let assignments = quote! {
         #(
@@ -69,36 +63,34 @@ pub fn from_matches(input: TokenStream) -> TokenStream {
     };
 
     let expanded = quote! {
-        use yew_router::path_matcher::FromMatchesError as __FromMatchesError;
-        use yew_router::path_matcher::FromMatches as __FromMatches;
-        use std::collections::HashMap as __HashMap;
-        use std::collections::HashSet as __HashSet;
-//        use std::convert::TryFrom as __TryFrom;
-        use std::str::FromStr as __FromStr;
+            use yew_router::path_matcher::FromMatchesError as __FromMatchesError;
+            use yew_router::path_matcher::FromMatches as __FromMatches;
+            use std::collections::HashMap as __HashMap;
+            use std::collections::HashSet as __HashSet;
+    //        use std::convert::TryFrom as __TryFrom;
+            use std::str::FromStr as __FromStr;
 
-        impl __FromMatches for #name {
-            fn from_matches(matches: &__HashMap<&str, String>) -> Result<Self, __FromMatchesError> {
-                #assignments
+            impl __FromMatches for #name {
+                fn from_matches(matches: &__HashMap<&str, String>) -> Result<Self, __FromMatchesError> {
+                    #assignments
 
-                let x = #name {
-                    #(#idents2),*
-                };
-                Ok(x)
+                    let x = #name {
+                        #(#idents2),*
+                    };
+                    Ok(x)
+                }
+
+                fn verify(matches: &__HashSet<String>) {
+                    #(
+                        if !matches.contains(&#keys.to_string()) {
+                            panic!("The struct expected the matches to contain a field named '{}'", #keys.to_string())
+                        }
+                    )*
+                }
             }
-
-            fn verify(matches: &__HashSet<String>) {
-                #(
-                    if !matches.contains(&#keys.to_string()) {
-                        panic!("The struct expected the matches to contain a field named '{}'", #keys.to_string())
-                    }
-                )*
-            }
-        }
-    };
+        };
     TokenStream::from(expanded)
 }
-
-
 
 //#[cfg(test)]
 //mod test {

@@ -11,46 +11,50 @@
     unused_qualifications
 )]
 
-mod token_optimizer;
 pub mod parser;
+mod token_optimizer;
 
 pub use parser::CaptureVariant;
-pub use token_optimizer::{parse_str_and_optimize_tokens, optimize_tokens, MatcherToken, next_delimiters};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+pub use token_optimizer::{
+    next_delimiters, optimize_tokens, parse_str_and_optimize_tokens, MatcherToken,
+};
 
 /// An error type used when implementing `FromMatches`.
 #[derive(Debug)]
 pub enum FromMatchesError {
     /// Missing field
-    MissingField{
+    MissingField {
         /// The name of the field expected to be present
-        field_name: String
+        field_name: String,
     },
     /// Dynamic error
     Error(Box<dyn Error>),
     /// Unknown error
-    UnknownErr // TODO Will be removed soon. dyn error above needs to go, and replaced with the names of the failed type conversions.
+    UnknownErr, // TODO Will be removed soon. dyn error above needs to go, and replaced with the names of the failed type conversions.
 }
 
 impl Display for FromMatchesError {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
         match self {
-            FromMatchesError::MissingField {field_name} => write!{f, "The field: '{}' was not present in your path matcher.", field_name},
+            FromMatchesError::MissingField { field_name } => {
+                write! {f, "The field: '{}' was not present in your path matcher.", field_name}
+            }
             FromMatchesError::Error(e) => e.fmt(f),
-            FromMatchesError::UnknownErr => write!(f, "unknown error")
+            FromMatchesError::UnknownErr => write!(f, "unknown error"),
         }
     }
 }
 
 impl Error for FromMatchesError {
-//    fn source(&self) -> Option<&(dyn Error + 'static)> {
-//        match self  {
-//            FromMatchesError::MissingField {..} => None,
-//            FromMatchesError::Error(e) => Some(&e )
-//        }
-//    }
+    //    fn source(&self) -> Option<&(dyn Error + 'static)> {
+    //        match self  {
+    //            FromMatchesError::MissingField {..} => None,
+    //            FromMatchesError::Error(e) => Some(&e )
+    //        }
+    //    }
 }
 
 /// Used for constructing `Properties` from URL matches.
@@ -85,57 +89,45 @@ mod test {
         hello: String,
         there: String,
         general: String,
-        kenobi: String
+        kenobi: String,
     }
 
     impl FromMatches for TestStruct {
         fn from_matches(matches: &HashMap<&str, String>) -> Result<Self, FromMatchesError> {
             let hello = matches
                 .get("hello")
-                .ok_or_else(|| {
-                    FromMatchesError::MissingField {
-                        field_name: "hello".to_string()
-                    }
+                .ok_or_else(|| FromMatchesError::MissingField {
+                    field_name: "hello".to_string(),
                 })
                 .and_then(|m: &String| {
-                    String::try_from(m.clone())
-                        .map_err(|_| FromMatchesError::UnknownErr)
+                    String::try_from(m.clone()).map_err(|_| FromMatchesError::UnknownErr)
                 })?;
 
             let there = matches
                 .get("there")
-                .ok_or_else(|| {
-                    FromMatchesError::MissingField {
-                        field_name: "there".to_string()
-                    }
+                .ok_or_else(|| FromMatchesError::MissingField {
+                    field_name: "there".to_string(),
                 })
                 .and_then(|m: &String| {
-                    String::try_from(m.clone())
-                        .map_err(|_| FromMatchesError::UnknownErr)
+                    String::try_from(m.clone()).map_err(|_| FromMatchesError::UnknownErr)
                 })?;
 
             let general = matches
                 .get("general")
-                .ok_or_else(|| {
-                    FromMatchesError::MissingField {
-                        field_name: "general".to_string()
-                    }
+                .ok_or_else(|| FromMatchesError::MissingField {
+                    field_name: "general".to_string(),
                 })
                 .and_then(|m: &String| {
-                    String::try_from(m.clone())
-                        .map_err(|_| FromMatchesError::UnknownErr)
+                    String::try_from(m.clone()).map_err(|_| FromMatchesError::UnknownErr)
                 })?;
 
             let kenobi = matches
                 .get("kenobi")
-                .ok_or_else(|| {
-                    FromMatchesError::MissingField {
-                        field_name: "kenobi".to_string()
-                    }
+                .ok_or_else(|| FromMatchesError::MissingField {
+                    field_name: "kenobi".to_string(),
                 })
                 .and_then(|m: &String| {
-                    String::try_from(m.clone())
-                        .map_err(|_| FromMatchesError::UnknownErr)
+                    String::try_from(m.clone()).map_err(|_| FromMatchesError::UnknownErr)
                 })?;
 
             let x = TestStruct {
@@ -149,16 +141,28 @@ mod test {
 
         fn verify(field_names: &HashSet<String>) {
             if !field_names.contains(&"hello".to_string()) {
-                panic!("The struct expected the matches to contain a field named '{}'", "hello".to_string())
+                panic!(
+                    "The struct expected the matches to contain a field named '{}'",
+                    "hello".to_string()
+                )
             }
             if !field_names.contains(&"there".to_string()) {
-                panic!("The struct expected the matches to contain a field named '{}'", "there".to_string())
+                panic!(
+                    "The struct expected the matches to contain a field named '{}'",
+                    "there".to_string()
+                )
             }
             if !field_names.contains(&"general".to_string()) {
-                panic!("The struct expected the matches to contain a field named '{}'", "general".to_string())
+                panic!(
+                    "The struct expected the matches to contain a field named '{}'",
+                    "general".to_string()
+                )
             }
             if !field_names.contains(&"kenobi".to_string()) {
-                panic!("The struct expected the matches to contain a field named '{}'", "kenobi".to_string())
+                panic!(
+                    "The struct expected the matches to contain a field named '{}'",
+                    "kenobi".to_string()
+                )
             }
         }
     }
@@ -183,7 +187,6 @@ mod test {
         TestStruct::verify(&hs);
     }
 
-
     #[test]
     fn underived_matches_impl_is_valid() {
         let mut hm = HashMap::new();
@@ -193,7 +196,6 @@ mod test {
         hm.insert("kenobi", "one".to_string());
         TestStruct::from_matches(&hm).expect("should generate struct");
     }
-
 
     #[test]
     fn underived_matches_rejects_incomplete() {
