@@ -35,7 +35,7 @@ fn match_path_impl<'a, 'b: 'a>(
 
     while let Some(token) = iter.next() {
         i = match token {
-            MatcherToken::Match(literal) => {
+            MatcherToken::Exact(literal) => {
                 trace!("Matching '{}' against literal: '{}'", i, literal);
                 tag_possibly_case_sensitive(literal.as_str(), !settings.case_insensitive)(i)?.0
             }
@@ -429,9 +429,9 @@ mod integration_test {
         assert_eq!(
             x,
             vec![
-                MatcherToken::Match("/first".to_string()),
-                MatcherToken::Optional(vec![MatcherToken::Match("/second".to_string())]),
-                MatcherToken::Optional(vec![MatcherToken::Match("/".to_string())])
+                MatcherToken::Exact("/first".to_string()),
+                MatcherToken::Optional(vec![MatcherToken::Exact("/second".to_string())]),
+                MatcherToken::Optional(vec![MatcherToken::Exact("/".to_string())])
             ]
         );
         match_path_impl(&x, MatcherSettings::default(), "/first").expect("should match");
@@ -443,12 +443,12 @@ mod integration_test {
         let x = yew_router_route_parser::parse_str_and_optimize_tokens("/first(/{})", true)
             .expect("Should parse");
         let expected = vec![
-            MatcherToken::Match("/first".to_string()),
+            MatcherToken::Exact("/first".to_string()),
             MatcherToken::Optional(vec![
-                MatcherToken::Match("/".to_string()),
+                MatcherToken::Exact("/".to_string()),
                 MatcherToken::Capture(CaptureVariant::Unnamed),
             ]),
-            MatcherToken::Optional(vec![MatcherToken::Match("/".to_string())]),
+            MatcherToken::Optional(vec![MatcherToken::Exact("/".to_string())]),
         ];
         assert_eq!(x, expected);
         match_path_impl(&x, MatcherSettings::default(), "/first").expect("should match");
@@ -460,10 +460,10 @@ mod integration_test {
         let x = yew_router_route_parser::parse_str_and_optimize_tokens("/{*}(/stuff)", true)
             .expect("Should parse");
         let expected = vec![
-            MatcherToken::Match("/".to_string()),
+            MatcherToken::Exact("/".to_string()),
             MatcherToken::Capture(CaptureVariant::ManyUnnamed),
-            MatcherToken::Optional(vec![MatcherToken::Match("/stuff".to_string())]),
-            MatcherToken::Optional(vec![MatcherToken::Match("/".to_string())]),
+            MatcherToken::Optional(vec![MatcherToken::Exact("/stuff".to_string())]),
+            MatcherToken::Optional(vec![MatcherToken::Exact("/".to_string())]),
         ];
         assert_eq!(x, expected);
         match_path_impl(&x, MatcherSettings::default(), "/some/garbage").expect("should match");

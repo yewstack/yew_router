@@ -30,7 +30,7 @@ impl Component for RouterButton {
             Msg::Clicked => {
                 let route_info = RouteInfo {
                     route: self.props.link.clone(),
-                    state: self.props.state.clone(),
+                    state: self.props.state,
                 };
                 self.router.send(RouteRequest::ChangeRoute(route_info));
                 false

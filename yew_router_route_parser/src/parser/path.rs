@@ -94,7 +94,7 @@ pub fn section_matchers(i: &str) -> IResult<&str, Vec<RouteParserToken>, Verbose
     ) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
         let token = tokens.last().expect("Must be at least one token.");
         match token {
-            RouteParserToken::Match(_) => {
+            RouteParserToken::Exact(_) => {
                 let (i, t) = opt(capture)(i)?;
                 if let Some(new_t) = t {
                     tokens.push(new_t);
@@ -197,14 +197,14 @@ mod test {
         let (_, tokens) = path_parser("/first(/second)(/third)").expect("Should validate");
         let expected = vec![
             RouteParserToken::Separator,
-            RouteParserToken::Match("first".to_string()),
+            RouteParserToken::Exact("first".to_string()),
             RouteParserToken::Optional(vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Match("second".to_string()),
+                RouteParserToken::Exact("second".to_string()),
             ]),
             RouteParserToken::Optional(vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Match("third".to_string()),
+                RouteParserToken::Exact("third".to_string()),
             ]),
         ];
         assert_eq!(tokens, expected);

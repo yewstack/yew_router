@@ -67,7 +67,7 @@ use yew_router_path_matcher::RenderFn;
 ///     fn view(&self) -> Html<Self> {
 ///         html! {
 ///             <Router>
-///                 <Route path=route!("/a/{value}") render=component::<AComponent>() />
+///                 <Route matcher=route!("/a/{value}") render=component::<AComponent>() />
 ///             </Router>
 ///         }
 ///     }

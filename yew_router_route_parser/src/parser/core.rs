@@ -1,5 +1,5 @@
 //! Core functions for working with the route parser.
-use crate::parser::CaptureOrMatch;
+use crate::parser::CaptureOrExact;
 use crate::parser::CaptureVariant;
 use crate::parser::RouteParserToken;
 use nom::branch::alt;
@@ -35,7 +35,7 @@ pub fn match_specific(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&
     context(
         "match",
         map(valid_ident_characters, |ident| {
-            RouteParserToken::Match(ident.to_string())
+            RouteParserToken::Exact(ident.to_string())
         }),
     )(i)
 }
@@ -81,11 +81,11 @@ pub fn capture(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
 
 /// Matches either "item" or "{capture}"
 /// It returns a subset enum of Token.
-pub fn capture_or_match(i: &str) -> IResult<&str, CaptureOrMatch, VerboseError<&str>> {
+pub fn capture_or_match(i: &str) -> IResult<&str, CaptureOrExact, VerboseError<&str>> {
     let (i, token) = context("capture or match", alt((capture, match_specific)))(i)?;
     let token = match token {
-        RouteParserToken::Capture(variant) => CaptureOrMatch::Capture(variant),
-        RouteParserToken::Match(m) => CaptureOrMatch::Match(m),
+        RouteParserToken::Capture(variant) => CaptureOrExact::Capture(variant),
+        RouteParserToken::Exact(m) => CaptureOrExact::Exact(m),
         _ => unreachable!("Only should handle captures and matches"),
     };
     Ok((i, token))

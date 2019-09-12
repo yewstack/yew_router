@@ -104,7 +104,7 @@ impl PathMatcher {
                             let captures = capture_names_impl(&t);
                             acc.extend(captures)
                         }
-                        MatcherToken::Match(_) => {}
+                        MatcherToken::Exact(_) => {}
                         MatcherToken::Capture(variant) => match variant {
                             CaptureVariant::ManyNamed(name)
                             | CaptureVariant::Named(name)
@@ -157,7 +157,7 @@ mod tests {
     fn multiple_tokens() {
         let tokens = vec![
             RouteParserToken::Separator,
-            RouteParserToken::Match("hello".to_string()),
+            RouteParserToken::Exact("hello".to_string()),
             RouteParserToken::Separator,
         ];
 
@@ -196,7 +196,7 @@ mod tests {
     fn match_with_trailing_match_any() {
         let tokens = vec![
             RouteParserToken::Separator,
-            RouteParserToken::Match("a".to_string()),
+            RouteParserToken::Exact("a".to_string()),
             RouteParserToken::Separator,
             RouteParserToken::Capture(CaptureVariant::Unnamed),
         ];
@@ -211,7 +211,7 @@ mod tests {
             RouteParserToken::Separator,
             RouteParserToken::Capture(CaptureVariant::NumberedUnnamed { sections: 3 }),
             RouteParserToken::Separator,
-            RouteParserToken::Match("a".to_string()),
+            RouteParserToken::Exact("a".to_string()),
         ];
         let path_matcher = PathMatcher::from(tokens);
         let (_, _matches) = path_matcher
@@ -241,7 +241,7 @@ mod tests {
                 name: "captured".to_string(),
             }),
             RouteParserToken::Separator,
-            RouteParserToken::Match("a".to_string()),
+            RouteParserToken::Exact("a".to_string()),
         ];
         let path_matcher = PathMatcher::from(tokens);
         let (_, matches) = path_matcher
@@ -259,7 +259,7 @@ mod tests {
             RouteParserToken::Separator,
             RouteParserToken::Capture(CaptureVariant::ManyUnnamed),
             RouteParserToken::Separator,
-            RouteParserToken::Match("a".to_string()),
+            RouteParserToken::Exact("a".to_string()),
         ];
         let path_matcher = PathMatcher::from(tokens);
         let (_, _matches) = path_matcher
@@ -273,7 +273,7 @@ mod tests {
             RouteParserToken::Separator,
             RouteParserToken::Capture(CaptureVariant::ManyNamed("captured".to_string())),
             RouteParserToken::Separator,
-            RouteParserToken::Match("a".to_string()),
+            RouteParserToken::Exact("a".to_string()),
         ];
         let path_matcher = PathMatcher::from(tokens);
         let (_, matches) = path_matcher

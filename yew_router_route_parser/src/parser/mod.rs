@@ -17,15 +17,15 @@ type PathQueryFragmentTokens = (
     Option<Vec<RouteParserToken>>,
 );
 
-/// Tokens generated from parsing a path matcher string.
-/// They will be optimized to another token type used to match URLs.
+/// Tokens generated from parsing a route matcher string.
+/// They will be optimized to another token type that is used to match URLs.
 #[derive(Debug, Clone, PartialEq)]
 pub enum RouteParserToken {
     /// Match /
     Separator,
     /// Match a specific string.
-    Match(String),
-    /// Match {_}. See CaptureVariant for more.
+    Exact(String),
+    /// Match {_}. See `CaptureVariant` for more.
     Capture(CaptureVariant),
     /// Match ?
     QueryBegin,
@@ -36,7 +36,7 @@ pub enum RouteParserToken {
         /// Identifier
         ident: String,
         /// Capture or match
-        capture_or_match: CaptureOrMatch,
+        capture_or_match: CaptureOrExact,
     },
     /// Match \#
     FragmentBegin,
@@ -73,9 +73,9 @@ pub enum CaptureVariant {
 
 /// Either a Capture, or a Match
 #[derive(Debug, Clone, PartialEq)]
-pub enum CaptureOrMatch {
+pub enum CaptureOrExact {
     /// Match a specific string.
-    Match(String),
+    Exact(String),
     /// Match a capture variant.
     Capture(CaptureVariant),
 }
@@ -136,9 +136,9 @@ mod tests {
             parsed,
             vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Match("hello".to_string()),
+                RouteParserToken::Exact("hello".to_string()),
                 RouteParserToken::Separator,
-                RouteParserToken::Match("there".to_string())
+                RouteParserToken::Exact("there".to_string())
             ]
         );
     }
@@ -150,7 +150,7 @@ mod tests {
             parsed,
             vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Match("hello".to_string()),
+                RouteParserToken::Exact("hello".to_string()),
                 RouteParserToken::Separator
             ]
         );
@@ -163,7 +163,7 @@ mod tests {
             parsed,
             vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Match("hello".to_string()),
+                RouteParserToken::Exact("hello".to_string()),
                 RouteParserToken::Separator,
                 RouteParserToken::Capture(CaptureVariant::Named("there".to_string())),
             ]
@@ -177,10 +177,10 @@ mod tests {
             parsed,
             vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Match("hello".to_string()),
+                RouteParserToken::Exact("hello".to_string()),
                 RouteParserToken::Separator,
                 RouteParserToken::Capture(CaptureVariant::Named("there".to_string())),
-                RouteParserToken::Match("general".to_string()),
+                RouteParserToken::Exact("general".to_string()),
                 RouteParserToken::Capture(CaptureVariant::Unnamed)
             ]
         )

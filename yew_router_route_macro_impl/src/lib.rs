@@ -60,7 +60,7 @@ impl Parse for S {
             Strict,
         }
 
-        let collected = many_unordered(
+        let collected: HashSet<Keyword> = many_unordered(
             input,
             vec![
                 &|input| input.parse::<kw::Strict>().ok().map(|_| Keyword::Strict),
@@ -103,7 +103,7 @@ pub fn route(input: TokenStream) -> TokenStream {
     let t = yew_router_route_parser::parse_str_and_optimize_tokens(input.as_str(), !s.strict)
         .expect("Invalid Path Matcher")
         .into_iter()
-        .map(ShadowOptimizedToken::from);
+        .map(ShadowMatcherToken::from);
 
     let complete = !s.incomplete; // by default, complete is on.
     let strict = s.strict;
@@ -111,14 +111,14 @@ pub fn route(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         {
-            let settings = yew_router::path_matcher::MatcherSettings {
+            let settings = ::yew_router::path_matcher::MatcherSettings {
                 strict: #strict,
                 /// A matcher must consume all of the input to succeed.
                 complete: #complete,
                 /// All literal matches do not care about case.
                 case_insensitive: #case_insensitive
             };
-            yew_router::path_matcher::PathMatcher {
+            ::yew_router::path_matcher::PathMatcher {
                 tokens : vec![#(#t),*],
                 settings
             }
@@ -127,16 +127,18 @@ pub fn route(input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-impl ToTokens for ShadowOptimizedToken {
+impl ToTokens for ShadowMatcherToken {
     fn to_tokens(&self, ts: &mut TokenStream2) {
-        use ShadowOptimizedToken as SOT;
+        use ShadowMatcherToken as SOT;
         let t: TokenStream2 = match self {
-            SOT::Match(s) => quote! {yew_router::path_matcher::MatcherToken::Match(#s.to_string())},
+            SOT::Exact(s) => quote! {
+                ::yew_router::path_matcher::MatcherToken::Exact(#s.to_string())
+            },
             SOT::Capture(variant) => quote! {
-                yew_router::path_matcher::MatcherToken::Capture(#variant)
+                ::yew_router::path_matcher::MatcherToken::Capture(#variant)
             },
             SOT::Optional(optional) => quote! {
-                yew_router::path_matcher::MatcherToken::Optional(vec![#(#optional),*])
+                ::yew_router::path_matcher::MatcherToken::Optional(vec![#(#optional),*])
             },
         };
         ts.extend(t)
@@ -145,10 +147,10 @@ impl ToTokens for ShadowOptimizedToken {
 
 /// A shadow of the OptimizedToken type.
 /// It should match it exactly so that this macro can expand to the original.
-enum ShadowOptimizedToken {
-    Match(String),
+enum ShadowMatcherToken {
+    Exact(String),
     Capture(ShadowCaptureVariant),
-    Optional(Vec<ShadowOptimizedToken>),
+    Optional(Vec<ShadowMatcherToken>),
 }
 
 enum ShadowCaptureVariant {
@@ -164,34 +166,34 @@ impl ToTokens for ShadowCaptureVariant {
     fn to_tokens(&self, ts: &mut TokenStream2) {
         let t = match self {
             ShadowCaptureVariant::Unnamed => {
-                quote! {yew_router::path_matcher::CaptureVariant::Unnamed}
+                quote! {::yew_router::path_matcher::CaptureVariant::Unnamed}
             }
             ShadowCaptureVariant::ManyUnnamed => {
-                quote! {yew_router::path_matcher::CaptureVariant::ManyUnnamed}
+                quote! {::yew_router::path_matcher::CaptureVariant::ManyUnnamed}
             }
             ShadowCaptureVariant::NumberedUnnamed { sections } => {
-                quote! {yew_router::path_matcher::CaptureVariant::NumberedUnnamed{#sections}}
+                quote! {::yew_router::path_matcher::CaptureVariant::NumberedUnnamed{#sections}}
             }
             ShadowCaptureVariant::Named(name) => {
-                quote! {yew_router::path_matcher::CaptureVariant::Named(#name.to_string())}
+                quote! {::yew_router::path_matcher::CaptureVariant::Named(#name.to_string())}
             }
             ShadowCaptureVariant::ManyNamed(name) => {
-                quote! {yew_router::path_matcher::CaptureVariant::ManyNamed(#name.to_string())}
+                quote! {::yew_router::path_matcher::CaptureVariant::ManyNamed(#name.to_string())}
             }
             ShadowCaptureVariant::NumberedNamed { sections, name } => {
-                quote! {yew_router::path_matcher::CaptureVariant::NumberedNamed{#sections, #name.to_string()}}
+                quote! {::yew_router::path_matcher::CaptureVariant::NumberedNamed{#sections, #name.to_string()}}
             }
         };
         ts.extend(t)
     }
 }
 
-impl From<MatcherToken> for ShadowOptimizedToken {
+impl From<MatcherToken> for ShadowMatcherToken {
     fn from(ot: MatcherToken) -> Self {
         use MatcherToken as MT;
-        use ShadowOptimizedToken as SOT;
+        use ShadowMatcherToken as SOT;
         match ot {
-            MT::Match(s) => SOT::Match(s),
+            MT::Exact(s) => SOT::Exact(s),
             MT::Capture(variant) => SOT::Capture(variant.into()),
             MT::Optional(optional) => SOT::Optional(optional.into_iter().map(SOT::from).collect()),
         }
