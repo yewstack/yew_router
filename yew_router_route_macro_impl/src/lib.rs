@@ -163,12 +163,24 @@ enum ShadowCaptureVariant {
 impl ToTokens for ShadowCaptureVariant {
     fn to_tokens(&self, ts: &mut TokenStream2) {
         let t = match self {
-            ShadowCaptureVariant::Unnamed => quote! {yew_router::path_matcher::CaptureVariant::Unnamed},
-            ShadowCaptureVariant::ManyUnnamed => quote! {yew_router::path_matcher::CaptureVariant::ManyUnnamed},
-            ShadowCaptureVariant::NumberedUnnamed { sections } => quote! {yew_router::path_matcher::CaptureVariant::NumberedUnnamed{#sections}},
-            ShadowCaptureVariant::Named(name) => quote! {yew_router::path_matcher::CaptureVariant::Named(#name.to_string())},
-            ShadowCaptureVariant::ManyNamed(name) => quote! {yew_router::path_matcher::CaptureVariant::ManyNamed(#name.to_string())},
-            ShadowCaptureVariant::NumberedNamed { sections, name } => quote! {yew_router::path_matcher::CaptureVariant::NumberedNamed{#sections, #name.to_string()}},
+            ShadowCaptureVariant::Unnamed => {
+                quote! {yew_router::path_matcher::CaptureVariant::Unnamed}
+            }
+            ShadowCaptureVariant::ManyUnnamed => {
+                quote! {yew_router::path_matcher::CaptureVariant::ManyUnnamed}
+            }
+            ShadowCaptureVariant::NumberedUnnamed { sections } => {
+                quote! {yew_router::path_matcher::CaptureVariant::NumberedUnnamed{#sections}}
+            }
+            ShadowCaptureVariant::Named(name) => {
+                quote! {yew_router::path_matcher::CaptureVariant::Named(#name.to_string())}
+            }
+            ShadowCaptureVariant::ManyNamed(name) => {
+                quote! {yew_router::path_matcher::CaptureVariant::ManyNamed(#name.to_string())}
+            }
+            ShadowCaptureVariant::NumberedNamed { sections, name } => {
+                quote! {yew_router::path_matcher::CaptureVariant::NumberedNamed{#sections, #name.to_string()}}
+            }
         };
         ts.extend(t)
     }

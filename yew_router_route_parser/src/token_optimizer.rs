@@ -64,7 +64,6 @@ pub fn next_delimiters<'a>(
 
     let mut sequences = vec![];
     for next in iter {
-//    while let Some(next) = iter.next() {
         match next {
             MatcherToken::Match(sequence) => {
                 sequences.push(MatchOrOptSequence::Match(&sequence));
@@ -176,11 +175,12 @@ pub fn optimize_tokens(
                     })
                     .unwrap_or_else(|| false);
 
-                // Only append the optional slash if the settings allow it, the last
-                if append_optional_slash
-                    && !last_optimized_match_was_a_slash
-                    && !fragment_or_query_encountered
+                // Only append the optional slash if
+                if append_optional_slash // the settings allow it
+                    && !last_optimized_match_was_a_slash // the last character wasn't a '/'
+                    && !fragment_or_query_encountered // There hasn't been a fragment or query
                     && token_iterator.peek().is_none()
+                // And nothing occurs after this // TODO Maybe this isn't desired. You still may want to add a '/' before fragments and queries.
                 {
                     let s: String = run.iter().map(token_to_string).collect();
                     optimized.push(MatcherToken::Match(s));

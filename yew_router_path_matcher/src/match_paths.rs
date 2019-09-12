@@ -71,7 +71,6 @@ fn match_path_impl<'a, 'b: 'a>(
     Ok((i, matches))
 }
 
-
 // TODO see if _all_ of these outer if/else blocks could be removed.
 
 /// Captures a section and doesn't add it to the matches.
@@ -184,7 +183,6 @@ fn capture_many_named<'a, 'b>(
         matches.insert(&capture_key, c.to_string());
         Ok(ii)
     }
-
 }
 
 fn capture_numbered_named<'a, 'b>(
