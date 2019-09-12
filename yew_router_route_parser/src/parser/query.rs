@@ -7,7 +7,7 @@ use nom::multi::{many0, many1};
 use nom::sequence::{pair, separated_pair, tuple};
 use nom::IResult;
 
-use crate::parser::util::{optional_match, optional_matches_v, ret_vec};
+use crate::parser::util::{optional_match, optional_matches_v, vectorize};
 use nom::error::{context, VerboseError};
 
 /// Character used to start the first query.
@@ -46,7 +46,7 @@ fn begin_query_parser_with_optionals(
         map(
             pair(
                 query_begin_token,
-                alt((ret_vec(query), many1(optional_match(query)))),
+                alt((vectorize(query), many1(optional_match(query)))),
             ),
             |(begin, query)| {
                 let mut ret = vec![begin];
@@ -58,7 +58,7 @@ fn begin_query_parser_with_optionals(
 }
 
 fn begin_query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
-    map(pair(query_begin_token, ret_vec(query)), |(begin, query)| {
+    map(pair(query_begin_token, vectorize(query)), |(begin, query)| {
         let mut ret = vec![begin];
         ret.extend(query);
         ret
@@ -109,7 +109,7 @@ fn rest_query_or_optional_rest_query(
 fn query_parser_impl(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     map(
         pair(
-            context("? query parser", begin_query_parser),
+            context("? query parser impl", begin_query_parser),
             rest_query_or_optional_rest_query,
         ),
         |(mut first, mut rest)| {
@@ -120,13 +120,15 @@ fn query_parser_impl(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseErr
 }
 
 pub fn query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
-    alt((
-        alt((query_parser_impl, optional_matches_v(query_parser_impl))),
+    context("query parser",
         alt((
-            begin_query_parser_with_optionals,
-            optional_matches_v(begin_query_parser_with_optionals),
-        )),
-    ))(i)
+            alt((query_parser_impl, optional_matches_v(query_parser_impl))),
+            alt((
+                begin_query_parser_with_optionals,
+                optional_matches_v(begin_query_parser_with_optionals),
+            )),
+        ))
+    )(i)
 }
 
 #[cfg(test)]

@@ -10,7 +10,7 @@ use nom::IResult;
 use std::rc::Rc;
 
 /// Given a function that returns a single token, wrap the token in a Vec.
-pub fn ret_vec<'a>(
+pub fn vectorize<'a>(
     f: impl Fn(&'a str) -> IResult<&'a str, RouteParserToken, VerboseError<&'a str>>,
 ) -> impl Fn(&'a str) -> IResult<&'a str, Vec<RouteParserToken>, VerboseError<&'a str>> {
     move |i: &str| (f)(i).map(|(i, t)| (i, vec![t]))
@@ -36,7 +36,7 @@ pub fn optional_matches_v<'a, F>(
 where
     F: Fn(&'a str) -> IResult<&'a str, Vec<RouteParserToken>, VerboseError<&'a str>>,
 {
-    ret_vec(optional_matches(f))
+    vectorize(optional_matches(f))
 }
 
 /// Optionally match a string

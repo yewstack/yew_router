@@ -50,24 +50,24 @@ pub fn match_specific(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&
 /// * {5:name}
 pub fn capture(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
     let capture_variants = alt((
-        map(peek(tag("}")), |_| CaptureVariant::Unnamed), // just empty {}
-        map(preceded(tag("*:"), valid_ident_characters), |s| {
+        context("capture unnamed", map(peek(tag("}")), |_| CaptureVariant::Unnamed)), // just empty {}
+        context("capture many named", map(preceded(tag("*:"), valid_ident_characters), |s| {
             CaptureVariant::ManyNamed(s.to_string())
-        }),
-        map(tag("*"), |_| CaptureVariant::ManyUnnamed),
-        map(valid_ident_characters, |s| {
+        })),
+        context("capture many unnamed", map(tag("*"), |_| CaptureVariant::ManyUnnamed)),
+        context("capture named", map(valid_ident_characters, |s| {
             CaptureVariant::Named(s.to_string())
-        }),
-        map(
+        })),
+        context("capture number named", map(
             separated_pair(digit1, tag(":"), valid_ident_characters),
             |(n, s)| CaptureVariant::NumberedNamed {
                 sections: n.parse().expect("Should parse digits"),
                 name: s.to_string(),
             },
-        ),
-        map(digit1, |num: &str| CaptureVariant::NumberedUnnamed {
+        )),
+        context("capture number unnamed", map(digit1, |num: &str| CaptureVariant::NumberedUnnamed {
             sections: num.parse().expect("should parse digits"),
-        }),
+        })),
     ));
 
     context(
