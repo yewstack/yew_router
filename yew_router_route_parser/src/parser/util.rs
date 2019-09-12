@@ -57,10 +57,13 @@ where
 pub fn alternative(alternatives: Vec<String>) -> impl Fn(&str) -> IResult<&str, &str> {
     move |i: &str| {
         for alternative in &alternatives {
-            match tag(alternative.as_str())(i) {
-                done @ IResult::Ok(..) => return done,
-                _ => (), // continue
+            if let done @ IResult::Ok(..) = tag(alternative.as_str())(i) {
+                return done
             }
+//            match tag(alternative.as_str())(i) {
+//                done @ IResult::Ok(..) => return done,
+//                _ => (), // continue
+//            }
         }
         Err(nom::Err::Error((i, ErrorKind::Tag))) // nothing found.
     }

@@ -20,10 +20,10 @@ pub fn valid_ident_characters(i: &str) -> IResult<&str, &str, VerboseError<&str>
         let (i, next) = peek(take(1usize))(i)?; // Look at the first character
         if is_digit(next.bytes().next().unwrap()) {
             //        return Err(nom::Err(VerboseError::from("Digits not allowed"))) // Digits not allowed
-            return Err(nom::Err::Error(VerboseError::from_error_kind(
+            Err(nom::Err::Error(VerboseError::from_error_kind(
                 i,
                 ErrorKind::Digit,
-            )));
+            )))
         } else {
             is_not(INVALID_CHARACTERS)(i)
         }

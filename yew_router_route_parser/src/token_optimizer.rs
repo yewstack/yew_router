@@ -39,7 +39,7 @@ impl From<CaptureOrMatch> for MatcherToken {
 /// If a match is not found, then do the same, or accept as part of an alt() a take the rest of the input (as long as it is valid).
 /// return this take_till configuration and use that to terminate / capture the given string for the capture token.
 pub fn next_delimiters<'a>(
-    mut iter: Peekable<Iter<MatcherToken>>,
+    iter: Peekable<Iter<MatcherToken>>,
 ) -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
     enum MatchOrOptSequence<'a> {
         Match(&'a str),
@@ -63,7 +63,8 @@ pub fn next_delimiters<'a>(
     }
 
     let mut sequences = vec![];
-    while let Some(next) = iter.next() {
+    for next in iter {
+//    while let Some(next) = iter.next() {
         match next {
             MatcherToken::Match(sequence) => {
                 sequences.push(MatchOrOptSequence::Match(&sequence));
@@ -179,15 +180,14 @@ pub fn optimize_tokens(
                 if append_optional_slash
                     && !last_optimized_match_was_a_slash
                     && !fragment_or_query_encountered
+                    && token_iterator.peek().is_none()
                 {
-                    if let None = token_iterator.peek() {
-                        let s: String = run.iter().map(token_to_string).collect();
-                        optimized.push(MatcherToken::Match(s));
-                        run.clear();
-                        optimized.push(MatcherToken::Optional(vec![MatcherToken::Match(
-                            "/".to_string(),
-                        )]))
-                    }
+                    let s: String = run.iter().map(token_to_string).collect();
+                    optimized.push(MatcherToken::Match(s));
+                    run.clear();
+                    optimized.push(MatcherToken::Optional(vec![MatcherToken::Match(
+                        "/".to_string(),
+                    )]))
                 }
             }
 
@@ -206,7 +206,7 @@ pub fn optimize_tokens(
 
                 if append_optional_slash {
                     // If the optional is the last token (at this level of nesting), then stick a optional (/) at the end
-                    if let None = token_iterator.peek() {
+                    if token_iterator.peek().is_none() {
                         // Safety: its fine to unconditionally add another optional slash here,
                         // because optional sections SHOULD_NOT be able to be parsed with a trailing '/'
                         optimized.push(MatcherToken::Optional(vec![MatcherToken::Match(

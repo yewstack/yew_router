@@ -10,6 +10,13 @@ mod path;
 mod query;
 pub mod util;
 
+/// Alias for a tuple of optional vectors of tokens representing the path, query, and fragment in that order.
+type PathQueryFragmentTokens = (
+    Option<Vec<RouteParserToken>>,
+    Option<Vec<RouteParserToken>>,
+    Option<Vec<RouteParserToken>>,
+);
+
 /// Tokens generated from parsing a path matcher string.
 /// They will be optimized to another token type used to match URLs.
 #[derive(Debug, Clone, PartialEq)]
@@ -99,11 +106,7 @@ pub fn parse(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseError<&st
                 opt(query::query_parser),
                 opt(fragment::fragment_parser),
             ))),
-            |(path, query, fragment): (
-                Option<Vec<RouteParserToken>>,
-                Option<Vec<RouteParserToken>>,
-                Option<Vec<RouteParserToken>>,
-            )| {
+            |(path, query, fragment): PathQueryFragmentTokens| {
                 let mut tokens = Vec::new();
                 if let Some(mut t) = path {
                     tokens.append(&mut t)

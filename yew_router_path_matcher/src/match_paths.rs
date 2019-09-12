@@ -13,6 +13,7 @@ use std::slice::Iter;
 use yew_router_route_parser::parser::util::consume_until;
 use yew_router_route_parser::{CaptureVariant, MatcherToken};
 
+#[allow(clippy::trivially_copy_pass_by_ref)]
 pub(super) fn match_path<'a, 'b: 'a>(
     tokens: &'b [MatcherToken],
     settings: &'b MatcherSettings,
@@ -70,6 +71,7 @@ fn match_path_impl<'a, 'b: 'a>(
     Ok((i, matches))
 }
 
+
 // TODO see if _all_ of these outer if/else blocks could be removed.
 
 /// Captures a section and doesn't add it to the matches.
@@ -88,12 +90,10 @@ fn capture_unnamed<'a>(
             consume_until(delimiter),
         ))(i)?
         .0
+    } else if i.is_empty() {
+        i // Match even if nothing is left
     } else {
-        if i.len() == 0 {
-            i // Match even if nothing is left
-        } else {
-            valid_capture_characters(i)?.0
-        }
+        valid_capture_characters(i)?.0
     };
     Ok(ii)
 }
@@ -106,12 +106,10 @@ fn capture_many_unnamed<'a>(
     let ii = if let Some(_peaked_next_token) = iter.peek() {
         let delimiter = yew_router_route_parser::next_delimiters(iter.clone());
         consume_until(delimiter)(i)?.0
+    } else if i.is_empty() {
+        i // Match even if nothing is left
     } else {
-        if i.len() == 0 {
-            i // Match even if nothing is left
-        } else {
-            valid_many_capture_characters(i)?.0
-        }
+        valid_many_capture_characters(i)?.0
     };
     Ok(ii)
 }
@@ -178,16 +176,15 @@ fn capture_many_named<'a, 'b>(
         let (ii, captured) = consume_until(delimiter)(i)?;
         matches.insert(&capture_key, captured);
         Ok(ii)
+    } else if i.is_empty() {
+        matches.insert(&capture_key, "".to_string()); // TODO Is this a thing I want?
+        Ok(i) // Match even if nothing is left
     } else {
-        if i.len() == 0 {
-            matches.insert(&capture_key, "".to_string()); // TODO Is this a thing I want?
-            Ok(i) // Match even if nothing is left
-        } else {
-            let (ii, c) = valid_many_capture_characters(i)?;
-            matches.insert(&capture_key, c.to_string());
-            Ok(ii)
-        }
+        let (ii, c) = valid_many_capture_characters(i)?;
+        matches.insert(&capture_key, c.to_string());
+        Ok(ii)
     }
+
 }
 
 fn capture_numbered_named<'a, 'b>(
