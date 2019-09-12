@@ -143,9 +143,9 @@ pub fn optimize_tokens(
     append_optional_slash: bool,
 ) -> Vec<MatcherToken> {
     // The list of optimized tokens.
-    let mut optimized = vec![];
+    let mut optimized: Vec<MatcherToken> = vec![];
     // Stores consecutive Tokens that can be reduced down to a OptimizedToken::Match.
-    let mut run = vec![];
+    let mut run: Vec<RouteParserToken> = vec![];
 
     let mut fragment_or_query_encountered = false;
 
@@ -160,27 +160,11 @@ pub fn optimize_tokens(
             RouteParserToken::Separator | RouteParserToken::QuerySeparator => run.push(token),
             RouteParserToken::Match(_) => {
                 run.push(token);
-                // If the last matcher token was a Match terminated by a '/', then don't add an optional section.
-                let last_optimized_match_was_a_slash = optimized
-                    .last()
-                    .map(|last_token| match last_token {
-                        MatcherToken::Match(m) => {
-                            if let Some(last_char) = m.chars().last() {
-                                last_char == '/'
-                            } else {
-                                false
-                            }
-                        }
-                        _ => false,
-                    })
-                    .unwrap_or_else(|| false);
 
-                // Only append the optional slash if
+                // Only append the optional slash if:
                 if append_optional_slash // the settings allow it
-                    && !last_optimized_match_was_a_slash // the last character wasn't a '/'
                     && !fragment_or_query_encountered // There hasn't been a fragment or query
-                    && token_iterator.peek().is_none()
-                // And nothing occurs after this // TODO Maybe this isn't desired. You still may want to add a '/' before fragments and queries.
+                    && token_is_not_present_or_is_either_a_slash_or_question(token_iterator.peek()) // The next token doesn't exist or is a '/' or '?'
                 {
                     let s: String = run.iter().map(token_to_string).collect();
                     optimized.push(MatcherToken::Match(s));
@@ -215,36 +199,113 @@ pub fn optimize_tokens(
                     }
                 }
             }
-            RouteParserToken::Capture(_) | RouteParserToken::QueryCapture { .. } => {
+            RouteParserToken::Capture(variant) => {
                 // Empty the run when a capture is encountered.
                 if !run.is_empty() {
                     let s: String = run.iter().map(token_to_string).collect();
                     optimized.push(MatcherToken::Match(s));
                     run.clear()
                 }
-                match token {
-                    RouteParserToken::Capture(variant) => {
-                        optimized.push(MatcherToken::Capture(variant))
+                optimized.push(MatcherToken::Capture(variant.clone()))
+            }
+            RouteParserToken::QueryCapture { ident, capture_or_match } => {
+                run.push(RouteParserToken::Match(format!("{}=", ident))); // Push the ident to the run either way.
+                match capture_or_match {
+                    CaptureOrMatch::Match(m) => {
+                        run.push(RouteParserToken::Match(m.clone()))
                     }
-                    RouteParserToken::QueryCapture {
-                        ident,
-                        capture_or_match,
-                    } => optimized.extend(vec![
-                        MatcherToken::Match(format!("{}=", ident)),
-                        capture_or_match.into(),
-                    ]),
-                    _ => {
-                        log::error!("crashing time");
-                        unreachable!()
+                    CaptureOrMatch::Capture(capture) => {
+                        let s: String = run.iter().map(token_to_string).collect();
+                        optimized.push(MatcherToken::Match(s));
+                        run.clear();
+
+                        optimized.push(MatcherToken::Capture(capture.clone()))
                     }
-                };
+                }
             }
         }
     }
-    // empty the "run"
+    // empty the "run".
     if !run.is_empty() {
         let s: String = run.iter().map(token_to_string).collect();
         optimized.push(MatcherToken::Match(s));
     }
     optimized
+}
+
+
+fn token_is_not_present_or_is_either_a_slash_or_question(token: Option<&RouteParserToken>) -> bool {
+    match token {
+        None | Some(RouteParserToken::QueryBegin) | Some(RouteParserToken::FragmentBegin) => true,
+        _ => false
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn optimization_inserts_optional_slash_at_end() {
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Match("thing".to_string())
+        ];
+        let optimized = optimize_tokens(tokens, true);
+        let expected = vec![
+            MatcherToken::Match("/thing".to_string()),
+            MatcherToken::Optional(vec![MatcherToken::Match("/".to_string())])
+        ];
+        assert_eq!(expected, optimized);
+    }
+
+
+    #[test]
+    fn optimization_inserts_optional_slash_before_query() {
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Match("thing".to_string()),
+            RouteParserToken::QueryBegin,
+            RouteParserToken::QueryCapture { ident: "HelloThere".to_string(), capture_or_match: CaptureOrMatch::Match("GeneralKenobi".to_string()) },
+        ];
+        let optimized = optimize_tokens(tokens, true);
+        let expected = vec![
+            MatcherToken::Match("/thing".to_string()),
+            MatcherToken::Optional(vec![MatcherToken::Match("/".to_string())]),
+            MatcherToken::Match("?HelloThere=GeneralKenobi".to_string()),
+        ];
+        assert_eq!(expected, optimized);
+    }
+
+
+    #[test]
+    fn optimization_inserts_optional_slash_before_fragment() {
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Match("thing".to_string()),
+            RouteParserToken::FragmentBegin,
+        ];
+        let optimized = optimize_tokens(tokens, true);
+        let expected = vec![
+            MatcherToken::Match("/thing".to_string()),
+            MatcherToken::Optional(vec![MatcherToken::Match("/".to_string())]),
+            MatcherToken::Match("#".to_string()),
+        ];
+        assert_eq!(expected, optimized);
+    }
+
+    #[test]
+    fn optimization_does_not_insert_optional_slash_after_slash() {
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Match("thing".to_string()),
+            RouteParserToken::Separator,
+        ];
+        let optimized = optimize_tokens(tokens, true);
+        let expected = vec![
+            MatcherToken::Match("/thing/".to_string()),
+        ];
+        assert_eq!(expected, optimized);
+    }
+
 }
