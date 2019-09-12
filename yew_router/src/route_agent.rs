@@ -28,8 +28,6 @@ impl Transferable for Void {}
 /// Message used for the RouteAgent.
 #[derive(Debug)]
 pub enum Msg<T>
-where
-    T: RouteState,
 {
     /// Message for when the route is changed.
     BrowserNavigationRouteChanged((String, T)),
@@ -59,9 +57,10 @@ impl<T> Transferable for RouteRequest<T> where for<'de> T: Serialize + Deseriali
 
 /// The Router agent holds on to the RouteService singleton and mediates access to it.
 pub struct RouteAgent<T>
-where
-    for<'de> T: RouterState<'de>,
+where for<'de>
+      T: RouterState<'de>,
 {
+    // In order to have the AgentLink<Self> below, apparently T must be constrained like this. Unfortunately, this means that everything related to an agent requires this constraint.
     link: AgentLink<RouteAgent<T>>,
     route_service: RouteService<T>,
     /// A list of all entities connected to the router.

@@ -13,9 +13,11 @@ use nom::branch::alt;
 /// Tokens used to determine how to match and capture sections from a URL.
 #[derive(Debug, PartialEq, Clone)]
 pub enum MatcherToken {
-    /// Extraneous section-related tokens can be condensed into a match.
+    /// Section-related tokens can be condensed into a match.
     Match(String),
+    /// Capture section.
     Capture(CaptureVariant),
+    /// Section that doesn't have to match.
     Optional(Vec<MatcherToken>)
 }
 
@@ -120,12 +122,18 @@ fn token_to_string(token: &RouteParserToken) -> &str {
     }
 }
 
-
+/// Parse the provided "matcher string" and then optimize the tokens.
 pub fn parse_str_and_optimize_tokens(i: &str, append_optional_slash: bool) -> Result<Vec<MatcherToken>, nom::Err<VerboseError<&str>>> {
     let tokens = parse(i)?;
     Ok(optimize_tokens(tokens, append_optional_slash))
 }
 
+/// Optimize `RouteParserToken`s to `MatcherToken`s.
+///
+/// This involves condensing sequential tokens that represent statically knowable characters into large `Match` tokens.
+/// For example, the tokens \[Separator, Match("thing"), Separator\] becomes just \[Match("/thing/")\].
+///
+/// It also if configured to do so, will add optional slashes at the end of path sections where appropriate.
 pub fn optimize_tokens(tokens: Vec<RouteParserToken>, append_optional_slash: bool) -> Vec<MatcherToken> {
     // The list of optimized tokens.
     let mut optimized = vec![];

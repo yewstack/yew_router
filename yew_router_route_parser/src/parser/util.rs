@@ -9,12 +9,14 @@ use nom::combinator::{peek};
 use nom::character::complete::anychar;
 use std::rc::Rc;
 
+/// Given a function that returns a single token, wrap the token in a Vec.
 pub fn ret_vec<'a>(f: impl Fn(&'a str) -> IResult<&'a str, RouteParserToken, VerboseError<&'a str>>) -> impl Fn(&'a str) -> IResult<&'a str, Vec<RouteParserToken>, VerboseError<&'a str>> {
     move |i: &str | {
         (f)(i).map(|(i, t)| (i, vec![t]))
     }
 }
 
+/// Given a function that returns a vector of Tokens, optionally return a token encompassing them, should they match
 pub fn optional_matches<'a, F>(f: F) -> impl Fn(&'a str) -> IResult<&'a str, RouteParserToken, VerboseError<&'a str>>
     where
         F: Fn(&'a str) -> IResult<&'a str, Vec<RouteParserToken>, VerboseError<&'a str>>
@@ -28,7 +30,7 @@ pub fn optional_matches<'a, F>(f: F) -> impl Fn(&'a str) -> IResult<&'a str, Rou
             .map(|(i, t)| (i, RouteParserToken::Optional(t)))
     }
 }
-
+/// Optionally match a string, returning a vector of tokens.
 pub fn optional_matches_v<'a, F>(f: F) -> impl Fn(&'a str) -> IResult<&'a str, Vec<RouteParserToken>, VerboseError<&'a str>>
     where
         F: Fn(&'a str) -> IResult<&'a str, Vec<RouteParserToken>, VerboseError<&'a str>>
@@ -36,7 +38,7 @@ pub fn optional_matches_v<'a, F>(f: F) -> impl Fn(&'a str) -> IResult<&'a str, V
     ret_vec(optional_matches(f))
 }
 
-
+/// Optionally match a string
 pub fn optional_match<'a, F>(f: F) -> impl Fn(&'a str) -> IResult<&'a str, RouteParserToken, VerboseError<&'a str>>
     where
         F: Fn(&'a str) -> IResult<&'a str, RouteParserToken, VerboseError<&'a str>>

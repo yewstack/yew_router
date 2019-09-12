@@ -7,7 +7,6 @@ use super::Msg;
 use super::Props;
 
 /// An anchor tag Component that when clicked, will navigate to the provided route.
-/// The Route's `to_route_string()` will be displayed as the href.
 #[derive(Debug)]
 pub struct RouterLink {
     router: RouteSenderBridge,

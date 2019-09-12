@@ -1,3 +1,15 @@
+//! Lib for matching route strings based on tokens generated from the yew_router_route_parser crate.
+
+#![deny(
+    missing_docs,
+    missing_debug_implementations,
+    missing_copy_implementations,
+    trivial_casts,
+    trivial_numeric_casts,
+    unsafe_code,
+    unstable_features,
+    unused_qualifications
+)]
 
 pub use yew_router_route_parser::{MatcherToken, CaptureVariant, FromMatches, FromMatchesError};
 
@@ -7,18 +19,21 @@ mod util;
 use nom::IResult;
 use std::collections::{HashMap, HashSet};
 use yew_router_route_parser::{optimize_tokens, parser};
-use yew::{Html, Component, Renderable};
+use yew::{Html, Component};
 use nom::combinator::all_consuming;
 
-pub trait RenderFn<CTX: yew::Component>: Fn(&Matches) -> Option<Html<CTX>> {}
+/// Render function.
+pub trait RenderFn<CTX: Component>: Fn(&Matches) -> Option<Html<CTX>> {}
 
 
 impl <CTX, T> RenderFn<CTX> for T
     where
     T: Fn(&Matches) -> Option<Html<CTX>>,
-    CTX: yew::Component
+    CTX: Component
 {}
 
+/// Matches contain keys corresponding to named capture sections,
+/// and values containing the content captured by those sections.
 pub type Matches<'a> = HashMap<&'a str, String>;
 
 /// Attempts to match routes, transform the route to Component props and render that Component.
@@ -26,14 +41,16 @@ pub type Matches<'a> = HashMap<&'a str, String>;
 /// The CTX refers to the context of the parent rendering this (The Router).
 #[derive(Debug, PartialEq, Clone)]
 pub struct PathMatcher {
+    /// Tokens used to determine how the matcher will match a route string.
     pub tokens: Vec<MatcherToken>,
+    /// Settings
     pub settings: MatcherSettings
 }
 
+/// Settings used for the matcher (and optimization of the parsed tokens that make up the matcher).
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct MatcherSettings {
-    // TODO support this
-    /// No optional '/' insertion. Text will be matched as strictly as possible.
+    /// Disallow insertion of Optional `/` at the end of paths.
     pub strict: bool,
     /// A matcher must consume all of the input to succeed.
     pub complete: bool,
@@ -52,6 +69,7 @@ impl Default for MatcherSettings {
 
 impl PathMatcher {
 
+    /// Attempt to create a PathMatcher from a "matcher string".
     pub fn try_from(i: &str) -> Result<Self, ()> // TODO: Error handling
         where
     {
@@ -66,6 +84,8 @@ impl PathMatcher {
 
     // TODO see if more error handling can be done here.
     // TODO, should find some way to support '/' characters in fragment. In the transform function, it could keep track of the seen hash begin yet, and transform captures based on that.
+
+    /// Match a route string.
     pub fn match_path<'a, 'b: 'a>(&'b self, i: &'a str) -> IResult<&'a str, Matches<'a>> {
         if self.settings.complete {
             all_consuming(match_paths::match_path(&self.tokens, &self.settings))(i)

@@ -1,18 +1,36 @@
+//! Parser for a "matcher string". The tokens produced by this parser are used to construct a matcher.
+
+#![deny(
+    missing_docs,
+    missing_debug_implementations,
+    missing_copy_implementations,
+    trivial_casts,
+    trivial_numeric_casts,
+    unsafe_code,
+    unstable_features,
+    unused_qualifications
+)]
 
 mod token_optimizer;
-pub use parser::CaptureVariant;
-pub use token_optimizer::{parse_str_and_optimize_tokens, optimize_tokens, MatcherToken, next_delimiters};
-
 pub mod parser;
 
+pub use parser::CaptureVariant;
+pub use token_optimizer::{parse_str_and_optimize_tokens, optimize_tokens, MatcherToken, next_delimiters};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
+/// An error type used when implementing `FromMatches`.
 #[derive(Debug)]
 pub enum FromMatchesError {
-    MissingField{ field_name: String},
+    /// Missing field
+    MissingField{
+        /// The name of the field expected to be present
+        field_name: String
+    },
+    /// Dynamic error
     Error(Box<dyn Error>),
+    /// Unknown error
     UnknownErr // TODO Will be removed soon. dyn error above needs to go, and replaced with the names of the failed type conversions.
 }
 
