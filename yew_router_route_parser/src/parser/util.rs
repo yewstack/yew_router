@@ -98,7 +98,7 @@ where
 {
     map(
         many_till(anychar, stop_parser),
-        |(any, stop_parser_result)| stop_parser_result,
+        |(_any, stop_parser_result)| stop_parser_result,
     )
 }
 
@@ -142,5 +142,11 @@ mod test {
         ));
         let parsed = parser("first_stuff_abc").expect("should parse");
         assert_eq!(parsed, ("abc", "first_stuff_".to_string()))
+    }
+
+    #[test]
+    fn simple_skip_until() {
+        let parsed = skip_until::<_,_,(),_>(tag("done"))("useless_stuff_done").expect("should parse");
+        assert_eq!(parsed, ("", "done"))
     }
 }
