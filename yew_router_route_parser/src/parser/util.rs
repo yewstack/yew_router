@@ -8,6 +8,7 @@ use nom::multi::many_till;
 use nom::sequence::delimited;
 use nom::IResult;
 use std::rc::Rc;
+use nom::character::complete::char;
 
 /// Given a function that returns a single token, wrap the token in a Vec.
 pub fn vectorize<'a>(
@@ -25,7 +26,7 @@ where
 {
     move |i: &str| -> IResult<&str, RouteParserToken, VerboseError<&str>> {
         let f = &f;
-        context("optional matches", delimited(tag("("), f, tag(")")))(i)
+        context("optional matches", delimited(char('('), f, char(')')))(i)
             .map(|(i, t)| (i, RouteParserToken::Optional(t)))
     }
 }
@@ -48,7 +49,7 @@ where
 {
     move |i: &str| -> IResult<&str, RouteParserToken, VerboseError<&str>> {
         let f = &f;
-        context("optional match", delimited(tag("("), f, tag(")")))(i)
+        context("optional match", delimited(char('('), f, char(')')))(i)
             .map(|(i, t)| (i, RouteParserToken::Optional(vec![t])))
     }
 }

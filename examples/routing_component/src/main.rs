@@ -17,6 +17,9 @@ use yew_router::path_matcher::Matches;
 use yew_router::render::component;
 use yew_router::render::render;
 
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
 fn main() {
     yew::initialize();
     web_logger::init();

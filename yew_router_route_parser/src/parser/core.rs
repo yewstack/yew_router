@@ -5,6 +5,7 @@ use crate::parser::RouteParserToken;
 use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag, take};
 use nom::character::complete::digit1;
+use nom::character::complete::char;
 use nom::character::is_digit;
 use nom::combinator::{map, peek};
 use nom::error::ParseError;
@@ -15,11 +16,10 @@ use nom::IResult;
 /// Captures a string up to the point where a character not possible to be present in Rust's identifier is encountered.
 /// It prevents the first character from being a digit.
 pub fn valid_ident_characters(i: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    const INVALID_CHARACTERS: &str = " -*/+#?&^@~`;,.|\\{}[]()=\t\n";
+    const INVALID_CHARACTERS: &str = " -*/+#?&^@%$\'\"`%~;,.|\\{}[]()<>=\t\n";
     context("valid ident", |i: &str| {
         let (i, next) = peek(take(1usize))(i)?; // Look at the first character
         if is_digit(next.bytes().next().unwrap()) {
-            //        return Err(nom::Err(VerboseError::from("Digits not allowed"))) // Digits not allowed
             Err(nom::Err::Error(VerboseError::from_error_kind(
                 i,
                 ErrorKind::Digit,
@@ -50,16 +50,16 @@ pub fn match_specific(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&
 /// * {5:name}
 pub fn capture(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
     let capture_variants = alt((
-        context("capture unnamed", map(peek(tag("}")), |_| CaptureVariant::Unnamed)), // just empty {}
+        context("capture unnamed", map(peek(char('}')), |_| CaptureVariant::Unnamed)), // just empty {}
         context("capture many named", map(preceded(tag("*:"), valid_ident_characters), |s| {
             CaptureVariant::ManyNamed(s.to_string())
         })),
-        context("capture many unnamed", map(tag("*"), |_| CaptureVariant::ManyUnnamed)),
+        context("capture many unnamed", map(char('*'), |_| CaptureVariant::ManyUnnamed)),
         context("capture named", map(valid_ident_characters, |s| {
             CaptureVariant::Named(s.to_string())
         })),
         context("capture number named", map(
-            separated_pair(digit1, tag(":"), valid_ident_characters),
+            separated_pair(digit1, char(':'), valid_ident_characters),
             |(n, s)| CaptureVariant::NumberedNamed {
                 sections: n.parse().expect("Should parse digits"),
                 name: s.to_string(),
@@ -73,7 +73,7 @@ pub fn capture(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
     context(
         "capture",
         map(
-            delimited(tag("{"), capture_variants, tag("}")),
+            delimited(char('{'), capture_variants, char('}')),
             RouteParserToken::Capture,
         ),
     )(i)

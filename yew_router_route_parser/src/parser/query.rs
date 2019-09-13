@@ -1,23 +1,23 @@
 use crate::parser::core::{capture_or_match, valid_ident_characters};
 use crate::parser::RouteParserToken;
 use nom::branch::alt;
-use nom::bytes::complete::tag;
 use nom::combinator::map;
 use nom::multi::{many0, many1};
 use nom::sequence::{pair, separated_pair, tuple};
 use nom::IResult;
+use nom::character::complete::char;
 
 use crate::parser::util::{optional_match, optional_matches_v, vectorize};
 use nom::error::{context, VerboseError};
 
 /// Character used to start the first query.
 fn query_begin_token(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
-    map(tag("?"), |_| RouteParserToken::QueryBegin)(i)
+    map(char('?'), |_| RouteParserToken::QueryBegin)(i)
 }
 
 /// Character used to separate queries
 fn query_separator_token(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
-    map(tag("&"), |_| RouteParserToken::QuerySeparator)(i)
+    map(char('&'), |_| RouteParserToken::QuerySeparator)(i)
 }
 
 /// Matches
@@ -26,7 +26,7 @@ fn query(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
     context(
         "query",
         map(
-            separated_pair(valid_ident_characters, tag("="), capture_or_match),
+            separated_pair(valid_ident_characters, char('='), capture_or_match),
             |(ident, value)| RouteParserToken::QueryCapture {
                 ident: ident.to_string(),
                 capture_or_match: value,

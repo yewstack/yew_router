@@ -2,13 +2,13 @@ use crate::parser::path::section_matchers; // TODO possibly duplicate this funct
 use crate::parser::util::{optional_matches, optional_matches_v};
 use crate::parser::RouteParserToken;
 use nom::branch::alt;
-use nom::bytes::complete::tag;
 use nom::combinator::map;
 use nom::error::{context, VerboseError};
 use nom::IResult;
+use nom::character::complete::char;
 
 fn begin_fragment_token(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
-    map(tag("#"), |_| RouteParserToken::FragmentBegin)(i)
+    map(char('#'), |_| RouteParserToken::FragmentBegin)(i)
 }
 
 /// #item
@@ -38,8 +38,8 @@ pub fn fragment_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseE
             context("fragment optional item", fragment_parser_with_optional_item), // #(item)
         ))(i)
     }
-    alt((
+    context("fragment", alt((
         inner_fragment_parser,                     // #item | #(item)
         optional_matches_v(inner_fragment_parser), // (#(item)) | (#item)
-    ))(i)
+    )))(i)
 }

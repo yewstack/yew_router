@@ -9,6 +9,7 @@ use std::slice::Iter;
 use crate::parser::util::alternative;
 use nom::branch::alt;
 use nom::combinator::{cond, map_opt, rest};
+use crate::parser::YewRouterParseError;
 
 /// Tokens used to determine how to match and capture sections from a URL.
 #[derive(Debug, PartialEq, Clone)]
@@ -127,7 +128,7 @@ fn token_to_string(token: &RouteParserToken) -> &str {
 pub fn parse_str_and_optimize_tokens(
     i: &str,
     append_optional_slash: bool,
-) -> Result<Vec<MatcherToken>, nom::Err<VerboseError<&str>>> {
+) -> Result<Vec<MatcherToken>, YewRouterParseError> {
     let tokens = parse(i)?;
     Ok(optimize_tokens(tokens, append_optional_slash))
 }

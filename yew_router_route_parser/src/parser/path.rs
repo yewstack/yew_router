@@ -2,12 +2,12 @@ use crate::parser::core::{capture, match_specific};
 use crate::parser::util::optional_matches;
 use crate::parser::RouteParserToken;
 use nom::branch::alt;
-use nom::bytes::complete::tag;
 use nom::combinator::{map, opt};
 use nom::error::{context, VerboseError};
 use nom::multi::many0;
 use nom::sequence::pair;
 use nom::IResult;
+use nom::character::complete::char;
 
 /// * /
 /// * /item
@@ -76,7 +76,7 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError
 }
 
 fn separator_token(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
-    context("/", map(tag("/"), |_| RouteParserToken::Separator))(i)
+    context("/", map(char('/'), |_| RouteParserToken::Separator))(i)
 }
 
 pub fn section_matchers(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
@@ -126,7 +126,7 @@ mod test {
     use nom::error::ErrorKind;
     use nom::error::ErrorKind::{Alt, Tag};
     use nom::error::ParseError;
-    use nom::error::VerboseErrorKind::{Context, Nom};
+    use nom::error::VerboseErrorKind::{Context, Nom, Char};
     use nom::Err;
 
     #[test]
@@ -168,7 +168,7 @@ mod test {
 
         let error = VerboseError {
             errors: vec![
-                ("", Nom(Tag)),
+                ("", Char('}')),
                 ("{aoeu", Context("capture")),
                 ("{aoeu", Nom(Alt)),
                 ("{aoeu", Context("section matchers")),

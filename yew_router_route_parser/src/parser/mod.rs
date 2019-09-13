@@ -1,6 +1,6 @@
 //! Parser that consumes a string and produces the first representation of the matcher.
 use nom::branch::alt;
-use nom::combinator::{all_consuming, map, opt};
+use nom::combinator::{all_consuming, map, opt, map_opt};
 use nom::error::{ErrorKind, ParseError, VerboseError, context};
 use nom::sequence::tuple;
 
@@ -9,6 +9,9 @@ mod fragment;
 mod path;
 mod query;
 pub mod util;
+mod error;
+
+pub use error::YewRouterParseError;
 
 /// Alias for a tuple of optional vectors of tokens representing the path, query, and fragment in that order.
 type PathQueryFragmentTokens = (
@@ -98,15 +101,23 @@ impl ParseError<&str> for Error {
 }
 
 /// Parse "matcher string".
-pub fn parse(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseError<&str>>> {
+pub fn parse(i: &str) -> Result<Vec<RouteParserToken>, YewRouterParseError> {
+    parse_impl(i)
+        .map_err(|error| YewRouterParseError::from_err(i, error).expect("Nom should always return an 'Error' from the parser."))
+
+}
+
+/// Parse "matcher string" implementation.
+pub fn parse_impl(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseError<&str>>> {
         context("parser", alt((
+            all_consuming(map(core::capture, |t| vec![t])), // TODO this should probably only be a subset of the normal capture. No {} or {named}
             all_consuming(
-            context("main matcher", map(
-                tuple((
+             map_opt(
+                 context("main matcher", tuple((
                     opt(path::path_parser),
                     opt(query::query_parser),
                     opt(fragment::fragment_parser),
-                )),
+                ))),
                 |(path, query, fragment): PathQueryFragmentTokens| {
                     let mut tokens = Vec::new();
                     if let Some(mut t) = path {
@@ -118,10 +129,13 @@ pub fn parse(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseError<&st
                     if let Some(mut t) = fragment {
                         tokens.append(&mut t)
                     }
-                    tokens
+                    if !tokens.is_empty() {
+                        Some(tokens)
+                    } else {
+                        None
+                    }
                 },
-            ))),
-            all_consuming(map(core::capture, |t| vec![t])), // TODO this should probably only be a subset of the normal capture. No {} or {named}
+            )),
         )))
     (i)
     .map(|(_, tokens)| tokens) // because of all_consuming, there should either be an error, or a success, no intermediate remaining input.
@@ -222,14 +236,14 @@ mod tests {
 
     #[test]
     fn expected_slash_question_or_hash() {
-        let e = parse("hello").expect_err("Should not parse");
+        let _e = parse("hello").expect_err("Should not parse");
 //        let expected = nom::Err::Error(VerboseError {
 //            errors: vec![]
 //        });
-//        if let nom::Err::Error(er) = &e {
+//        if let nom::Err::Error(er) = &_e {
 //            println!("{}", nom::error::convert_error("hello", er.clone()))
 //        }
 //
-//        assert_eq!(e, expected)
+//        assert_eq!(_e, expected)
     }
 }
