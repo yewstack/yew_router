@@ -1,4 +1,4 @@
-use crate::parser::core::{capture, match_specific};
+use crate::parser::core::{capture, match_exact};
 use crate::parser::util::optional_matches;
 use crate::parser::RouteParserToken;
 use nom::branch::alt;
@@ -81,7 +81,7 @@ fn separator_token(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str
 
 pub fn section_matchers(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     let (i, token): (&str, RouteParserToken) =
-        context("section matchers", alt((match_specific, capture)))(i)?;
+        context("section matchers", alt((match_exact, capture)))(i)?;
     let tokens = vec![token];
 
     /// You can't have two matching sections in a row, because there is nothing to indicate when
@@ -104,7 +104,7 @@ pub fn section_matchers(i: &str) -> IResult<&str, Vec<RouteParserToken>, Verbose
                 }
             }
             RouteParserToken::Capture(_) => {
-                let (i, t) = opt(match_specific)(i)?;
+                let (i, t) = opt(match_exact)(i)?;
                 if let Some(new_t) = t {
                     tokens.push(new_t);
                     match_next_section_matchers(i, tokens)

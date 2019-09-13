@@ -1,11 +1,17 @@
 //! Error handling.
 use crate::parser::util::skip_until;
 use core::fmt::Write;
-use nom::character::complete::char;
+use nom::character::complete::{char, anychar};
 use nom::error::VerboseError;
 use nom::multi::many0_count;
 use std::fmt::{Debug, Display, Error as FmtError, Formatter};
 use ExpectedConstruct as Ec;
+use nom::branch::alt;
+use nom::sequence::{terminated, pair};
+use crate::parser::core::valid_exact_match_characters;
+use crate::parser::util::consume_until;
+use nom::bytes::complete::tag;
+use nom::combinator::map;
 
 const DOUBLE_SLASHES_NOT_ALLOWED: &str = "Double slashes ('//') are not allowed.";
 const EMPTY_MATCH_NOT_ALLOWED: &str =
@@ -16,6 +22,7 @@ const SECONDARY_QUERIES_USE_AND: &str =
     "Secondary queries should be started with '&' instead of '?'.";
 const UNCLOSED_OPTIONAL: &str = "There are more open parenthesis than close parenthesis. There must be the same number of open parenthesis as close parenthesis.";
 const TOO_MANY_OPTIONAL_CLOSES: &str = "There are more close parenthesis than open parenthesis. There must be the same number of open parenthesis as close parenthesis.";
+const DANGLING_QUERY: &str = "Dangling query. Queries exist in the form '<?|&><exact>=<query|exact>'. The '=<query|exact>' section was left off here.";
 const UNHANDLED_ERROR: &str = "Unhandled error.";
 
 /// A struct to hold information for printing a useful error message to a user for their parser.
@@ -78,12 +85,7 @@ impl<'a> YewRouterParseError<'a> {
         let (substring, _kind) = err.errors.first().unwrap();
         let mut offset: usize = offset(input, substring);
 
-        let (expected, reason): (Vec<Ec>, String) = if offset == 0 {
-            (
-                vec![Ec::Slash, Ec::Question, Ec::Hash, Ec::OpenBrace],
-                EMPTY_MATCH_NOT_ALLOWED.to_string(),
-            )
-        } else if double_slash(input, substring, offset) {
+        let (expected, reason): (Vec<Ec>, String) =  if double_slash(input, substring, offset) {
             (
                 vec![
                     Ec::ExactText,
@@ -123,6 +125,17 @@ impl<'a> YewRouterParseError<'a> {
             (vec![], UNCLOSED_OPTIONAL.to_string())
         } else if too_many_closed_optional(input) {
             (vec![], TOO_MANY_OPTIONAL_CLOSES.to_string())
+        } else if dangling_query(substring) {
+            offset = dangling_query_offset(input);
+            (
+                vec![Ec::Equals],
+                DANGLING_QUERY.to_string()
+            )
+        } else if offset == 0 {
+            (
+                vec![Ec::Slash, Ec::Question, Ec::Hash, Ec::OpenBrace],
+                EMPTY_MATCH_NOT_ALLOWED.to_string(),
+            )
         } else {
             (vec![], UNHANDLED_ERROR.to_string())
         };
@@ -258,6 +271,40 @@ fn too_many_closed_optional(input: &str) -> bool {
     }
 }
 
+// Detects if there was an instance of a query that didn't have an =<capture|match> present
+fn dangling_query(substring: &str) -> bool {
+    match alt((
+        terminated(skip_until(char('?')), valid_exact_match_characters),
+        terminated(skip_until(char('&')), valid_exact_match_characters)
+    ))
+    (substring) {
+        Ok((rest, _)) => {
+            rest.len() == 0 || rest.chars().next() == Some('&') || rest.chars().next() == Some('#')
+        },
+        Err(x) => {
+            dbg!(x);
+            false
+        }
+    }
+}
+
+fn dangling_query_offset(input: &str) -> usize {
+    let (rest, _) = alt((
+        terminated(skip_until(char('?')), valid_exact_match_characters),
+        terminated(skip_until(char('&')), valid_exact_match_characters)
+    ))(input)
+        .unwrap();
+
+    if rest.len() == 0 {
+        input.len()
+    } else {
+        input.len() - rest.len()
+    }
+
+}
+
+
+
 #[cfg(test)]
 mod test_conditions {
     use super::*;
@@ -303,12 +350,38 @@ mod test_conditions {
 
     #[test]
     fn multiple_query_beginnings_test() {
-        multiple_query_beginnings("?hello=there&bold=one?general=kenobi", "?general=kenobi");
+        assert!(multiple_query_beginnings("?hello=there&bold=one?general=kenobi", "?general=kenobi"));
     }
 
     #[test]
     fn multiple_query_beginnings_avoids_false_positive() {
-        multiple_query_beginnings("(?hello=there)(?general=kenobi)", "(?general=kenobi)");
+        assert!(!multiple_query_beginnings("(?hello=there)(?general=kenobi)", "(?general=kenobi)"));
+    }
+
+    // ------
+    #[test]
+    fn dangling_query_detected() {
+        assert!(dangling_query("/yeet/?thing"))
+    }
+
+    #[test]
+    fn dangling_query_detected_with_valid_query_after() {
+        assert!(dangling_query("/yeet/?thing&query=something"))
+    }
+
+    #[test]
+    fn dangling_query_detected_with_fragment_after() {
+        assert!(dangling_query("/yeet/?thing#fragment"))
+    }
+
+    #[test]
+    fn dangling_query_avoids_false_positive_literal() {
+        assert!(!dangling_query("?thing=yes"))
+    }
+
+    #[test]
+    fn dangling_query_avoids_false_positive_capture() {
+        assert!(!dangling_query("?thing={}"))
     }
 
 }
@@ -468,6 +541,35 @@ Message:         'Double slashes ('//') are not allowed.'"##;
             offset: 16,
             expected: vec![],
             reason: UNCLOSED_OPTIONAL.to_string(),
+        };
+        assert_eq!(error, expected)
+    }
+
+
+    #[test]
+    fn dangling_query_terminating() {
+        let input = "?bad_query";
+        let error = parse(input).expect_err("should fail");
+
+        let expected = YewRouterParseError {
+            input,
+            offset: 10,
+            expected: vec![Ec::Equals],
+            reason: DANGLING_QUERY.to_string(),
+        };
+        assert_eq!(error, expected)
+    }
+
+    #[test]
+    fn dangling_query_before_valid_query() {
+        let input = "?bad_query&query=thing";
+        let error = parse(input).expect_err("should fail");
+
+        let expected = YewRouterParseError {
+            input,
+            offset: 10,
+            expected: vec![Ec::Equals],
+            reason: DANGLING_QUERY.to_string(),
         };
         assert_eq!(error, expected)
     }

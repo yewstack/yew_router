@@ -71,9 +71,10 @@ pub fn alternative(alternatives: Vec<String>) -> impl Fn(&str) -> IResult<&str, 
 /// The consumed input is returned in the form of an allocated string.
 /// # Note
 /// `stop_parser` only peeks its input.
-pub fn consume_until<'a, F>(stop_parser: F) -> impl Fn(&'a str) -> IResult<&'a str, String>
+pub fn consume_until<'a, F, E>(stop_parser: F) -> impl Fn(&'a str) -> IResult<&'a str, String, E>
 where
-    F: Fn(&'a str) -> IResult<&'a str, &'a str>,
+    E: ParseError<&'a str>,
+    F: Fn(&'a str) -> IResult<&'a str, &'a str, E>,
 {
     // In order for the returned fn to be Fn instead of FnOnce, wrap the inner fn in an RC.
     let f = Rc::new(many_till(
@@ -88,6 +89,7 @@ where
     }
 }
 
+// TODO This might be the same as preceeded.
 /// Skips values until the stop parser succeeds, then returns the output of the stop parser.
 pub fn skip_until<I, F, E, T>(stop_parser: F) -> impl Fn(I) -> IResult<I, T, E>
 where
@@ -108,7 +110,7 @@ mod test {
 
     #[test]
     fn consume_until_simple() {
-        let parser = consume_until(tag("z"));
+        let parser = consume_until::<_, ()>(tag("z"));
         let parsed = parser("abcz").expect("Should parse");
         assert_eq!(parsed, ("z", "abc".to_string()))
     }

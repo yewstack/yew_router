@@ -30,11 +30,19 @@ pub fn valid_ident_characters(i: &str) -> IResult<&str, &str, VerboseError<&str>
     })(i)
 }
 
+/// A more permissive set of characters than those specified in `valid_ident_characters that the route string will need to match exactly.
+pub fn valid_exact_match_characters(i: &str) -> IResult<&str, &str, VerboseError<&str>> {
+    const INVALID_CHARACTERS: &str = " /?&#=\t\n(){}";
+    context("valid exact match", |i: &str| {
+        is_not(INVALID_CHARACTERS)(i)
+    })(i)
+}
+
 /// Captures groups of characters that will need to be matched exactly later.
-pub fn match_specific(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
+pub fn match_exact(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
     context(
         "match",
-        map(valid_ident_characters, |ident| {
+        map(valid_exact_match_characters, |ident| {
             RouteParserToken::Exact(ident.to_string())
         }),
     )(i)
@@ -100,7 +108,7 @@ pub fn capture(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
 /// Matches either "item" or "{capture}"
 /// It returns a subset enum of Token.
 pub fn capture_or_match(i: &str) -> IResult<&str, CaptureOrExact, VerboseError<&str>> {
-    let (i, token) = context("capture or match", alt((capture, match_specific)))(i)?;
+    let (i, token) = context("capture or match", alt((capture, match_exact)))(i)?;
     let token = match token {
         RouteParserToken::Capture(variant) => CaptureOrExact::Capture(variant),
         RouteParserToken::Exact(m) => CaptureOrExact::Exact(m),
