@@ -124,7 +124,7 @@ mod test {
     use super::*;
     use nom::combinator::all_consuming;
     use nom::error::ErrorKind;
-    use nom::error::ErrorKind::{Alt, Tag};
+    use nom::error::ErrorKind::Alt;
     use nom::error::ParseError;
     use nom::error::VerboseErrorKind::{Char, Context, Nom};
     use nom::Err;

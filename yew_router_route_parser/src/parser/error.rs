@@ -1,6 +1,9 @@
 //! Error handling.
+use crate::parser::util::skip_until;
 use core::fmt::Write;
+use nom::character::complete::char;
 use nom::error::VerboseError;
+use nom::multi::many0_count;
 use std::fmt::{Debug, Display, Error as FmtError, Formatter};
 use ExpectedConstruct as Ec;
 
@@ -11,6 +14,8 @@ const CAPTURE_BLOCK_LONG: &str = "A capture block can be made up of: '{}', '{<id
 const CAPTURE_BLOCK_SHORT: &str = "A capture block can be made up of: '{}', '{<ident>}', '{*}', '{*:<ident>}', '{<number>}', or '{<number>:<ident>}'.";
 const SECONDARY_QUERIES_USE_AND: &str =
     "Secondary queries should be started with '&' instead of '?'.";
+const UNCLOSED_OPTIONAL: &str = "There are more open parenthesis than close parenthesis. There must be the same number of open parenthesis as close parenthesis.";
+const TOO_MANY_OPTIONAL_CLOSES: &str = "There are more close parenthesis than open parenthesis. There must be the same number of open parenthesis as close parenthesis.";
 const UNHANDLED_ERROR: &str = "Unhandled error.";
 
 /// A struct to hold information for printing a useful error message to a user for their parser.
@@ -114,6 +119,10 @@ impl<'a> YewRouterParseError<'a> {
             }
         } else if multiple_query_beginnings(input, substring) {
             (vec![Ec::And], SECONDARY_QUERIES_USE_AND.to_string())
+        } else if unclosed_optional(input) {
+            (vec![], UNCLOSED_OPTIONAL.to_string())
+        } else if too_many_closed_optional(input) {
+            (vec![], TOO_MANY_OPTIONAL_CLOSES.to_string())
         } else {
             (vec![], UNHANDLED_ERROR.to_string())
         };
@@ -177,10 +186,11 @@ fn double_slash(input: &str, substring: &str, offset: usize) -> bool {
 
 /// Finds a capture that contains an invalid character.
 fn bad_capture(substring: &str) -> bool {
-    substring
-        .chars()
-        .skip(1) // Skip the first, because that should be the opening '{'.
-        .any(contains_forbidden_capture_character)
+    substring.starts_with('{')
+        && substring
+            .chars()
+            .skip(1) // Skip the first, because that should be the opening '{'.
+            .any(contains_forbidden_capture_character)
 }
 
 fn contains_forbidden_capture_character(c: char) -> bool {
@@ -209,8 +219,6 @@ fn find_bad_capture_character_offset(offset: usize, substring: &str) -> usize {
 /// Returns true if the query starts twice (denoted by a ?)
 fn multiple_query_beginnings(input: &str, substring: &str) -> bool {
     use crate::parser::query::begin_query_parser;
-    use crate::parser::util::skip_until;
-    use nom::multi::many0_count;
 
     // Count the number of occurrences of the begin_query_parser appear.
     // If it is greater than 1, then the matcher string is misconstrued.
@@ -223,6 +231,31 @@ fn multiple_query_beginnings(input: &str, substring: &str) -> bool {
 
     substring.starts_with('?') // This check should help to avoid colliding with '(?...)' sections
         && multiple_begin_queries
+}
+
+/// Detects if there are more open than closed parenthesis.
+fn unclosed_optional(input: &str) -> bool {
+    if let Ok((_, open_count)) = many0_count(skip_until::<_, _, (), _>(char('(')))(input) {
+        if let Ok((_, close_count)) = many0_count(skip_until::<_, _, (), _>(char(')')))(input) {
+            open_count > close_count
+        } else {
+            false
+        }
+    } else {
+        false
+    }
+}
+
+fn too_many_closed_optional(input: &str) -> bool {
+    if let Ok((_, open_count)) = many0_count(skip_until::<_, _, (), _>(char('(')))(input) {
+        if let Ok((_, close_count)) = many0_count(skip_until::<_, _, (), _>(char(')')))(input) {
+            open_count < close_count
+        } else {
+            false
+        }
+    } else {
+        false
+    }
 }
 
 #[cfg(test)]
@@ -284,7 +317,6 @@ mod test_conditions {
 mod test {
     use super::*;
     use crate::parser::parse;
-    use nom::Err as NomErr;
 
     #[test]
     fn double_slash_error() {
@@ -421,6 +453,21 @@ Message:         'Double slashes ('//') are not allowed.'"##;
             offset: 10,
             expected: vec![Ec::And],
             reason: SECONDARY_QUERIES_USE_AND.to_string(),
+        };
+        assert_eq!(error, expected)
+    }
+
+    // --------------
+    #[test]
+    fn too_many_open_parens() {
+        let input = "(/thing)(/other)((/thing)";
+        let error = parse(input).expect_err("should fail");
+
+        let expected = YewRouterParseError {
+            input,
+            offset: 16,
+            expected: vec![],
+            reason: UNCLOSED_OPTIONAL.to_string(),
         };
         assert_eq!(error, expected)
     }

@@ -146,7 +146,8 @@ mod test {
 
     #[test]
     fn simple_skip_until() {
-        let parsed = skip_until::<_,_,(),_>(tag("done"))("useless_stuff_done").expect("should parse");
+        let parsed =
+            skip_until::<_, _, (), _>(tag("done"))("useless_stuff_done").expect("should parse");
         assert_eq!(parsed, ("", "done"))
     }
 }
