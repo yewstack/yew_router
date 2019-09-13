@@ -4,8 +4,8 @@ use crate::parser::CaptureVariant;
 use crate::parser::RouteParserToken;
 use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag, take};
-use nom::character::complete::digit1;
 use nom::character::complete::char;
+use nom::character::complete::digit1;
 use nom::character::is_digit;
 use nom::combinator::{map, peek};
 use nom::error::ParseError;
@@ -50,24 +50,42 @@ pub fn match_specific(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&
 /// * {5:name}
 pub fn capture(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
     let capture_variants = alt((
-        context("capture unnamed", map(peek(char('}')), |_| CaptureVariant::Unnamed)), // just empty {}
-        context("capture many named", map(preceded(tag("*:"), valid_ident_characters), |s| {
-            CaptureVariant::ManyNamed(s.to_string())
-        })),
-        context("capture many unnamed", map(char('*'), |_| CaptureVariant::ManyUnnamed)),
-        context("capture named", map(valid_ident_characters, |s| {
-            CaptureVariant::Named(s.to_string())
-        })),
-        context("capture number named", map(
-            separated_pair(digit1, char(':'), valid_ident_characters),
-            |(n, s)| CaptureVariant::NumberedNamed {
-                sections: n.parse().expect("Should parse digits"),
-                name: s.to_string(),
-            },
-        )),
-        context("capture number unnamed", map(digit1, |num: &str| CaptureVariant::NumberedUnnamed {
-            sections: num.parse().expect("should parse digits"),
-        })),
+        context(
+            "capture unnamed",
+            map(peek(char('}')), |_| CaptureVariant::Unnamed),
+        ), // just empty {}
+        context(
+            "capture many named",
+            map(preceded(tag("*:"), valid_ident_characters), |s| {
+                CaptureVariant::ManyNamed(s.to_string())
+            }),
+        ),
+        context(
+            "capture many unnamed",
+            map(char('*'), |_| CaptureVariant::ManyUnnamed),
+        ),
+        context(
+            "capture named",
+            map(valid_ident_characters, |s| {
+                CaptureVariant::Named(s.to_string())
+            }),
+        ),
+        context(
+            "capture number named",
+            map(
+                separated_pair(digit1, char(':'), valid_ident_characters),
+                |(n, s)| CaptureVariant::NumberedNamed {
+                    sections: n.parse().expect("Should parse digits"),
+                    name: s.to_string(),
+                },
+            ),
+        ),
+        context(
+            "capture number unnamed",
+            map(digit1, |num: &str| CaptureVariant::NumberedUnnamed {
+                sections: num.parse().expect("should parse digits"),
+            }),
+        ),
     ));
 
     context(

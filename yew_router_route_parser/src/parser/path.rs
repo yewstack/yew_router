@@ -2,12 +2,12 @@ use crate::parser::core::{capture, match_specific};
 use crate::parser::util::optional_matches;
 use crate::parser::RouteParserToken;
 use nom::branch::alt;
+use nom::character::complete::char;
 use nom::combinator::{map, opt};
 use nom::error::{context, VerboseError};
 use nom::multi::many0;
 use nom::sequence::pair;
 use nom::IResult;
-use nom::character::complete::char;
 
 /// * /
 /// * /item
@@ -126,7 +126,7 @@ mod test {
     use nom::error::ErrorKind;
     use nom::error::ErrorKind::{Alt, Tag};
     use nom::error::ParseError;
-    use nom::error::VerboseErrorKind::{Context, Nom, Char};
+    use nom::error::VerboseErrorKind::{Char, Context, Nom};
     use nom::Err;
 
     #[test]

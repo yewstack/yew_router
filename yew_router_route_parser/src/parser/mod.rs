@@ -1,15 +1,15 @@
 //! Parser that consumes a string and produces the first representation of the matcher.
 use nom::branch::alt;
-use nom::combinator::{all_consuming, map, opt, map_opt};
-use nom::error::{ErrorKind, ParseError, VerboseError, context};
+use nom::combinator::{all_consuming, map, map_opt, opt};
+use nom::error::{context, ErrorKind, ParseError, VerboseError};
 use nom::sequence::tuple;
 
 mod core;
+mod error;
 mod fragment;
 mod path;
 mod query;
 pub mod util;
-mod error;
 
 pub use error::YewRouterParseError;
 
@@ -102,22 +102,27 @@ impl ParseError<&str> for Error {
 
 /// Parse "matcher string".
 pub fn parse(i: &str) -> Result<Vec<RouteParserToken>, YewRouterParseError> {
-    parse_impl(i)
-        .map_err(|error| YewRouterParseError::from_err(i, error).expect("Nom should always return an 'Error' from the parser."))
-
+    parse_impl(i).map_err(|error| {
+        YewRouterParseError::from_err(i, error)
+            .expect("Nom should always return an 'Error' from the parser.")
+    })
 }
 
 /// Parse "matcher string" implementation.
 pub fn parse_impl(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseError<&str>>> {
-        context("parser", alt((
+    context(
+        "parser",
+        alt((
             all_consuming(map(core::capture, |t| vec![t])), // TODO this should probably only be a subset of the normal capture. No {} or {named}
-            all_consuming(
-             map_opt(
-                 context("main matcher", tuple((
-                    opt(path::path_parser),
-                    opt(query::query_parser),
-                    opt(fragment::fragment_parser),
-                ))),
+            all_consuming(map_opt(
+                context(
+                    "main matcher",
+                    tuple((
+                        opt(path::path_parser),
+                        opt(query::query_parser),
+                        opt(fragment::fragment_parser),
+                    )),
+                ),
                 |(path, query, fragment): PathQueryFragmentTokens| {
                     let mut tokens = Vec::new();
                     if let Some(mut t) = path {
@@ -136,8 +141,8 @@ pub fn parse_impl(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseErro
                     }
                 },
             )),
-        )))
-    (i)
+        )),
+    )(i)
     .map(|(_, tokens)| tokens) // because of all_consuming, there should either be an error, or a success, no intermediate remaining input.
 }
 
@@ -205,10 +210,10 @@ mod tests {
     #[test]
     fn parser_cant_contain_multiple_matches_in_a_row_0() {
         let _e = parse("/path{}{match}").expect_err("Should not validate");
-//        let expected = nom::Err::Error(VerboseError {
-//            errors: vec![]
-//        });
-//        assert_eq!(e, expected)
+        //        let expected = nom::Err::Error(VerboseError {
+        //            errors: vec![]
+        //        });
+        //        assert_eq!(e, expected)
     }
     #[test]
     fn parser_cant_contain_multiple_matches_in_a_row_1() {
@@ -237,13 +242,13 @@ mod tests {
     #[test]
     fn expected_slash_question_or_hash() {
         let _e = parse("hello").expect_err("Should not parse");
-//        let expected = nom::Err::Error(VerboseError {
-//            errors: vec![]
-//        });
-//        if let nom::Err::Error(er) = &_e {
-//            println!("{}", nom::error::convert_error("hello", er.clone()))
-//        }
-//
-//        assert_eq!(_e, expected)
+        //        let expected = nom::Err::Error(VerboseError {
+        //            errors: vec![]
+        //        });
+        //        if let nom::Err::Error(er) = &_e {
+        //            println!("{}", nom::error::convert_error("hello", er.clone()))
+        //        }
+        //
+        //        assert_eq!(_e, expected)
     }
 }

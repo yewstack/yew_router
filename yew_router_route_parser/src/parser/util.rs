@@ -2,13 +2,14 @@
 use crate::parser::RouteParserToken;
 use nom::bytes::complete::tag;
 use nom::character::complete::anychar;
-use nom::combinator::peek;
-use nom::error::{context, ErrorKind, VerboseError};
+use nom::character::complete::char;
+use nom::combinator::{map, peek};
+use nom::error::{context, ErrorKind, ParseError, VerboseError};
 use nom::multi::many_till;
 use nom::sequence::delimited;
-use nom::IResult;
+use nom::{AsChar, IResult, InputIter, InputLength, InputTake, Slice};
+use std::ops::RangeFrom;
 use std::rc::Rc;
-use nom::character::complete::char;
 
 /// Given a function that returns a single token, wrap the token in a Vec.
 pub fn vectorize<'a>(
@@ -68,7 +69,8 @@ pub fn alternative(alternatives: Vec<String>) -> impl Fn(&str) -> IResult<&str, 
 
 /// Consumes the input until the provided parser succeeds.
 /// The consumed input is returned in the form of an allocated string.
-/// # Note stop parser does not consume its input
+/// # Note
+/// `stop_parser` only peeks its input.
 pub fn consume_until<'a, F>(stop_parser: F) -> impl Fn(&'a str) -> IResult<&'a str, String>
 where
     F: Fn(&'a str) -> IResult<&'a str, &'a str>,
@@ -84,6 +86,20 @@ where
         let ret = first.into_iter().collect();
         Ok((i, ret))
     }
+}
+
+/// Skips values until the stop parser succeeds, then returns the output of the stop parser.
+pub fn skip_until<I, F, E, T>(stop_parser: F) -> impl Fn(I) -> IResult<I, T, E>
+where
+    I: Clone + PartialEq + InputIter + InputLength + InputTake + Slice<RangeFrom<usize>>,
+    <I as InputIter>::Item: AsChar,
+    E: ParseError<I>,
+    F: Fn(I) -> IResult<I, T, E>,
+{
+    map(
+        many_till(anychar, stop_parser),
+        |(any, stop_parser_result)| stop_parser_result,
+    )
 }
 
 #[cfg(test)]

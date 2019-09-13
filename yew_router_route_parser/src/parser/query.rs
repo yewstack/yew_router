@@ -1,11 +1,11 @@
 use crate::parser::core::{capture_or_match, valid_ident_characters};
 use crate::parser::RouteParserToken;
 use nom::branch::alt;
+use nom::character::complete::char;
 use nom::combinator::map;
 use nom::multi::{many0, many1};
 use nom::sequence::{pair, separated_pair, tuple};
 use nom::IResult;
-use nom::character::complete::char;
 
 use crate::parser::util::{optional_match, optional_matches_v, vectorize};
 use nom::error::{context, VerboseError};
@@ -57,12 +57,17 @@ fn begin_query_parser_with_optionals(
     )(i)
 }
 
-fn begin_query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
-    map(pair(query_begin_token, vectorize(query)), |(begin, query)| {
-        let mut ret = vec![begin];
-        ret.extend(query);
-        ret
-    })(i)
+pub(crate) fn begin_query_parser(
+    i: &str,
+) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
+    map(
+        pair(query_begin_token, vectorize(query)),
+        |(begin, query)| {
+            let mut ret = vec![begin];
+            ret.extend(query);
+            ret
+        },
+    )(i)
 }
 
 /// Matches:
@@ -120,14 +125,15 @@ fn query_parser_impl(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseErr
 }
 
 pub fn query_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
-    context("query parser",
+    context(
+        "query parser",
         alt((
             alt((query_parser_impl, optional_matches_v(query_parser_impl))),
             alt((
                 begin_query_parser_with_optionals,
                 optional_matches_v(begin_query_parser_with_optionals),
             )),
-        ))
+        )),
     )(i)
 }
 
