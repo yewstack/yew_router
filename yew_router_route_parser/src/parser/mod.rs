@@ -83,23 +83,6 @@ pub enum CaptureOrExact {
     Capture(CaptureVariant),
 }
 
-/// General error type
-#[derive(Debug, Clone, Copy)]
-pub enum Error {
-    /// Unspecified error
-    Unspecified,
-}
-
-impl ParseError<&str> for Error {
-    fn from_error_kind(_input: &str, _kind: ErrorKind) -> Self {
-        Error::Unspecified
-    }
-
-    fn append(_input: &str, _kind: ErrorKind, _other: Self) -> Self {
-        Error::Unspecified
-    }
-}
-
 /// Parse "matcher string".
 pub fn parse(i: &str) -> Result<Vec<RouteParserToken>, YewRouterParseError> {
     parse_impl(i).map_err(|error| {

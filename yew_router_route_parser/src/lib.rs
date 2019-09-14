@@ -88,8 +88,6 @@ mod test {
     struct TestStruct {
         hello: String,
         there: String,
-        general: String,
-        kenobi: String,
     }
 
     impl FromMatches for TestStruct {
@@ -112,30 +110,7 @@ mod test {
                     String::try_from(m.clone()).map_err(|_| FromMatchesError::UnknownErr)
                 })?;
 
-            let general = matches
-                .get("general")
-                .ok_or_else(|| FromMatchesError::MissingField {
-                    field_name: "general".to_string(),
-                })
-                .and_then(|m: &String| {
-                    String::try_from(m.clone()).map_err(|_| FromMatchesError::UnknownErr)
-                })?;
-
-            let kenobi = matches
-                .get("kenobi")
-                .ok_or_else(|| FromMatchesError::MissingField {
-                    field_name: "kenobi".to_string(),
-                })
-                .and_then(|m: &String| {
-                    String::try_from(m.clone()).map_err(|_| FromMatchesError::UnknownErr)
-                })?;
-
-            let x = TestStruct {
-                hello,
-                there,
-                general,
-                kenobi,
-            };
+            let x = TestStruct { hello, there };
             Ok(x)
         }
 
@@ -152,18 +127,6 @@ mod test {
                     "there".to_string()
                 )
             }
-            if !field_names.contains(&"general".to_string()) {
-                panic!(
-                    "The struct expected the matches to contain a field named '{}'",
-                    "general".to_string()
-                )
-            }
-            if !field_names.contains(&"kenobi".to_string()) {
-                panic!(
-                    "The struct expected the matches to contain a field named '{}'",
-                    "kenobi".to_string()
-                )
-            }
         }
     }
 
@@ -172,18 +135,22 @@ mod test {
         let mut hs = HashSet::new();
         hs.insert("hello".to_string());
         hs.insert("there".to_string());
-        hs.insert("general".to_string());
-        hs.insert("kenobi".to_string());
         TestStruct::verify(&hs);
     }
 
     #[test]
     #[should_panic]
-    fn underived_verify_impl_rejects_incomplete_matches() {
+    fn underived_verify_impl_rejects_incomplete_matches_hello() {
         let mut hs = HashSet::new();
         hs.insert("hello".to_string());
+        TestStruct::verify(&hs);
+    }
+
+    #[test]
+    #[should_panic]
+    fn underived_verify_impl_rejects_incomplete_matches_there() {
+        let mut hs = HashSet::new();
         hs.insert("there".to_string());
-        hs.insert("general".to_string());
         TestStruct::verify(&hs);
     }
 
@@ -192,47 +159,30 @@ mod test {
         let mut hm = HashMap::new();
         hm.insert("hello", "You are".to_string());
         hm.insert("there", "a".to_string());
-        hm.insert("general", "bold".to_string());
-        hm.insert("kenobi", "one".to_string());
         TestStruct::from_matches(&hm).expect("should generate struct");
     }
 
     #[test]
-    fn underived_matches_rejects_incomplete() {
+    fn underived_matches_rejects_incomplete_hello() {
         let mut hm = HashMap::new();
         hm.insert("hello", "You are".to_string());
-        hm.insert("there", "a".to_string());
-        hm.insert("general", "bold".to_string());
         TestStruct::from_matches(&hm).expect_err("should not generate struct");
     }
-}
 
-//#[cfg(test)]
-//mod integration_test {
-//    use super::*;
-//    use std::convert::TryFrom;
-//
-//    #[test]
-//    fn literal_only() {
-//        let path_matcher = PathMatcher::try_from("/hello/there/general/kenobi").expect("Should parse");
-//        let (_, dict) = path_matcher.match_path("/hello/there/general/kenobi").expect("should match");
-//        assert_eq!(dict.len(), 0);
-//    }
-//
-//    #[test]
-//    fn single_match_any_should_fail_to_match_over_separators() {
-//        let path_matcher = PathMatcher::try_from("/{test}/kenobi").expect("Should parse");
-//        path_matcher.match_path("/hello/there/general/kenobi").expect_err("should not match");
-//    }
-//
-//    #[test]
-//    fn single_match_any_should_match_within_separator() {
-//        let path_matcher = PathMatcher::try_from("/{}/kenobi").expect("Should parse");
-//        path_matcher.match_path("/hello/kenobi").expect("should match");
-//    }
-//
-//    #[test]
-//    fn cant_capture_numeral_idents() {
-//        PathMatcher::try_from("/{3hello}").expect_err("Should not parse");
-//    }
-//}
+    #[test]
+    fn underived_matches_rejects_incomplete_there() {
+        let mut hm = HashMap::new();
+        hm.insert("there", "You are".to_string());
+        TestStruct::from_matches(&hm).expect_err("should not generate struct");
+    }
+
+    #[test]
+    fn error_display_missing_field() {
+        let err = FromMatchesError::MissingField {
+            field_name: "hello".to_string(),
+        };
+        let displayed = format!("{}", err);
+        let expected = "The field: 'hello' was not present in your path matcher.";
+        assert_eq!(displayed, expected);
+    }
+}

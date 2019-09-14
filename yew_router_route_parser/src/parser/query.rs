@@ -100,7 +100,7 @@ fn rest_query_or_optional_rest_query(
             "optional & query parser",
             optional_matches_v(rest_query_parser),
         ),
-        context("& query parser", rest_query_parser),
+        rest_query_parser,
     ))(i)
 }
 
@@ -113,10 +113,7 @@ fn rest_query_or_optional_rest_query(
 /// * etc...
 fn query_parser_impl(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     map(
-        pair(
-            context("? query parser impl", begin_query_parser),
-            rest_query_or_optional_rest_query,
-        ),
+        pair(begin_query_parser, rest_query_or_optional_rest_query),
         |(mut first, mut rest)| {
             first.append(&mut rest);
             first

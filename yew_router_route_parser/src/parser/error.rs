@@ -1,17 +1,17 @@
 //! Error handling.
-use crate::parser::util::skip_until;
-use core::fmt::Write;
-use nom::character::complete::{char, anychar};
-use nom::error::VerboseError;
-use nom::multi::many0_count;
-use std::fmt::{Debug, Display, Error as FmtError, Formatter};
-use ExpectedConstruct as Ec;
-use nom::branch::alt;
-use nom::sequence::{terminated, pair};
 use crate::parser::core::valid_exact_match_characters;
 use crate::parser::util::consume_until;
+use crate::parser::util::skip_until;
+use core::fmt::Write;
+use nom::branch::alt;
 use nom::bytes::complete::tag;
+use nom::character::complete::{anychar, char};
 use nom::combinator::map;
+use nom::error::VerboseError;
+use nom::multi::many0_count;
+use nom::sequence::{pair, terminated};
+use std::fmt::{Debug, Display, Error as FmtError, Formatter};
+use ExpectedConstruct as Ec;
 
 const DOUBLE_SLASHES_NOT_ALLOWED: &str = "Double slashes ('//') are not allowed.";
 const EMPTY_MATCH_NOT_ALLOWED: &str =
@@ -75,6 +75,7 @@ impl Display for ExpectedConstruct {
     }
 }
 
+/// Simple offset calculator to determine where to place the carrot for indicating an error.
 fn offset(input: &str, substring: &str) -> usize {
     input.len() - substring.len()
 }
@@ -85,7 +86,7 @@ impl<'a> YewRouterParseError<'a> {
         let (substring, _kind) = err.errors.first().unwrap();
         let mut offset: usize = offset(input, substring);
 
-        let (expected, reason): (Vec<Ec>, String) =  if double_slash(input, substring, offset) {
+        let (expected, reason): (Vec<Ec>, String) = if double_slash(input, substring, offset) {
             (
                 vec![
                     Ec::ExactText,
@@ -127,10 +128,7 @@ impl<'a> YewRouterParseError<'a> {
             (vec![], TOO_MANY_OPTIONAL_CLOSES.to_string())
         } else if dangling_query(substring) {
             offset = dangling_query_offset(input);
-            (
-                vec![Ec::Equals],
-                DANGLING_QUERY.to_string()
-            )
+            (vec![Ec::Equals], DANGLING_QUERY.to_string())
         } else if offset == 0 {
             (
                 vec![Ec::Slash, Ec::Question, Ec::Hash, Ec::OpenBrace],
@@ -259,6 +257,7 @@ fn unclosed_optional(input: &str) -> bool {
     }
 }
 
+/// Detects if there are more closed than open parenthesis.
 fn too_many_closed_optional(input: &str) -> bool {
     if let Ok((_, open_count)) = many0_count(skip_until::<_, _, (), _>(char('(')))(input) {
         if let Ok((_, close_count)) = many0_count(skip_until::<_, _, (), _>(char(')')))(input) {
@@ -275,12 +274,10 @@ fn too_many_closed_optional(input: &str) -> bool {
 fn dangling_query(substring: &str) -> bool {
     match alt((
         terminated(skip_until(char('?')), valid_exact_match_characters),
-        terminated(skip_until(char('&')), valid_exact_match_characters)
-    ))
-    (substring) {
-        Ok((rest, _)) => {
-            rest.len() == 0 || rest.chars().next() == Some('&') || rest.chars().next() == Some('#')
-        },
+        terminated(skip_until(char('&')), valid_exact_match_characters),
+    ))(substring)
+    {
+        Ok((rest, _)) => rest.is_empty() || rest.starts_with('&') || rest.starts_with('#'),
         Err(x) => {
             dbg!(x);
             false
@@ -291,19 +288,16 @@ fn dangling_query(substring: &str) -> bool {
 fn dangling_query_offset(input: &str) -> usize {
     let (rest, _) = alt((
         terminated(skip_until(char('?')), valid_exact_match_characters),
-        terminated(skip_until(char('&')), valid_exact_match_characters)
+        terminated(skip_until(char('&')), valid_exact_match_characters),
     ))(input)
-        .unwrap();
+    .unwrap();
 
-    if rest.len() == 0 {
+    if rest.is_empty() {
         input.len()
     } else {
         input.len() - rest.len()
     }
-
 }
-
-
 
 #[cfg(test)]
 mod test_conditions {
@@ -350,12 +344,18 @@ mod test_conditions {
 
     #[test]
     fn multiple_query_beginnings_test() {
-        assert!(multiple_query_beginnings("?hello=there&bold=one?general=kenobi", "?general=kenobi"));
+        assert!(multiple_query_beginnings(
+            "?hello=there&bold=one?general=kenobi",
+            "?general=kenobi"
+        ));
     }
 
     #[test]
     fn multiple_query_beginnings_avoids_false_positive() {
-        assert!(!multiple_query_beginnings("(?hello=there)(?general=kenobi)", "(?general=kenobi)"));
+        assert!(!multiple_query_beginnings(
+            "(?hello=there)(?general=kenobi)",
+            "(?general=kenobi)"
+        ));
     }
 
     // ------
@@ -545,6 +545,21 @@ Message:         'Double slashes ('//') are not allowed.'"##;
         assert_eq!(error, expected)
     }
 
+    #[test]
+    fn too_many_close_parens() {
+        let input = "(/thing)(/other)(/thing))";
+        let error = parse(input).expect_err("should fail");
+
+        let expected = YewRouterParseError {
+            input,
+            offset: 24,
+            expected: vec![],
+            reason: TOO_MANY_OPTIONAL_CLOSES.to_string(),
+        };
+        assert_eq!(error, expected)
+    }
+
+    // --------------
 
     #[test]
     fn dangling_query_terminating() {

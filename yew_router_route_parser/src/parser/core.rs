@@ -33,9 +33,7 @@ pub fn valid_ident_characters(i: &str) -> IResult<&str, &str, VerboseError<&str>
 /// A more permissive set of characters than those specified in `valid_ident_characters that the route string will need to match exactly.
 pub fn valid_exact_match_characters(i: &str) -> IResult<&str, &str, VerboseError<&str>> {
     const INVALID_CHARACTERS: &str = " /?&#=\t\n(){}";
-    context("valid exact match", |i: &str| {
-        is_not(INVALID_CHARACTERS)(i)
-    })(i)
+    context("valid exact match", |i: &str| is_not(INVALID_CHARACTERS)(i))(i)
 }
 
 /// Captures groups of characters that will need to be matched exactly later.

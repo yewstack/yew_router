@@ -247,6 +247,18 @@ mod test {
     use super::*;
 
     #[test]
+    fn conversion_cap_or_exact_to_matcher_token_exact() {
+        let mt = MatcherToken::from(CaptureOrExact::Exact("hello".to_string()));
+        assert_eq!(mt, MatcherToken::Exact("hello".to_string()))
+    }
+
+    #[test]
+    fn conversion_cap_or_exact_to_matcher_token_capture() {
+        let mt = MatcherToken::from(CaptureOrExact::Capture(CaptureVariant::Unnamed));
+        assert_eq!(mt, MatcherToken::Capture(CaptureVariant::Unnamed))
+    }
+
+    #[test]
     fn optimization_inserts_optional_slash_at_end() {
         let tokens = vec![
             RouteParserToken::Separator,
@@ -306,6 +318,114 @@ mod test {
         let optimized = optimize_tokens(tokens, true);
         let expected = vec![MatcherToken::Exact("/thing/".to_string())];
         assert_eq!(expected, optimized);
+    }
+
+    #[test]
+    fn optimize_optional() {
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Exact("hello".to_string()),
+            RouteParserToken::Optional(vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Exact("hello".to_string()),
+            ]),
+        ];
+        let optimized = optimize_tokens(tokens, false);
+        let expected = vec![
+            MatcherToken::Exact("/hello".to_string()),
+            MatcherToken::Optional(vec![MatcherToken::Exact("/hello".to_string())]),
+        ];
+        assert_eq!(expected, optimized);
+    }
+
+    #[test]
+    fn optimize_optional_with_optional_slash() {
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Exact("hello".to_string()),
+            RouteParserToken::Optional(vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Exact("hello".to_string()),
+            ]),
+        ];
+        let optimized = optimize_tokens(tokens, true);
+        let expected = vec![
+            MatcherToken::Exact("/hello".to_string()),
+            MatcherToken::Optional(vec![MatcherToken::Exact("/hello".to_string())]),
+            MatcherToken::Optional(vec![MatcherToken::Exact("/".to_string())]),
+        ];
+        assert_eq!(expected, optimized);
+    }
+
+    #[test]
+    fn optimize_capture_all() {
+        let tokens = vec![RouteParserToken::Capture(CaptureVariant::ManyNamed(
+            "hello".to_string(),
+        ))];
+        let optimized = optimize_tokens(tokens, true);
+        let expected = vec![MatcherToken::Capture(CaptureVariant::ManyNamed(
+            "hello".to_string(),
+        ))];
+        assert_eq!(expected, optimized);
+    }
+
+    #[test]
+    fn optimize_capture_everything_after_initial_slash() {
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Capture(CaptureVariant::ManyNamed("hello".to_string())),
+        ];
+        let optimized = optimize_tokens(tokens, true);
+        let expected = vec![
+            MatcherToken::Exact("/".to_string()),
+            MatcherToken::Capture(CaptureVariant::ManyNamed("hello".to_string())),
+        ];
+        assert_eq!(expected, optimized);
+    }
+
+    #[test]
+    fn optimize_query_capture() {
+        let tokens = vec![
+            RouteParserToken::QueryBegin,
+            RouteParserToken::QueryCapture {
+                ident: "hello".to_string(),
+                capture_or_match: CaptureOrExact::Capture(CaptureVariant::Unnamed),
+            },
+        ];
+        let optimized = optimize_tokens(tokens, true);
+        let expected = vec![
+            MatcherToken::Exact("?hello=".to_string()),
+            MatcherToken::Capture(CaptureVariant::Unnamed),
+        ];
+        assert_eq!(expected, optimized);
+    }
+
+    #[test]
+    fn next_delimiter_simple() {
+        let tokens = vec![MatcherToken::Exact("/".to_string())];
+        next_delimiters(tokens.iter().peekable())("/").expect("should match");
+    }
+
+    #[test]
+    fn next_delimiter_optional() {
+        let tokens = vec![
+            MatcherToken::Exact("/thing".to_string()),
+            MatcherToken::Optional(vec![MatcherToken::Exact("/".to_string())]),
+        ];
+        next_delimiters(tokens.iter().peekable())("/thing").expect("should match");
+        next_delimiters(tokens.iter().peekable())("/thing/").expect("should match");
+    }
+
+    #[test]
+    fn next_delimiter_nested_optional() {
+        let tokens = vec![
+            MatcherToken::Exact("/thing".to_string()),
+            MatcherToken::Optional(vec![MatcherToken::Optional(vec![MatcherToken::Exact(
+                "/".to_string(),
+            )])]),
+        ];
+        next_delimiters(tokens.iter().peekable())("/thing").expect("should match");
+        next_delimiters(tokens.iter().peekable())("/thing/").expect("should match");
     }
 
 }

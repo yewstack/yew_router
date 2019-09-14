@@ -1,4 +1,5 @@
 use crate::parser::path::section_matchers; // TODO possibly duplicate this function (loosen its requirements for this module eg. allow '/' characters.)
+use crate::parser::util::vectorize;
 use crate::parser::util::{optional_matches, optional_matches_v};
 use crate::parser::RouteParserToken;
 use nom::branch::alt;
@@ -34,8 +35,9 @@ fn fragment_parser_with_optional_item(
 pub fn fragment_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     fn inner_fragment_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
         alt((
-            context("fragment", simple_fragment_parser), // #item
-            context("fragment optional item", fragment_parser_with_optional_item), // #(item)
+            simple_fragment_parser,             // #item
+            fragment_parser_with_optional_item, // #(item)
+            vectorize(begin_fragment_token),    // #
         ))(i)
     }
     context(
@@ -45,4 +47,34 @@ pub fn fragment_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseE
             optional_matches_v(inner_fragment_parser), // (#(item)) | (#item)
         )),
     )(i)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn empty_fragment() {
+        fragment_parser("#").expect("should parse");
+    }
+
+    #[test]
+    fn simple_fragment() {
+        fragment_parser("#hello").expect("should parse");
+    }
+
+    #[test]
+    fn optional_fragment() {
+        fragment_parser("#(hello)").expect("should parse");
+    }
+
+    #[test]
+    fn entirely_optional_simple_fragment() {
+        fragment_parser("(#)").expect("should parse");
+    }
+
+    #[test]
+    fn entirely_optional_fragment() {
+        fragment_parser("(#hello)").expect("should parse");
+    }
 }

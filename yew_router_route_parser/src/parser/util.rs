@@ -83,7 +83,6 @@ where
     ));
     move |i: &str| {
         let (i, (first, _stop)): (&str, (Vec<char>, &str)) = (f)(i)?;
-        log::trace!("consume until - first: {:?}, stop: {}", first, _stop);
         let ret = first.into_iter().collect();
         Ok((i, ret))
     }
