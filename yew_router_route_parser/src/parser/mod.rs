@@ -1,7 +1,7 @@
 //! Parser that consumes a string and produces the first representation of the matcher.
 use nom::branch::alt;
 use nom::combinator::{all_consuming, map, map_opt, opt};
-use nom::error::{context, ErrorKind, ParseError, VerboseError};
+use nom::error::{context, VerboseError};
 use nom::sequence::tuple;
 
 mod core;

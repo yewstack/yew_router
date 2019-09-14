@@ -1,15 +1,12 @@
 //! Error handling.
 use crate::parser::core::valid_exact_match_characters;
-use crate::parser::util::consume_until;
 use crate::parser::util::skip_until;
 use core::fmt::Write;
 use nom::branch::alt;
-use nom::bytes::complete::tag;
-use nom::character::complete::{anychar, char};
-use nom::combinator::map;
+use nom::character::complete::{char};
 use nom::error::VerboseError;
 use nom::multi::many0_count;
-use nom::sequence::{pair, terminated};
+use nom::sequence::{terminated};
 use std::fmt::{Debug, Display, Error as FmtError, Formatter};
 use ExpectedConstruct as Ec;
 
@@ -44,6 +41,7 @@ pub enum ExpectedConstruct {
     OpenBrace,
     CloseBrace,
     OpenParen,
+    #[allow(unused)]
     CloseParen,
     StarColonIdent,
     Star,
