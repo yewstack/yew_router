@@ -5,7 +5,7 @@ use nom::branch::alt;
 use nom::character::complete::char;
 use nom::combinator::{map, opt};
 use nom::error::{context, VerboseError};
-use nom::multi::many0;
+use nom::multi::{many0, many1};
 use nom::sequence::pair;
 use nom::IResult;
 
@@ -37,7 +37,7 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError
     let many_inner_paths = context(
         "many inner paths",
         map(
-            many0(inner_path_parser),
+            many1(inner_path_parser),
             |tokens: Vec<Vec<RouteParserToken>>| tokens.into_iter().flatten().collect::<Vec<_>>(),
         ),
     );
@@ -45,26 +45,33 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError
     // (/item)(/item)(/item)
     let many_optional_inner_paths = context(
         "many optional inner paths",
-        many0(optional_matches(inner_path_parser)),
+        many1(optional_matches(inner_path_parser)),
     );
 
-    let many_optional_after_concrete_inner = context(
-        "many optional after concrete paths",
-        map(
-            pair(many_inner_paths, many_optional_inner_paths),
-            |(mut first, second)| {
-                first.extend(second);
-                first
-            },
-        ),
+//    let many_optional_after_concrete_inner = context(
+//        "many optional after concrete paths",
+//        map(
+//            pair(many_inner_paths, many_optional_inner_paths),
+//            |(mut first, second)| {
+//                first.extend(second);
+//                first
+//            },
+//        ),
+//    );
+
+    let either_option_or_concrete = map(
+        many0(alt((many_inner_paths, many_optional_inner_paths))),
+        |x: Vec<Vec<RouteParserToken>>|{
+            x.into_iter().flatten().collect::<Vec<_>>()
+        }
     );
 
     // accept any number of /thing or just '/
     context(
         "path parser",
-        alt((
+        nom::combinator::verify(alt((
             map(
-                pair(many_optional_after_concrete_inner, opt(separator_token)),
+                pair(either_option_or_concrete, opt(separator_token)),
                 |(mut paths, ending_separator)| {
                     paths.extend(ending_separator);
                     paths
@@ -72,6 +79,8 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError
             ),
             map(separator_token, |x| vec![x]),
         )),
+        validate_path_parser_tokens
+        ),
     )(i)
 }
 
@@ -119,6 +128,33 @@ pub fn section_matchers(i: &str) -> IResult<&str, Vec<RouteParserToken>, Verbose
     match_next_section_matchers(i, tokens)
 }
 
+/// Makes sure that two capture groups can't be next to each other, even across optional boundaries.
+///
+/// The reason this is needed, is that by introducing optional sections,
+/// the possibility exists that someone might create a `(/capture)capture` arrangement.
+/// This shouldn't be allowed because due to the lack of an exact matcher between them,
+/// the second capture will never get a chance to run.
+fn validate_path_parser_tokens(tokens: &[RouteParserToken]) -> bool {
+    let mut linearized_tokens = vec![];
+    // Pull the tokens present in optional tokens into a single, non-nested collection of tokens.
+    tokens
+        .iter()
+        .for_each(|t| {
+            match t {
+                RouteParserToken::Optional(inner) => linearized_tokens.extend(inner),
+                token @ _ => linearized_tokens.push(token)
+            }
+        });
+    linearized_tokens
+        .windows(2)
+        .all(|win| {
+            match win {
+                [RouteParserToken::Capture(_), RouteParserToken::Capture(_)] => false,
+                _ => true
+            }
+        })
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -127,6 +163,7 @@ mod test {
     use nom::error::ErrorKind::Alt;
     use nom::error::ParseError;
     use nom::error::VerboseErrorKind::{Char, Context, Nom};
+    use crate::CaptureVariant;
     use nom::Err;
 
     #[test]
@@ -210,13 +247,66 @@ mod test {
         assert_eq!(tokens, expected);
     }
 
+
+    #[test]
+    fn option_section_between_exacts() {
+        let (_, tokens) = path_parser("/first(/second)/third").expect("Should validate");
+        let expected = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Exact("first".to_string()),
+            RouteParserToken::Optional(vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Exact("second".to_string()),
+            ]),
+            RouteParserToken::Separator,
+            RouteParserToken::Exact("third".to_string()),
+        ];
+        assert_eq!(tokens, expected);
+    }
+
+
+    #[test]
+    fn option_section_between_capture_then_exact() {
+        let (_, tokens) = path_parser("/first(/{})/third").expect("Should validate");
+        let expected = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Exact("first".to_string()),
+            RouteParserToken::Optional(vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Capture(CaptureVariant::Unnamed)
+            ]),
+            RouteParserToken::Separator,
+            RouteParserToken::Exact("third".to_string()),
+        ];
+        assert_eq!(tokens, expected);
+    }
+
+
+    #[test]
+    fn option_section_between_exact_then_capture() {
+        let (_, tokens) = path_parser("/first(/second)/{}").expect("Should validate");
+        let expected = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Exact("first".to_string()),
+            RouteParserToken::Optional(vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Exact("second".to_string()),
+            ]),
+            RouteParserToken::Separator,
+            RouteParserToken::Capture(CaptureVariant::Unnamed)
+        ];
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn option_section_between_captures_fails() {
+        all_consuming(path_parser)("/first(/{}){}").expect_err("Should not validate");
+    }
+
+
     #[test]
     fn option_section_can_start_matcher_string() {
         path_parser("(/hello)").expect("Should validate");
     }
 
-    #[test]
-    fn cant_alternate_optional_sections() {
-        all_consuming(path_parser)("/hello(/hello)/hello").expect_err("Should not validate");
-    }
 }
