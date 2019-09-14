@@ -5,7 +5,7 @@ use nom::branch::alt;
 use nom::character::complete::char;
 use nom::combinator::{map, opt};
 use nom::error::{context, VerboseError};
-use nom::multi::{many0, many1};
+use nom::multi::{many1};
 use nom::sequence::pair;
 use nom::IResult;
 
@@ -14,9 +14,9 @@ use nom::IResult;
 /// * /item/item
 /// * /item/item/item
 /// * /item(/item)
-/// * /item(/item)(/item) and so on
+/// * /item(/item)(/item)
 /// * (/item)
-/// * (/item)(/item) and so on
+/// * (/item)/item(/item)
 pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     fn inner_path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
         context(
@@ -48,19 +48,8 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError
         many1(optional_matches(inner_path_parser)),
     );
 
-//    let many_optional_after_concrete_inner = context(
-//        "many optional after concrete paths",
-//        map(
-//            pair(many_inner_paths, many_optional_inner_paths),
-//            |(mut first, second)| {
-//                first.extend(second);
-//                first
-//            },
-//        ),
-//    );
-
     let either_option_or_concrete = map(
-        many0(alt((many_inner_paths, many_optional_inner_paths))),
+        many1(alt((many_inner_paths, many_optional_inner_paths))),
         |x: Vec<Vec<RouteParserToken>>|{
             x.into_iter().flatten().collect::<Vec<_>>()
         }
@@ -84,6 +73,7 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError
     )(i)
 }
 
+/// The separator for paths sections.
 fn separator_token(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
     context("/", map(char('/'), |_| RouteParserToken::Separator))(i)
 }
@@ -149,7 +139,7 @@ fn validate_path_parser_tokens(tokens: &[RouteParserToken]) -> bool {
         .windows(2)
         .all(|win| {
             match win {
-                [RouteParserToken::Capture(_), RouteParserToken::Capture(_)] => false,
+                [RouteParserToken::Capture(_), RouteParserToken::Capture(_)] => false, // TODO because of this, would it be possible to relax the restriction around mandating path optionals start with '/'
                 _ => true
             }
         })
