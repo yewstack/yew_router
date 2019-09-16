@@ -1,8 +1,9 @@
 //! Parser that consumes a string and produces the first representation of the matcher.
 use nom::branch::alt;
-use nom::combinator::{all_consuming, map, map_opt, opt};
+use nom::combinator::{all_consuming, map_opt, opt};
 use nom::error::{context, VerboseError};
 use nom::sequence::tuple;
+use self::util::vectorize;
 
 mod core;
 mod error;
@@ -96,7 +97,7 @@ pub fn parse_impl(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseErro
     context(
         "parser",
         alt((
-            all_consuming(map(core::capture, |t| vec![t])), // TODO this should probably only be a subset of the normal capture. No {} or {named}
+            all_consuming(vectorize(core::capture)), // TODO this should probably only be a subset of the normal capture. No {} or {named}
             all_consuming(map_opt(
                 context(
                     "main matcher",
@@ -128,6 +129,7 @@ pub fn parse_impl(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseErro
     )(i)
     .map(|(_, tokens)| tokens) // because of all_consuming, there should either be an error, or a success, no intermediate remaining input.
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -192,11 +194,7 @@ mod tests {
 
     #[test]
     fn parser_cant_contain_multiple_matches_in_a_row_0() {
-        let _e = parse("/path{}{match}").expect_err("Should not validate");
-        //        let expected = nom::Err::Error(VerboseError {
-        //            errors: vec![]
-        //        });
-        //        assert_eq!(e, expected)
+         parse("/path{}{match}").expect_err("Should not validate");
     }
     #[test]
     fn parser_cant_contain_multiple_matches_in_a_row_1() {
@@ -224,14 +222,6 @@ mod tests {
 
     #[test]
     fn expected_slash_question_or_hash() {
-        let _e = parse("hello").expect_err("Should not parse");
-        //        let expected = nom::Err::Error(VerboseError {
-        //            errors: vec![]
-        //        });
-        //        if let nom::Err::Error(er) = &_e {
-        //            println!("{}", nom::error::convert_error("hello", er.clone()))
-        //        }
-        //
-        //        assert_eq!(_e, expected)
+        parse("hello").expect_err("Should not parse");
     }
 }

@@ -19,34 +19,25 @@ use nom::IResult;
 /// * (/item)/item(/item)
 pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
     fn inner_path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError<&str>> {
-        context(
-            "/ and item",
-            map(
-                pair(separator_token, section_matchers),
-                |(sep, sections)| {
-                    let mut x = Vec::with_capacity(sections.len() + 1);
-                    x.push(sep);
-                    x.extend(sections);
-                    x
-                },
-            ),
+        map(
+            pair(separator_token, section_matchers),
+            |(sep, sections)| {
+                let mut x = Vec::with_capacity(sections.len() + 1);
+                x.push(sep);
+                x.extend(sections);
+                x
+            },
         )(i)
     }
 
     // /item/item/item
-    let many_inner_paths = context(
-        "many inner paths",
-        map(
-            many1(inner_path_parser),
-            |tokens: Vec<Vec<RouteParserToken>>| tokens.into_iter().flatten().collect::<Vec<_>>(),
-        ),
+    let many_inner_paths = map(
+        many1(inner_path_parser),
+        |tokens: Vec<Vec<RouteParserToken>>| tokens.into_iter().flatten().collect::<Vec<_>>(),
     );
 
     // (/item)(/item)(/item)
-    let many_optional_inner_paths = context(
-        "many optional inner paths",
-        many1(optional_matches(inner_path_parser)),
-    );
+    let many_optional_inner_paths = many1(optional_matches(inner_path_parser));
 
     let either_option_or_concrete = map(
         many1(alt((many_inner_paths, many_optional_inner_paths))),

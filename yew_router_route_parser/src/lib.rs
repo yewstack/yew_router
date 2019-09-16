@@ -78,6 +78,12 @@ pub trait FromMatches: Sized {
     fn verify(_field_names: &HashSet<String>) {}
 }
 
+impl FromMatches for () {
+    fn from_matches(_matches: &HashMap<&str, String>) -> Result<Self, FromMatchesError> {
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
