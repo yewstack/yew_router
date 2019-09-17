@@ -2,7 +2,6 @@ pub mod render;
 pub mod route;
 pub mod router;
 
-pub mod matcher;
 
 use crate::route_agent::RouterState;
 

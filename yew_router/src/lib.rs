@@ -33,11 +33,16 @@ pub mod components;
 mod router_component;
 #[cfg(feature = "yew_router")]
 pub use router_component::{
-    render, render::component, route, router, Render, Route, Router, YewRouterState, matcher
+    render, render::component, route, router, Render, Route, Router, YewRouterState,
 };
 
 #[cfg(feature = "yew_router")]
-pub use yew_router_path_matcher as path_matcher;
+pub use matcher::route_matcher as path_matcher;
+
+
+#[cfg(feature = "yew_router")]
+pub mod matcher;
+
 
 #[cfg(feature = "yew_router")]
 pub use yew_router_derive::{route, FromMatches};

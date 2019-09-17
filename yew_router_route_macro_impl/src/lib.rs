@@ -111,7 +111,7 @@ pub fn route(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         {
-            let settings = ::yew_router::path_matcher::MatcherSettings {
+            let settings = ::yew_router::matcher::route_matcher::MatcherSettings {
                 strict: #strict,
                 /// A matcher must consume all of the input to succeed.
                 complete: #complete,
@@ -119,7 +119,7 @@ pub fn route(input: TokenStream) -> TokenStream {
                 case_insensitive: #case_insensitive
             };
             ::yew_router::matcher::Matcher::from(
-                ::yew_router::path_matcher::PathMatcher {
+                ::yew_router::matcher::route_matcher::RouteMatcher {
                     tokens : vec![#(#t),*],
                     settings
                 }

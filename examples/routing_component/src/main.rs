@@ -13,7 +13,7 @@ use crate::a_component::AModel;
 use crate::b_component::BModel;
 use crate::c_component::CModel;
 
-use yew_router::path_matcher::Matches;
+use yew_router::matcher::Matches;
 use yew_router::render::component;
 use yew_router::render::render;
 

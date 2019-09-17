@@ -1,7 +1,7 @@
 use regex::Regex;
-use yew_router_path_matcher::Matches;
+use super::Matches;
 use std::collections::{HashMap};
-use crate::router_component::matcher::MatcherProvider;
+use crate::matcher::MatcherProvider;
 use super::Matcher;
 
 

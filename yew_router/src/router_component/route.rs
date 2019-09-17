@@ -4,7 +4,7 @@ use crate::router_component::render::Render;
 use crate::router_component::router::Router;
 use std::fmt::{Debug, Error as FmtError, Formatter};
 use yew::{Children, Component, ComponentLink, Properties, ShouldRender};
-use crate::router_component::matcher::Matcher;
+use crate::matcher::Matcher;
 
 /// A nested component used inside of [Router](struct.Router.html) that can determine if a
 /// sub-component can be rendered.

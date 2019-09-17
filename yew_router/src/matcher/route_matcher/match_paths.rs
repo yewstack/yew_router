@@ -1,6 +1,6 @@
-use crate::util::tag_possibly_case_sensitive;
-use crate::MatcherSettings;
-use crate::Matches;
+use crate::matcher::route_matcher::util::tag_possibly_case_sensitive;
+use crate::matcher::route_matcher::MatcherSettings;
+use crate::matcher::Matches;
 use log::{debug, trace};
 use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag};

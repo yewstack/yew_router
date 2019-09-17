@@ -4,7 +4,7 @@ use yew::html::ChildrenWithProps;
 use yew::prelude::*;
 use yew::Properties;
 use yew_router::components::RouterLink;
-use yew_router::path_matcher::PathMatcher;
+use yew_router::path_matcher::RouteMatcher;
 use yew_router::route_agent::RouteRequest::GetCurrentRoute;
 use yew_router::{RouteAgent, RouteInfo};
 
@@ -100,8 +100,8 @@ impl Renderable<Guide> for Guide {
 }
 
 fn render_page_list_item(props: PageProps, route: &RouteInfo) -> Html<Guide> {
-    let pm: PathMatcher = PathMatcher::try_from(&props.page_url).unwrap();
-    if pm.match_path(route).is_ok() {
+    let pm: RouteMatcher = RouteMatcher::try_from(&props.page_url).unwrap();
+    if pm.match_route(route).is_ok() {
         log::debug!("Found an active");
         html! {
             <li style="padding-left: 4px; padding-right: 4px; padding-top: 6px; padding-bottom: 6px; background-color: lightgray;">

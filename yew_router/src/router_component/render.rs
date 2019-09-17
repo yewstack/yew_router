@@ -6,7 +6,7 @@ use std::rc::Rc;
 use yew::virtual_dom::vcomp::ScopeHolder;
 use yew::virtual_dom::{VComp, VNode};
 use yew::{Component, Html, Renderable};
-use yew_router_path_matcher::{FromMatches, Matches, RenderFn};
+use crate::matcher::{FromMatches, Matches, RenderFn};
 
 /// Creates a component using supplied props.
 fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(

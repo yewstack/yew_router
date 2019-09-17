@@ -1,15 +1,4 @@
-//! Lib for matching route strings based on tokens generated from the yew_router_route_parser crate.
-
-#![deny(
-    missing_docs,
-    missing_debug_implementations,
-    missing_copy_implementations,
-    trivial_casts,
-    trivial_numeric_casts,
-    unsafe_code,
-    unstable_features,
-    unused_qualifications
-)]
+//! Module for matching route strings based on tokens generated from the yew_router_route_parser crate.
 
 pub use yew_router_route_parser::{CaptureVariant, FromMatches, FromMatchesError, MatcherToken};
 
@@ -18,29 +7,17 @@ mod util;
 
 use nom::combinator::all_consuming;
 use nom::IResult;
-use std::collections::{HashMap, HashSet};
-use yew::{Component, Html};
+use std::collections::HashSet;
 use yew_router_route_parser::{optimize_tokens, parser};
+use super::Matches;
+use super::Matcher;
 
-/// Render function.
-pub trait RenderFn<CTX: Component>: Fn(&Matches) -> Option<Html<CTX>> {}
-
-impl<CTX, T> RenderFn<CTX> for T
-where
-    T: Fn(&Matches) -> Option<Html<CTX>>,
-    CTX: Component,
-{
-}
-
-/// Matches contain keys corresponding to named capture sections,
-/// and values containing the content captured by those sections.
-pub type Matches<'a> = HashMap<&'a str, String>;
 
 /// Attempts to match routes, transform the route to Component props and render that Component.
 ///
 /// The CTX refers to the context of the parent rendering this (The Router).
 #[derive(Debug, PartialEq, Clone)]
-pub struct PathMatcher {
+pub struct RouteMatcher {
     /// Tokens used to determine how the matcher will match a route string.
     pub tokens: Vec<MatcherToken>,
     /// Settings
@@ -57,6 +34,7 @@ pub struct MatcherSettings {
     /// All literal matches do not care about case.
     pub case_insensitive: bool,
 }
+
 impl Default for MatcherSettings {
     fn default() -> Self {
         MatcherSettings {
@@ -67,13 +45,13 @@ impl Default for MatcherSettings {
     }
 }
 
-impl PathMatcher {
+impl RouteMatcher {
     /// Attempt to create a PathMatcher from a "matcher string".
     pub fn try_from(i: &str) -> Result<Self, ()> // TODO: Error handling
         where {
         let tokens = parser::parse(i).map_err(|_| ())?;
         let settings = MatcherSettings::default();
-        let pm = PathMatcher {
+        let pm = RouteMatcher {
             tokens: optimize_tokens(tokens, !settings.strict),
             settings,
         };
@@ -83,7 +61,7 @@ impl PathMatcher {
     // TODO see if more error handling can be done here.
 
     /// Match a route string.
-    pub fn match_path<'a, 'b: 'a>(&'b self, i: &'a str) -> IResult<&'a str, Matches<'a>> {
+    pub fn match_route<'a, 'b: 'a>(&'b self, i: &'a str) -> IResult<&'a str, Matches<'a>> {
         if self.settings.complete {
             all_consuming(match_paths::match_path(&self.tokens, &self.settings))(i)
         } else {
@@ -122,6 +100,12 @@ impl PathMatcher {
     }
 }
 
+impl From<RouteMatcher> for Matcher {
+    fn from(value: RouteMatcher) -> Self {
+        Matcher::RouteMatcher(value)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -135,10 +119,10 @@ mod tests {
     //        });
     //    }
 
-    impl From<Vec<RouteParserToken>> for PathMatcher {
+    impl From<Vec<RouteParserToken>> for RouteMatcher {
         fn from(tokens: Vec<RouteParserToken>) -> Self {
             let settings = MatcherSettings::default();
-            PathMatcher {
+            RouteMatcher {
                 tokens: optimize_tokens(tokens, !settings.strict),
                 settings,
             }
@@ -148,8 +132,8 @@ mod tests {
     #[test]
     fn basic_separator() {
         let tokens = vec![RouteParserToken::Separator];
-        let path_matcher = PathMatcher::from(tokens);
-        path_matcher.match_path("/").expect("should parse");
+        let path_matcher = RouteMatcher::from(tokens);
+        path_matcher.match_route("/").expect("should parse");
     }
 
     #[test]
@@ -160,8 +144,8 @@ mod tests {
             RouteParserToken::Separator,
         ];
 
-        let path_matcher = PathMatcher::from(tokens);
-        path_matcher.match_path("/hello/").expect("should parse");
+        let path_matcher = RouteMatcher::from(tokens);
+        path_matcher.match_route("/hello/").expect("should parse");
     }
 
     #[test]
@@ -171,9 +155,9 @@ mod tests {
             RouteParserToken::Capture(CaptureVariant::Named("hello".to_string())),
             RouteParserToken::Separator,
         ];
-        let path_matcher = PathMatcher::from(tokens);
+        let path_matcher = RouteMatcher::from(tokens);
         let (_, matches) = path_matcher
-            .match_path("/general_kenobi/")
+            .match_route("/general_kenobi/")
             .expect("should parse");
         assert_eq!(matches["hello"], "general_kenobi".to_string())
     }
@@ -184,9 +168,9 @@ mod tests {
             RouteParserToken::Separator,
             RouteParserToken::Capture(CaptureVariant::Named("hello".to_string())),
         ];
-        let path_matcher = PathMatcher::from(tokens);
+        let path_matcher = RouteMatcher::from(tokens);
         let (_, matches) = path_matcher
-            .match_path("/general_kenobi")
+            .match_route("/general_kenobi")
             .expect("should parse");
         assert_eq!(matches["hello"], "general_kenobi".to_string())
     }
@@ -199,8 +183,8 @@ mod tests {
             RouteParserToken::Separator,
             RouteParserToken::Capture(CaptureVariant::Unnamed),
         ];
-        let path_matcher = PathMatcher::from(tokens);
-        let (_, _matches) = path_matcher.match_path("/a/").expect("should parse");
+        let path_matcher = RouteMatcher::from(tokens);
+        let (_, _matches) = path_matcher.match_route("/a/").expect("should parse");
     }
 
     #[test]
@@ -212,9 +196,9 @@ mod tests {
             RouteParserToken::Separator,
             RouteParserToken::Exact("a".to_string()),
         ];
-        let path_matcher = PathMatcher::from(tokens);
+        let path_matcher = RouteMatcher::from(tokens);
         let (_, _matches) = path_matcher
-            .match_path("/garbage1/garbage2/garbage3/a")
+            .match_route("/garbage1/garbage2/garbage3/a")
             .expect("should parse");
     }
 
@@ -224,9 +208,9 @@ mod tests {
             RouteParserToken::Separator,
             RouteParserToken::Capture(CaptureVariant::NumberedUnnamed { sections: 3 }),
         ];
-        let path_matcher = PathMatcher::from(tokens);
+        let path_matcher = RouteMatcher::from(tokens);
         let (s, _matches) = path_matcher
-            .match_path("/garbage1/garbage2/garbage3")
+            .match_route("/garbage1/garbage2/garbage3")
             .expect("should parse");
         assert_eq!(s.len(), 0)
     }
@@ -242,9 +226,9 @@ mod tests {
             RouteParserToken::Separator,
             RouteParserToken::Exact("a".to_string()),
         ];
-        let path_matcher = PathMatcher::from(tokens);
+        let path_matcher = RouteMatcher::from(tokens);
         let (_, matches) = path_matcher
-            .match_path("/garbage1/garbage2/garbage3/a")
+            .match_route("/garbage1/garbage2/garbage3/a")
             .expect("should parse");
         assert_eq!(
             matches["captured"],
@@ -260,9 +244,9 @@ mod tests {
             RouteParserToken::Separator,
             RouteParserToken::Exact("a".to_string()),
         ];
-        let path_matcher = PathMatcher::from(tokens);
+        let path_matcher = RouteMatcher::from(tokens);
         let (_, _matches) = path_matcher
-            .match_path("/garbage1/garbage2/garbage3/a")
+            .match_route("/garbage1/garbage2/garbage3/a")
             .expect("should parse");
     }
 
@@ -274,9 +258,9 @@ mod tests {
             RouteParserToken::Separator,
             RouteParserToken::Exact("a".to_string()),
         ];
-        let path_matcher = PathMatcher::from(tokens);
+        let path_matcher = RouteMatcher::from(tokens);
         let (_, matches) = path_matcher
-            .match_path("/garbage1/garbage2/garbage3/a")
+            .match_route("/garbage1/garbage2/garbage3/a")
             .expect("should parse");
         assert_eq!(
             matches["captured"],

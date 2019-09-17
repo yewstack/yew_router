@@ -20,7 +20,9 @@ serde = "1.0"
 serde_derive = "1.0"
 yew = { git = "https://github.com/yewstack/yew", branch="master" }
 stdweb = "0.4"
-yew_router_path_matcher = {path = "../yew_router_path_matcher"}
+#yew_router_path_matcher = {path = "../yew_router_path_matcher"}
 yew_router_derive = {path = "../yew_router_derive"} # TODO Make this optional.
+yew_router_route_parser = {path = "../yew_router_route_parser"}
+nom = "5.0.0"
 
 regex = "1.3.1" # TODO make this optional.

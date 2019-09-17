@@ -13,7 +13,7 @@ use yew::virtual_dom::VChild;
 use yew::{
     html, virtual_dom::VNode, Component, ComponentLink, Html, Properties, Renderable, ShouldRender,
 };
-use yew_router_path_matcher::RenderFn;
+use crate::matcher::RenderFn;
 
 /// Rendering control flow component.
 ///
