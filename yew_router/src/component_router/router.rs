@@ -194,9 +194,9 @@ fn try_render_child<T: for<'de> YewRouterState<'de>>(
     route_child
         .props
         .matcher
-        .match_path(route_string)
+        .match_route_string(route_string)
         .map(
-            |(_rest, matches): (&str, std::collections::HashMap<&str, String>)| {
+            |matches:  std::collections::HashMap<&str, String>| {
                 match render {
                     Some(render) => {
                         if children_present {
@@ -227,7 +227,6 @@ fn try_render_child<T: for<'de> YewRouterState<'de>>(
                 }
             },
         )
-        .ok()
         .flatten_stable()
 }
 
