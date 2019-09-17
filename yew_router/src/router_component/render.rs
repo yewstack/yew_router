@@ -1,5 +1,5 @@
 //! Wrapper around RenderFn that allows clones.
-use crate::component_router::YewRouterState;
+use crate::router_component::YewRouterState;
 use crate::router::Router;
 use std::fmt::{Debug, Error as FmtError, Formatter};
 use std::rc::Rc;

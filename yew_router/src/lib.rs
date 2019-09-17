@@ -30,10 +30,10 @@ pub type RouteInfo = route_info::RouteInfo<()>;
 pub mod components;
 
 #[cfg(feature = "yew_router")]
-mod component_router;
+mod router_component;
 #[cfg(feature = "yew_router")]
-pub use component_router::{
-    render, render::component, route, router, Render, Route, Router, YewRouterState,
+pub use router_component::{
+    render, render::component, route, router, Render, Route, Router, YewRouterState, matcher
 };
 
 #[cfg(feature = "yew_router")]

@@ -81,7 +81,6 @@ impl PathMatcher {
     }
 
     // TODO see if more error handling can be done here.
-    // TODO, should find some way to support '/' characters in fragment. In the transform function, it could keep track of the seen hash begin yet, and transform captures based on that.
 
     /// Match a route string.
     pub fn match_path<'a, 'b: 'a>(&'b self, i: &'a str) -> IResult<&'a str, Matches<'a>> {

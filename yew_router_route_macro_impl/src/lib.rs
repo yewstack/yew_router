@@ -118,7 +118,7 @@ pub fn route(input: TokenStream) -> TokenStream {
                 /// All literal matches do not care about case.
                 case_insensitive: #case_insensitive
             };
-            ::yew_router::route::Matcher::from(
+            ::yew_router::matcher::Matcher::from(
                 ::yew_router::path_matcher::PathMatcher {
                     tokens : vec![#(#t),*],
                     settings
