@@ -16,13 +16,15 @@
 //! ## State and Aliases
 //! Because the History API allows you to store data along with a route string,
 //! most types have at type parameter that allows you to specify which type is being stored.
-//! As this behavior is uncommon, aliases are provided to remove the need to specify the storage
-//! type you likely aren't using.
+//! As this behavior is uncommon, aliases using the unit type (`()`) are provided to remove the
+//! need to specify the storage type you likely aren't using.
 //!
 //! If you do indeed want to specify the data to be stored in the History API consider the following:
 //! * The aliased types are typically named the same as their implementations, but are importable from a module higher up the hierarchy. You will have to look around for them in the docs as they aren't reexported at the highest level like their respective aliases.
+//! * You should use the same state type parameter everywhere. Having different state types means multiple RouteAgents will be spawned and they will not communicate with routers of differing state types.
 //! * You probably want to wrap your type in an `Option` and alias your type to make specifying it easier.
 //! * There are varying, mostly undocumented, limits to the maximum size of objects you can store in the History API across different browsers (firefox appears to be the lowest bar at 640kb). Keeping this in mind for cross-browser compatibility is a must.
+//! * If you are building a large application, it is a good idea to alias all entities used from this crate to use your specific state type much like has already been done with `()`.
 //!
 //! ## Orphaning
 //! Currently it is possible to "orphan" components in Yew. This happens when a component doesn't display anymore,

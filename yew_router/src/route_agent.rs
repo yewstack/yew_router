@@ -51,7 +51,16 @@ pub enum RouteRequest<T> {
 
 impl<T> Transferable for RouteRequest<T> where for<'de> T: Serialize + Deserialize<'de> {}
 
-/// The Router agent holds on to the RouteService singleton and mediates access to it.
+/// The RouteAgent holds on to the RouteService singleton and mediates access to it.
+///
+/// It serves as a means to propagate messages to components interested in the state of the current route.
+///
+/// # Warning
+/// All routing-related components should use the same type parameter across your application.
+///
+/// If you don't, then multiple RouteAgents will be spawned, and will not communicate messages to
+/// routing components of different types.
+///
 pub struct RouteAgent<T>
 where
     for<'de> T: RouterState<'de>,
