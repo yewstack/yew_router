@@ -6,11 +6,15 @@ edition = "2018"
 
 
 [features]
-default = ["yew_router", "components"]
+default = ["router", "components", "matchers"]
 
-yew_router = ["router_agent"]
+router = ["router_agent", "yew_router_route_parser"]
+components = ["router_agent" ]
+
 router_agent = []
-components = ["router_agent"]
+matchers = [ "regex_matcher", "route_matcher"]
+regex_matcher = ["regex"]
+route_matcher = ["yew_router_route_parser", "yew_router_derive", "nom"]
 
 
 [dependencies]
@@ -20,9 +24,9 @@ serde = "1.0"
 serde_derive = "1.0"
 yew = { git = "https://github.com/yewstack/yew", branch="master" }
 stdweb = "0.4"
-#yew_router_path_matcher = {path = "../yew_router_path_matcher"}
-yew_router_derive = {path = "../yew_router_derive"} # TODO Make this optional.
-yew_router_route_parser = {path = "../yew_router_route_parser"}
-nom = "5.0.0"
 
-regex = "1.3.1" # TODO make this optional.
+
+yew_router_route_parser = {path = "../yew_router_route_parser", optional=true}
+yew_router_derive = {path = "../yew_router_derive", optional=true} # TODO Make this optional.
+nom = {version = "5.0.0", optional=true}
+regex = {version = "1.3.1", optional=true} # TODO make this optional.
