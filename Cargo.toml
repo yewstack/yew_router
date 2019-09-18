@@ -6,7 +6,6 @@ members = [
     "yew_router_derive",
     "yew_router_from_matches_macro_impl",
     "yew_router",
-    "integration_test",
     "examples/routing_component",
     "examples/guide",
     "examples/nested_routers"

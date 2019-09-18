@@ -34,11 +34,9 @@ pub use router_component::{
     render, render::component, route, router, Render, Route, Router, YewRouterState,
 };
 
-#[cfg(feature = "matcher")]
-pub use matcher::route_matcher as path_matcher;
 
 
-#[cfg(any(feature = "matcher", feature= "router" ) )]
+#[cfg(any(feature = "matchers", feature= "router" ) )]
 pub mod matcher;
 
 #[cfg(feature = "matchers")]

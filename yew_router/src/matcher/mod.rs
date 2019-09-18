@@ -5,7 +5,7 @@ use std::fmt::Debug;
 use std::collections::HashMap;
 use yew::{Component, Html};
 
-pub use yew_router_route_parser::FromMatches;
+pub use yew_router_route_parser::{FromMatches, FromMatchesError, CaptureVariant, MatcherToken};
 
 #[cfg(feature = "regex_matcher")]
 mod regex_matcher;
@@ -16,7 +16,7 @@ use regex::Regex;
 #[cfg(feature = "route_matcher")]
 pub mod route_matcher;
 #[cfg(feature = "route_matcher")]
-use self::route_matcher::{RouteMatcher};
+pub use self::route_matcher::{RouteMatcher};
 
 
 /// An enum that contains variants that can match a route string

@@ -63,8 +63,8 @@ pub fn from_matches(input: TokenStream) -> TokenStream {
     };
 
     let expanded = quote! {
-            use yew_router::path_matcher::FromMatchesError as __FromMatchesError;
-            use yew_router::path_matcher::FromMatches as __FromMatches;
+            use yew_router::matcher::FromMatchesError as __FromMatchesError;
+            use yew_router::matcher::FromMatches as __FromMatches;
             use std::collections::HashMap as __HashMap;
             use std::collections::HashSet as __HashSet;
     //        use std::convert::TryFrom as __TryFrom;
