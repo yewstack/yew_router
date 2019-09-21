@@ -77,7 +77,7 @@ pub use router_component::{
 pub mod matcher;
 
 #[cfg(feature = "matchers")]
-pub use yew_router_macro::FromMatches;
+pub use yew_router_macro::FromCaptures;
 
 /// The route macro produces a Matcher which can be used to determine if a route string should cause
 /// a section of html or component should render.

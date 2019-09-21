@@ -1,10 +1,10 @@
 use yew::prelude::*;
 use yew::Properties;
-use yew_router::FromMatches;
+use yew_router::FromCaptures;
 
 pub struct CModel;
 
-#[derive(PartialEq, Properties, FromMatches)]
+#[derive(PartialEq, Properties, FromCaptures)]
 pub struct Props {}
 
 pub enum Msg {}

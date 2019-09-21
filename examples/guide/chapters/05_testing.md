@@ -1,9 +1,9 @@
 # Testing
 
-To make sure that your router works reliably, you will want to test your `FromMatches` implementations, as well as the output of your `route!` macros.
+To make sure that your router works reliably, you will want to test your `FromCaptures` implementations, as well as the output of your `route!` macros.
 
 
-## FromMatches
+## FromCaptures
 Testing implementors of is simple enough.
 
 Just provide a `&Matches` (an alias of `HashMap<'str, String>`) to your prop's `from_matches()` method and test the expected results.
@@ -13,9 +13,9 @@ Just provide a `&Matches` (an alias of `HashMap<'str, String>`) to your prop's `
 
 #[test]
 fn creates_props() {
-    let mut matches: Matches = HashMap::new();
-    matches.insert("key", "value");
-    assert!(Props::from_matches(matches).is_some())
+    let mut captures: Captures = HashMap::new();
+    captures.insert("key", "value");
+    assert!(Props::from_matches(captures).is_some())
 }
 ```
 

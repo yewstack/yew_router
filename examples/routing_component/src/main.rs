@@ -13,7 +13,7 @@ use crate::a_component::AModel;
 use crate::b_component::BModel;
 use crate::c_component::CModel;
 
-use yew_router::matcher::Matches;
+use yew_router::matcher::Captures;
 use yew_router::render::component;
 use yew_router::render::render;
 
@@ -70,14 +70,14 @@ impl Renderable<Model> for Model {
                         </Route>
                         <Route
                             matcher=route!("/f/{capture}")
-                            render=render(|matches: &Matches| {
+                            render=render(|captures: &Captures| {
                                 Some(html!{
-                                    {format!("hello {}", matches[&"capture"])}
+                                    {format!("hello {}", captures[&"capture"])}
                                 })
                             })
                         />
-                        <Route matcher=route!("{*:any}") render=render(|matches: &Matches| {
-                            Some(html!{{format!("404, page not found for '{}'", matches["any"])}})
+                        <Route matcher=route!("{*:any}") render=render(|captures: &Captures| {
+                            Some(html!{{format!("404, page not found for '{}'", captures["any"])}})
                         }) />
                     </Router>
                 </div>

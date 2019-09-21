@@ -17,7 +17,7 @@ The signature of this function is `fn(matches: &Matches) -> Option<Html<Router>>
 The `Router` will only cease its search for a target if this function returns `Some`, otherwise it will continue to try other `Route`s.
 
 The `component()` function allows you to specify a component to attempt render.
-You can only call this with a type parameter of a component whose `Properties` have implemented `FromMatches`.
+You can only call this with a type parameter of a component whose `Properties` have implemented `FromCaptures`.
 
 Alternatively, `render()` can be called instead, which takes a closure that returns an `Option<Html<_>>`.
 

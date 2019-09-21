@@ -4,7 +4,7 @@ use syn;
 use syn::parse_macro_input;
 use syn::{Data, DeriveInput, Field, Fields, Ident};
 
-pub fn from_matches_impl(input: TokenStream) -> TokenStream {
+pub fn from_captures_impl(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     let name = input.ident;
@@ -16,19 +16,19 @@ pub fn from_matches_impl(input: TokenStream) -> TokenStream {
                     fields_named.named.iter().cloned().collect::<Vec<_>>()
                 }
                 Fields::Unnamed(_) => {
-                    panic!("Deriving FromMatches not supported for Tuple Structs.")
+                    panic!("Deriving FromCaptures not supported for Tuple Structs.")
                 }
                 Fields::Unit => {
-                    panic!("Deriving FromMatches not supported for Unit Structs, but it should be in the near future. Open an issue .")
+                    panic!("Deriving FromCaptures not supported for Unit Structs, but it should be in the near future. Open an issue .")
                 }
             }
 
         }
         Data::Enum(_de) => {
-            panic!("Deriving FromMatches not supported for Enums.")
+            panic!("Deriving FromCaptures not supported for Enums.")
         }
         Data::Union(_du) => {
-            panic!("Deriving FromMatches not supported for Unions.")
+            panic!("Deriving FromCaptures not supported for Unions.")
         }
     };
 
@@ -45,30 +45,30 @@ pub fn from_matches_impl(input: TokenStream) -> TokenStream {
 
     let assignments = quote! {
         #(
-        let #idents = matches
+        let #idents = captures
             .get(#keys)
             .ok_or_else(|| {
-                __FromMatchesError::MissingField {
+                __FromCapturesError::MissingField {
                     field_name: #keys.to_string()
                 }
             })
             .and_then(|m: &String| {
-                let x: Result<#types, __FromMatchesError> = __FromStr::from_str(m.as_ref())
-                    .map_err(|_| __FromMatchesError::UnknownErr);
+                let x: Result<#types, __FromCapturesError> = __FromStr::from_str(m.as_ref())
+                    .map_err(|_| __FromCapturesError::UnknownErr);
                 x
             })?;
         )*
     };
 
     let expanded = quote! {
-            use yew_router::matcher::FromMatchesError as __FromMatchesError;
-            use yew_router::matcher::FromMatches as __FromMatches;
+            use yew_router::matcher::FromCapturesError as __FromCapturesError;
+            use yew_router::matcher::FromCaptures as __FromCaptures;
             use std::collections::HashMap as __HashMap;
             use std::collections::HashSet as __HashSet;
             use std::str::FromStr as __FromStr;
 
-            impl __FromMatches for #name {
-                fn from_matches(matches: &__HashMap<&str, String>) -> Result<Self, __FromMatchesError> {
+            impl __FromCaptures for #name {
+                fn from_captures(captures: &__HashMap<&str, String>) -> Result<Self, __FromCapturesError> {
                     #assignments
 
                     let x = #name {
@@ -77,9 +77,9 @@ pub fn from_matches_impl(input: TokenStream) -> TokenStream {
                     Ok(x)
                 }
 
-                fn verify(matches: &__HashSet<String>) {
+                fn verify(captures: &__HashSet<String>) {
                     #(
-                        if !matches.contains(&#keys.to_string()) {
+                        if !captures.contains(&#keys.to_string()) {
                             panic!("The struct expected the matches to contain a field named '{}'", #keys.to_string())
                         }
                     )*

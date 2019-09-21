@@ -24,11 +24,12 @@ use crate::matcher::RenderFn;
 /// # Example
 /// ```
 /// use yew::prelude::*;
-/// use yew_router::{Router, Route, route, FromMatches, render::component};
+/// use yew_router::{Router, Route, route, render::component};
+/// use yew_router::FromCaptures;
 ///
 /// pub struct AComponent {}
 ///
-/// #[derive(Properties, FromMatches)]
+/// #[derive(Properties, FromCaptures)]
 /// pub struct AComponentProps {
 ///     value: String
 /// }

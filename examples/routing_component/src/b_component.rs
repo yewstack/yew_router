@@ -1,17 +1,14 @@
-use std::collections::HashMap;
 use std::str::FromStr;
 use std::usize;
 use yew::prelude::*;
 use yew::Properties;
-use yew_router::matcher::FromMatches;
-use yew_router::matcher::FromMatchesError;
+use yew_router::matcher::{FromCaptures, Captures};
+use yew_router::matcher::FromCapturesError;
 use yew_router::route;
 use yew_router::route_agent::RouteRequest;
 use yew_router::{RouteAgent, RouteInfo};
 
 pub struct BModel {
-    //    number: Option<usize>,
-    //    sub_path: Option<String>,
     props: Props,
     router: Box<dyn Bridge<RouteAgent>>,
 }
@@ -83,8 +80,8 @@ impl Component for BModel {
                 // When the route changes, you can opt to re-parse the route. and update the props.
                 // TODO I'm not sure about the utility of this if the router is passing updated props anyways.
                 let path_matcher = route!("/b(?sub_path={sub_path})(#{number})");
-                if let Some(matches) = path_matcher.match_route_string(&route.route) {
-                    let props = Props::from_matches(&matches).unwrap();
+                if let Some(captures) = path_matcher.match_route_string(&route.route) {
+                    let props = Props::from_captures(&captures).unwrap();
                     self.props = props;
                     true
                 } else {
@@ -142,16 +139,16 @@ impl Renderable<BModel> for BModel {
     }
 }
 
-impl FromMatches for Props {
-    fn from_matches(matches: &HashMap<&str, String>) -> Result<Self, FromMatchesError> {
-        let number = matches
+impl FromCaptures for Props {
+    fn from_captures(captures: &Captures) -> Result<Self, FromCapturesError> {
+        let number = captures
             .get("number")
-            .map(|n: &String| usize::from_str(&n).map_err(|_| FromMatchesError::UnknownErr))
+            .map(|n: &String| usize::from_str(&n).map_err(|_| FromCapturesError::UnknownErr))
             .transpose()?;
 
         let props = Props {
             number,
-            sub_path: matches.get("sub_path").cloned(),
+            sub_path: captures.get("sub_path").cloned(),
         };
         Ok(props)
     }

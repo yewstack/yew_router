@@ -1,6 +1,6 @@
 use crate::matcher::route_matcher::util::tag_possibly_case_sensitive;
 use crate::matcher::route_matcher::MatcherSettings;
-use crate::matcher::Matches;
+use crate::matcher::Captures;
 use log::{debug, trace};
 use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag};
@@ -17,7 +17,7 @@ use yew_router_route_parser::{CaptureVariant, MatcherToken};
 pub(super) fn match_path<'a, 'b: 'a>(
     tokens: &'b [MatcherToken],
     settings: &'b MatcherSettings,
-) -> impl Fn(&'a str) -> IResult<&'a str, Matches<'b>> {
+) -> impl Fn(&'a str) -> IResult<&'a str, Captures<'b>> {
     move |i: &str| match_path_impl(tokens, *settings, i)
 }
 
@@ -26,12 +26,12 @@ fn match_path_impl<'a, 'b: 'a>(
     tokens: &'b [MatcherToken],
     settings: MatcherSettings,
     mut i: &'a str,
-) -> IResult<&'a str, Matches<'b>> {
+) -> IResult<&'a str, Captures<'b>> {
     trace!("Attempting to match path: {:?} using: {:?}", i, tokens);
 
     let mut iter = tokens.iter().peekable();
 
-    let mut matches: Matches = Matches::new();
+    let mut matches: Captures = Captures::new();
 
     while let Some(token) = iter.next() {
         i = match token {
@@ -148,7 +148,7 @@ fn capture_named<'a, 'b>(
     i: &'a str,
     iter: &mut Peekable<Iter<MatcherToken>>,
     capture_key: &'b str,
-    matches: &mut Matches<'b>,
+    matches: &mut Captures<'b>,
 ) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     log::trace!("Matching Named ({})", capture_key);
     if let Some(_peaked_next_token) = iter.peek() {
@@ -167,7 +167,7 @@ fn capture_many_named<'a, 'b>(
     i: &'a str,
     iter: &mut Peekable<Iter<MatcherToken>>,
     capture_key: &'b str,
-    matches: &mut Matches<'b>,
+    matches: &mut Captures<'b>,
 ) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     log::trace!("Matching NumberedUnnamed ({})", capture_key);
     if let Some(_peaked_next_token) = iter.peek() {
@@ -190,7 +190,7 @@ fn capture_numbered_named<'a, 'b>(
     iter: &mut Peekable<Iter<MatcherToken>>,
     name: &'b str,
     mut sections: usize,
-    matches: &mut Matches<'b>,
+    matches: &mut Captures<'b>,
 ) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     log::trace!("Matching NumberedNamed ({}, {})", sections, name);
     let mut captured = "".to_string();

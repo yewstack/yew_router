@@ -31,19 +31,19 @@ let r: Render<()> = render(|_matches: &Matches| Some(html!{"Hello"}));
 ## `component` function
 The `component` function is a way to create this `Render` wrapper by providing the type of the component you want to render as a type parameter.
 
-The only caveat to being able to use the `component` function, is that the `Properties` of the specified component must implement the `FromMatches` trait. 
-`FromMatches` mandates that you implement a function called `from_matches` which has a type signature of, `Fn(&Matches) -> Option<Self>`.
+The only caveat to being able to use the `component` function, is that the `Properties` of the specified component must implement the `FromCaptures` trait. 
+`FromCaptures` mandates that you implement a function called `from_matches` which has a type signature of, `Fn(&Matches) -> Option<Self>`.
 Code in `component` takes the props created from this function and creates a component using them.
 
 There exists a shortcut, though.
-If you have a simple props made up only of types that implement `FromStr`, then you can derive the `FromMatches`.
+If you have a simple props made up only of types that implement `FromStr`, then you can derive the `FromCaptures`.
 
 
 ### Example 
 ```rust
 pub struct MyComponent;
 
-#[derive(FromMatches, Properties)]
+#[derive(FromCaptures, Properties)]
 pub struct MyComponentProps;
 
 impl Component for MyComponent {
@@ -61,8 +61,8 @@ html! {
 ```
 
 ### Note
-The derive functionality of `FromMatches` is relatively basic.
+The derive functionality of `FromCaptures` is relatively basic.
 It cannot handle `Option`s that you might want to populate based on optional matching sections (`()`).
-It is recommended that you implement `FromMatches` yourself for `Properties` structs that contain types that aren't automatically convertible from Strings.
+It is recommended that you implement `FromCaptures` yourself for `Properties` structs that contain types that aren't automatically convertible from Strings.
 
 

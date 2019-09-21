@@ -4,12 +4,12 @@ use yew::Properties;
 use yew_router::components::router_button::RouterButton;
 use yew_router::render::component;
 use yew_router::route;
-use yew_router::FromMatches;
+use yew_router::FromCaptures;
 use yew_router::{Route, Router};
 
 pub struct AModel {}
 
-#[derive(PartialEq, Properties, FromMatches)]
+#[derive(PartialEq, Properties, FromCaptures)]
 pub struct Props {}
 
 pub enum Msg {}

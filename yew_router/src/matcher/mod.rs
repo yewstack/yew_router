@@ -5,7 +5,7 @@ use std::fmt::Debug;
 use std::collections::HashMap;
 use yew::{Component, Html};
 
-pub use yew_router_route_parser::{FromMatches, FromMatchesError, CaptureVariant, MatcherToken};
+pub use yew_router_route_parser::{FromCaptures, FromCapturesError, CaptureVariant, MatcherToken};
 
 #[cfg(feature = "regex_matcher")]
 mod regex_matcher;
@@ -37,13 +37,13 @@ pub enum Matcher {
 pub trait MatcherProvider: Debug {
     /// Given itself and a route string, determine if the route matches by returning an Option
     /// possibly containing any sections captured by the matcher.
-    fn match_route_string<'a, 'b: 'a>(&'b self, route_string: &'a str) -> Option<Matches<'a>>;
+    fn match_route_string<'a, 'b: 'a>(&'b self, route_string: &'a str) -> Option<Captures<'a>>;
 }
 
 impl Matcher {
     /// Given itself and a route string, determine if the route matches by returning an Option
     /// possibly containing any sections captured by the matcher.
-    pub fn match_route_string<'a, 'b: 'a>(&'b self, route_string: &'a str) -> Option<Matches<'a>> {
+    pub fn match_route_string<'a, 'b: 'a>(&'b self, route_string: &'a str) -> Option<Captures<'a>> {
         match self {
             #[cfg(feature = "route_matcher")]
             Matcher::RouteMatcher(matcher) => {
@@ -58,16 +58,16 @@ impl Matcher {
 
 
 
-/// Matches contain keys corresponding to named capture sections,
+/// Captures contain keys corresponding to named match sections,
 /// and values containing the content captured by those sections.
-pub type Matches<'a> = HashMap<&'a str, String>;
+pub type Captures<'a> = HashMap<&'a str, String>;
 
 /// Render function.
-pub trait RenderFn<CTX: Component>: Fn(&Matches) -> Option<Html<CTX>> {}
+pub trait RenderFn<CTX: Component>: Fn(&Captures) -> Option<Html<CTX>> {}
 
 impl<CTX, T> RenderFn<CTX> for T
     where
-        T: Fn(&Matches) -> Option<Html<CTX>>,
+        T: Fn(&Captures) -> Option<Html<CTX>>,
         CTX: Component,
 {
 }
