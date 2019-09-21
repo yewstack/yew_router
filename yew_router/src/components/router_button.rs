@@ -1,5 +1,5 @@
 //! A component wrapping a <button/> tag that changes the route.
-use crate::route_agent::{RouteRequest, RouteSenderBridge, Void};
+use crate::agent::{RouteRequest, RouteSenderBridge, Void};
 use crate::route_info::RouteInfo;
 use yew::prelude::*;
 

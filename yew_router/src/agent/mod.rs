@@ -12,8 +12,15 @@ use std::fmt::{Debug, Error as FmtError, Formatter};
 use crate::route_info::RouteInfo;
 use crate::route_info::RouteState;
 use log::trace;
-use std::ops::{Deref, DerefMut};
 use yew::callback::Callback;
+
+
+pub mod bridge;
+use bridge::RouteAgentBridge as RouteAgentBridgeImpl;
+
+/// Alias to RouteAgentBridge<()>;
+pub type RouteAgentBridge = RouteAgentBridgeImpl<()>;
+
 
 /// Any state that can be used in the router agent must meet the criteria of this trait.
 pub trait RouterState<'de>: RouteState + Serialize + Deserialize<'de> + Debug {}
@@ -62,8 +69,8 @@ impl<T> Transferable for RouteRequest<T> where for<'de> T: Serialize + Deseriali
 /// routing components of different types.
 ///
 pub struct RouteAgent<T>
-where
-    for<'de> T: RouterState<'de>,
+    where
+            for<'de> T: RouterState<'de>,
 {
     // In order to have the AgentLink<Self> below, apparently T must be constrained like this. Unfortunately, this means that everything related to an agent requires this constraint.
     link: AgentLink<RouteAgent<T>>,
@@ -85,8 +92,8 @@ impl<T: for<'de> RouterState<'de>> Debug for RouteAgent<T> {
 }
 
 impl<T> Agent for RouteAgent<T>
-where
-    for<'de> T: RouterState<'de>,
+    where
+            for<'de> T: RouterState<'de>,
 {
     type Reach = Context;
     type Message = Msg<T>;
@@ -165,28 +172,20 @@ where
         }
     }
     fn disconnected(&mut self, id: HandlerId) {
-        trace!(
-            "request to disconnect; num subs: {}",
-            self.subscribers.len()
-        );
         self.subscribers.remove(&id);
-        trace!(
-            "disconnect processed ; num subs: {}",
-            self.subscribers.len()
-        ); // the latter value should be -1
-           // if it isn't then the handlerIds are different for each request
     }
 }
 
 /// A sender for the Router that doesn't send messages back to the component that connects to it.
 ///
 /// This may be subject to change
+#[deprecated(note = "Dispatchers should make having an indirection agent unnecessary.")]
 pub struct RouteSenderAgent<T>
-where
-    for<'de> T: RouterState<'de>,
+    where
+            for<'de> T: RouterState<'de>,
 {
     /// This acts as a level of indirection.
-    router_agent: RouteAgentBridge<T>,
+    router_agent: RouteAgentBridgeImpl<T>,
 }
 
 impl<T: for<'de> RouterState<'de>> Debug for RouteSenderAgent<T> {
@@ -198,8 +197,8 @@ impl<T: for<'de> RouterState<'de>> Debug for RouteSenderAgent<T> {
 }
 
 impl<T> Agent for RouteSenderAgent<T>
-where
-    for<'de> T: RouterState<'de>,
+    where
+            for<'de> T: RouterState<'de>,
 {
     type Reach = Context;
     type Message = ();
@@ -208,7 +207,7 @@ where
 
     fn create(link: AgentLink<Self>) -> Self {
         RouteSenderAgent {
-            router_agent: RouteAgentBridge::new(link.send_back(|_| ())),
+            router_agent: RouteAgentBridgeImpl::new(link.send_back(|_| ())),
         }
     }
 
@@ -224,8 +223,8 @@ pub type RouteSenderBridge = RouteSenderAgentBridge<()>;
 
 /// A simplified interface to the router agent
 pub struct RouteSenderAgentBridge<T>(Box<dyn Bridge<RouteSenderAgent<T>>>)
-where
-    for<'de> T: RouterState<'de>;
+    where
+            for<'de> T: RouterState<'de>;
 
 impl<T: for<'de> RouterState<'de>> Debug for RouteSenderAgentBridge<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
@@ -234,8 +233,8 @@ impl<T: for<'de> RouterState<'de>> Debug for RouteSenderAgentBridge<T> {
 }
 
 impl<T> RouteSenderAgentBridge<T>
-where
-    for<'de> T: RouterState<'de>,
+    where
+            for<'de> T: RouterState<'de>,
 {
     /// Creates a new sender only bridge.
     pub fn new(callback: Callback<Void>) -> Self {
@@ -249,57 +248,3 @@ where
     }
 }
 
-/// Alias to RouteSenderBridge<()>;
-pub type RouteBridge = RouteAgentBridge<()>;
-
-/// A simplified interface to the router agent.
-pub struct RouteAgentBridge<T>(Box<dyn Bridge<RouteAgent<T>>>)
-where
-    for<'de> T: RouterState<'de>;
-
-impl<T> RouteAgentBridge<T>
-where
-    for<'de> T: RouterState<'de>,
-{
-    /// Creates a new bridge.
-    pub fn new(callback: Callback<RouteInfo<T>>) -> Self {
-        let router_agent = RouteAgent::bridge(callback);
-        RouteAgentBridge(router_agent)
-    }
-
-    /// Experimental, may be removed
-    ///
-    /// Directly spawn a new Router
-    pub fn spawn(callback: Callback<RouteInfo<T>>) -> Self {
-        use yew::agent::Discoverer;
-        let router_agent = Context::spawn_or_join(callback);
-        RouteAgentBridge(router_agent)
-    }
-
-    /// Sends a `RouteRequest` Message.
-    pub fn send(&mut self, request: RouteRequest<T>) {
-        self.0.send(request)
-    }
-}
-
-/// A wrapper around the bridge
-//pub (crate) struct RouteAgentBridge<T: for<'de> YewRouterState<'de>>(pub Box<dyn Bridge<RouteAgent<T>>>);
-
-impl<T: for<'de> RouterState<'de>> Debug for RouteAgentBridge<T> {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
-        f.debug_tuple("RouteAgentBridge").finish()
-    }
-}
-
-impl<T: for<'de> RouterState<'de>> Deref for RouteAgentBridge<T> {
-    type Target = Box<dyn Bridge<RouteAgent<T>>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl<T: for<'de> RouterState<'de>> DerefMut for RouteAgentBridge<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}

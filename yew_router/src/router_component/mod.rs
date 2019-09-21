@@ -3,7 +3,7 @@ pub mod route;
 pub mod router;
 
 
-use crate::route_agent::RouterState;
+use crate::agent::RouterState;
 
 /// Alias to [Router<()>](struct.Router.html)
 ///

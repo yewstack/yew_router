@@ -1,8 +1,7 @@
 //! Router Component.
 
 use crate::router_component::route::Route;
-use crate::route_agent::RouteAgentBridge;
-use crate::route_agent::RouteRequest;
+use crate::agent::{bridge::RouteAgentBridge, RouteRequest};
 use crate::route_info::RouteInfo;
 use crate::YewRouterState;
 use log::{trace, warn};
