@@ -1,6 +1,4 @@
-extern crate proc_macro;
 use proc_macro::TokenStream;
-use proc_macro_hack::proc_macro_hack;
 use quote::{quote, ToTokens};
 use std::collections::HashSet;
 use std::hash::Hash;
@@ -92,9 +90,9 @@ impl Parse for S {
     }
 }
 
+
 /// Expected to be used like: route!("/route/to/thing" => Component)
-#[proc_macro_hack]
-pub fn route(input: TokenStream) -> TokenStream {
+pub fn route_impl(input: TokenStream) -> TokenStream {
     let s: S = parse_macro_input!(input as S);
     let input: String = s.s;
 

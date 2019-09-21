@@ -1,12 +1,10 @@
-extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn;
 use syn::parse_macro_input;
 use syn::{Data, DeriveInput, Field, Fields, Ident};
 
-#[proc_macro_derive(FromMatches)]
-pub fn from_matches(input: TokenStream) -> TokenStream {
+pub fn from_matches_impl(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     let name = input.ident;
@@ -67,7 +65,6 @@ pub fn from_matches(input: TokenStream) -> TokenStream {
             use yew_router::matcher::FromMatches as __FromMatches;
             use std::collections::HashMap as __HashMap;
             use std::collections::HashSet as __HashSet;
-    //        use std::convert::TryFrom as __TryFrom;
             use std::str::FromStr as __FromStr;
 
             impl __FromMatches for #name {

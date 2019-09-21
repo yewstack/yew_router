@@ -47,6 +47,7 @@
     unstable_features,
     unused_qualifications
 )]
+use proc_macro_hack::proc_macro_hack;
 
 pub mod route_service;
 
@@ -76,4 +77,31 @@ pub use router_component::{
 pub mod matcher;
 
 #[cfg(feature = "matchers")]
-pub use yew_router_derive::{route, FromMatches};
+pub use yew_router_macro::FromMatches;
+
+/// The route macro produces a Matcher which can be used to determine if a route string should cause
+/// a section of html or component should render.
+///
+/// At its simplest, the macro will accept a literal string containing a path, query, and fragment.
+/// Not all parts are required, but the macro will fail if they are specified out of order.
+/// If the route acquired from the browser matches this exactly, the route will match, and the
+/// associated target will be rendered.
+///
+///
+/// On top of just matching strings literally, match sections, denoted by `{}` can be supplied to
+/// match anything in that section.
+///
+/// If a key starting with a valid rust identifier is supplied between the brackets like
+/// `{key}` then the characters that gets matched by this section will be captured and will become
+/// available in a HashMap returned from the matcher if it succeeds.
+///
+/// If a `*` is contained within the brackets like `{*}`, then the capture section will match across all paths.
+///
+/// If a number is specified within the brackets like `{3}`, then that number of path separators (`/`)
+/// must be encountered before that match rule ends. `{1}` is equivalent to `{}`.
+///
+/// These `*` and number variants can be combined with the key-capture feature to capture sections to
+/// apply these rules while capturing sections with a named key. This looks like `{*:key}` or `{2:other_key}`.
+#[cfg(feature = "matchers")]
+#[proc_macro_hack]
+pub use yew_router_macro::route;
