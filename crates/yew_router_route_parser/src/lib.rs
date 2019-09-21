@@ -57,6 +57,11 @@ impl Error for FromCapturesError {
     //    }
 }
 
+
+/// Captures contain keys corresponding to named match sections,
+/// and values containing the content captured by those sections.
+pub type Captures<'a> = HashMap<&'a str, String>;
+
 /// Used for constructing `Properties` from URL matches.
 ///
 /// # Note
@@ -71,7 +76,7 @@ impl Error for FromCapturesError {
 pub trait FromCaptures: Sized {
     /// Produces the props from the hashmap.
     /// It is expected that `TryFrom<String>` be implemented on all of the types contained within the props.
-    fn from_captures(captures: &HashMap<&str, String>) -> Result<Self, FromCapturesError>;
+    fn from_captures(captures: &Captures) -> Result<Self, FromCapturesError>;
     /// Verifies that all of the field names produced by the PathMatcher exist on the target props.
     /// Should panic if not all match.
     /// Should only be used at compile time.
@@ -79,7 +84,7 @@ pub trait FromCaptures: Sized {
 }
 
 impl FromCaptures for () {
-    fn from_captures(_captures: &HashMap<&str, String>) -> Result<Self, FromCapturesError> {
+    fn from_captures(_captures: &Captures) -> Result<Self, FromCapturesError> {
         Ok(())
     }
 }

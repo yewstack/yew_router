@@ -1,11 +1,8 @@
 //! Logic for matching and capturing route strings.
 use std::fmt::Debug;
-
-
-use std::collections::HashMap;
 use yew::{Component, Html};
 
-pub use yew_router_route_parser::{FromCaptures, FromCapturesError, CaptureVariant, MatcherToken};
+pub use yew_router_route_parser::{Captures, FromCaptures, FromCapturesError, CaptureVariant, MatcherToken};
 
 #[cfg(feature = "regex_matcher")]
 mod regex_matcher;
@@ -16,7 +13,8 @@ use regex::Regex;
 #[cfg(feature = "route_matcher")]
 pub mod route_matcher;
 #[cfg(feature = "route_matcher")]
-pub use self::route_matcher::{RouteMatcher};
+pub use self::route_matcher::RouteMatcher;
+
 
 
 /// An enum that contains variants that can match a route string
@@ -55,12 +53,6 @@ impl Matcher {
         }
     }
 }
-
-
-
-/// Captures contain keys corresponding to named match sections,
-/// and values containing the content captured by those sections.
-pub type Captures<'a> = HashMap<&'a str, String>;
 
 /// Render function.
 pub trait RenderFn<CTX: Component>: Fn(&Captures) -> Option<Html<CTX>> {}
