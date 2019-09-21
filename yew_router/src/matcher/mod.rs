@@ -1,5 +1,4 @@
 //! Logic for matching and capturing route strings.
-use std::fmt::Debug;
 use yew::{Component, Html};
 
 pub use yew_router_route_parser::{Captures, FromCaptures, FromCapturesError, CaptureVariant, MatcherToken};
@@ -9,16 +8,25 @@ mod regex_matcher;
 #[cfg(feature = "regex_matcher")]
 use regex::Regex;
 
-
 #[cfg(feature = "route_matcher")]
 pub mod route_matcher;
 #[cfg(feature = "route_matcher")]
 pub use self::route_matcher::RouteMatcher;
 
+mod custom;
+pub use custom::CustomMatcher;
+
+
+/// Trait that allows user-defined matchers.
+pub trait MatcherProvider {
+    /// Given itself and a route string, determine if the route matches by returning an Option
+    /// possibly containing any sections captured by the matcher.
+    fn match_route_string<'a, 'b: 'a>(&'b self, route_string: &'a str) -> Option<Captures<'a>>;
+}
 
 
 /// An enum that contains variants that can match a route string
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Matcher {
 
     #[cfg(feature = "route_matcher")]
@@ -28,14 +36,18 @@ pub enum Matcher {
     /// A matcher that uses a regex to match and capture values.
     RegexMatcher(Regex),
     /// A user-defined matcher.
-    CustomMatcher(Box<dyn MatcherProvider>)
+    CustomMatcher(CustomMatcher)
 }
 
-/// Trait that allows user-defined matchers.
-pub trait MatcherProvider: Debug {
-    /// Given itself and a route string, determine if the route matches by returning an Option
-    /// possibly containing any sections captured by the matcher.
-    fn match_route_string<'a, 'b: 'a>(&'b self, route_string: &'a str) -> Option<Captures<'a>>;
+impl PartialEq for Matcher {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Matcher::RouteMatcher(this), Matcher::RouteMatcher(other)) => this == other,
+            (Matcher::RegexMatcher(this), Matcher::RegexMatcher(other)) => this.as_str() == other.as_str(),
+            (Matcher::CustomMatcher(this), Matcher::CustomMatcher(other)) => this == other,
+            _ => false
+        }
+    }
 }
 
 impl Matcher {
@@ -64,11 +76,4 @@ impl<CTX, T> RenderFn<CTX> for T
 {
 }
 
-
-
-impl From<Box<dyn MatcherProvider>> for Matcher {
-    fn from(value: Box<dyn MatcherProvider>) -> Self {
-        Matcher::CustomMatcher(value)
-    }
-}
 
