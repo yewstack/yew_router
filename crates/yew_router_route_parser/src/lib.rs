@@ -64,13 +64,6 @@ impl Error for FromCapturesError {
 pub type Captures<'a> = HashMap<&'a str, String>;
 
 /// Used for constructing `Properties` from URL matches.
-///
-/// # Note
-/// FromCaptures derives relies on a trait called `FromStrOption`, which is the same as `std::str::FromStr`,
-/// but returns an `Option` instead of a `Result`.
-/// This is done to allow implementation of that trait for `Option<T>` and `Result<T>`.
-///
-
 pub trait FromCaptures: Sized {
     /// Produces the props from the hashmap.
     /// It is expected that `TryFrom<String>` be implemented on all of the types contained within the props.
@@ -88,10 +81,10 @@ impl FromCaptures for () {
 }
 
 
-pub use from_str_option::FromStrOption;
+pub use captured_key_value::FromCapturedKeyValue;
 
-/// Module for holding implementation details for the `FromStrOption` trait.
-mod from_str_option {
+/// Module for holding implementation details for the `FromCapturedKeyValue` trait.
+mod captured_key_value {
     use std::num::*;
     use std::path::PathBuf;
     use std::net::{IpAddr, SocketAddr, Ipv4Addr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
@@ -103,9 +96,9 @@ mod from_str_option {
     /// * The `Option` case will succeed if the item isn't in the `Captures` map, but will fail if it can't parse.
     /// * The `Result` case will succeed if the item can't be parsed, but will fail if it isn't present in the `Captures` map.
     /// * To cause the `FromCaptures::from_captures` derivation to never fail outright if either the item isn't present, nor formatted correctly, specify `Option<Result<T>>`.
-    pub trait FromStrOption: Sized {
+    pub trait FromCapturedKeyValue: Sized {
         /// Reimplementation of `std::str::FromStr::from_str`, but returning an `Option` instead of a `Result`.
-        fn from_str(s: &str) -> Option<Self>;
+        fn from_value(s: &str) -> Option<Self>;
         /// If the key isn't available in the `Captures` map, the result of this function will be
         /// returned from the derived `FromCaptures::from_captures` function.
         fn key_not_available() -> Option<Self> {
@@ -113,9 +106,9 @@ mod from_str_option {
         }
     }
 
-    impl <T: FromStrOption> FromStrOption for Option<T> {
-        fn from_str(s: &str) -> Option<Self> {
-            Some(Some(FromStrOption::from_str(s)?))
+    impl <T: FromCapturedKeyValue> FromCapturedKeyValue for Option<T> {
+        fn from_value(s: &str) -> Option<Self> {
+            Some(Some(FromCapturedKeyValue::from_value(s)?))
         }
 
         /// This will cause the derivation of `from_matches` to not fail if the key can't be located
@@ -124,19 +117,19 @@ mod from_str_option {
         }
     }
 
-    impl <T, E> FromStrOption for Result<T, E>
+    impl <T, E> FromCapturedKeyValue for Result<T, E>
         where
             T: FromStr<Err=E>,
     {
-        fn from_str(s: &str) -> Option<Self> {
+        fn from_value(s: &str) -> Option<Self> {
             Some(T::from_str(s))
         }
     }
 
     macro_rules! from_str_option_impl {
         ($SelfT: ty) => {
-            impl FromStrOption for $SelfT {
-                fn from_str(s: &str) -> Option<Self> {
+            impl FromCapturedKeyValue for $SelfT {
+                fn from_value(s: &str) -> Option<Self> {
                     FromStr::from_str(s).ok()
                 }
             }

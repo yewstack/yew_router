@@ -11,7 +11,7 @@ use route::route_impl;
 /// Derives `FromCaptures` for the specified struct.
 ///
 /// # Note
-/// All fields must have types that implements `yew_router::matcher::FromStrOption`.
+/// All fields must have types that implements `yew_router::matcher::FromCapturedKeyValue`.
 ///
 /// # Examples
 ///
@@ -40,7 +40,7 @@ use route::route_impl;
 ///     not_required_parse_fail_allowed: Option<Result<u32, ParseIntError>>
 /// }
 /// let mut captures: Captures = Captures::new();
-/// captures.insert("parse_fail", "hello".to_string());
+/// captures.insert("parse_fail_allowed", "hello".to_string());
 /// captures.insert("not_required_parse_fail_allowed", "hello".to_string());
 /// assert!(Test::from_captures(&captures).is_ok())
 /// ```

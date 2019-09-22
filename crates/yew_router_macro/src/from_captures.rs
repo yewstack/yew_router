@@ -49,7 +49,7 @@ pub fn from_captures_impl(input: TokenStream) -> TokenStream {
             .get(#keys)
             .map_or_else(
                 || {
-                    <#types as ::yew_router::matcher::FromStrOption>::key_not_available()
+                    <#types as ::yew_router::matcher::FromCapturedKeyValue>::key_not_available()
                         .ok_or_else(|| {
                             ::yew_router::matcher::FromCapturesError::MissingField {
                                 field_name: #keys.to_string()
@@ -57,7 +57,7 @@ pub fn from_captures_impl(input: TokenStream) -> TokenStream {
                         })
                 },
                 |m: &String| {
-                    let x: Result<#types, ::yew_router::matcher::FromCapturesError> = ::yew_router::matcher::FromStrOption::from_str(m.as_str())
+                    let x: Result<#types, ::yew_router::matcher::FromCapturesError> = ::yew_router::matcher::FromCapturedKeyValue::from_value(m.as_str())
                         .ok_or_else(|| {
                             ::yew_router::matcher::FromCapturesError::FailedParse {
                                 field_name: #keys.to_string(),
