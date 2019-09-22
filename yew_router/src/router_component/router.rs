@@ -30,7 +30,8 @@ use crate::matcher::RenderFn;
 ///
 /// #[derive(Properties, FromCaptures)]
 /// pub struct AComponentProps {
-///     value: String
+///     value: String,
+///     other: Option<String>
 /// }
 ///
 /// impl Component for AComponent {

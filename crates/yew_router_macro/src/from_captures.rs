@@ -47,44 +47,48 @@ pub fn from_captures_impl(input: TokenStream) -> TokenStream {
         #(
         let #idents = captures
             .get(#keys)
-            .ok_or_else(|| {
-                __FromCapturesError::MissingField {
-                    field_name: #keys.to_string()
+            .map_or_else(
+                || {
+                    <#types as ::yew_router::matcher::FromStrOption>::key_not_available()
+                        .ok_or_else(|| {
+                            ::yew_router::matcher::FromCapturesError::MissingField {
+                                field_name: #keys.to_string()
+                            }
+                        })
+                },
+                |m: &String| {
+                    let x: Result<#types, ::yew_router::matcher::FromCapturesError> = ::yew_router::matcher::FromStrOption::from_str(m.as_str())
+                        .ok_or_else(|| {
+                            ::yew_router::matcher::FromCapturesError::FailedParse {
+                                field_name: #keys.to_string(),
+                            source_string: m.clone()
+                        }
+                    });
+                    x
                 }
-            })
-            .and_then(|m: &String| {
-                let x: Result<#types, __FromCapturesError> = __FromStr::from_str(m.as_ref())
-                    .map_err(|_| __FromCapturesError::UnknownErr);
-                x
-            })?;
+            )?;
         )*
     };
 
     let expanded = quote! {
-            use yew_router::matcher::FromCapturesError as __FromCapturesError;
-            use yew_router::matcher::FromCaptures as __FromCaptures;
-            use std::collections::HashMap as __HashMap;
-            use std::collections::HashSet as __HashSet;
-            use std::str::FromStr as __FromStr;
+        impl ::yew_router::matcher::FromCaptures for #name {
+            fn from_captures(captures: &::yew_router::matcher::Captures) -> Result<Self, ::yew_router::matcher::FromCapturesError> {
+                #assignments
 
-            impl __FromCaptures for #name {
-                fn from_captures(captures: &__HashMap<&str, String>) -> Result<Self, __FromCapturesError> {
-                    #assignments
-
-                    let x = #name {
-                        #(#idents2),*
-                    };
-                    Ok(x)
-                }
-
-                fn verify(captures: &__HashSet<String>) {
-                    #(
-                        if !captures.contains(&#keys.to_string()) {
-                            panic!("The struct expected the matches to contain a field named '{}'", #keys.to_string())
-                        }
-                    )*
-                }
+                let x = #name {
+                    #(#idents2),*
+                };
+                Ok(x)
             }
-        };
+
+            fn verify(captures: &::std::collections::HashSet<String>) {
+                #(
+                    if !captures.contains(&#keys.to_string()) {
+                        panic!("The struct expected the matches to contain a field named '{}'", #keys.to_string())
+                    }
+                )*
+            }
+        }
+    };
     TokenStream::from(expanded)
 }

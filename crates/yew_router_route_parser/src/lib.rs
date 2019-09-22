@@ -30,31 +30,32 @@ pub enum FromCapturesError {
         /// The name of the field expected to be present
         field_name: String,
     },
-    /// Dynamic error
-    Error(Box<dyn Error>),
-    /// Unknown error
-    UnknownErr, // TODO Will be removed soon. dyn error above needs to go, and replaced with the names of the failed type conversions.
+    /// Parsing the provided string failed.
+    FailedParse {
+        /// The name of the field that failed to parse.
+        field_name: String,
+        /// The source string from which the field should have been parsed.
+        source_string: String
+    },
 }
 
 impl Display for FromCapturesError {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
         match self {
             FromCapturesError::MissingField { field_name } => {
-                write! {f, "The field: '{}' was not present in your path matcher.", field_name}
+                write!(f, "The field: '{}' was not present in your path matcher.", field_name)
             }
-            FromCapturesError::Error(e) => e.fmt(f),
-            FromCapturesError::UnknownErr => write!(f, "unknown error"),
+            FromCapturesError::FailedParse {field_name,  source_string} => {
+                write!(f, "The field: `{}` was not able to be parsed from the provided string: `{}`.", field_name, source_string)
+            }
         }
     }
 }
 
 impl Error for FromCapturesError {
-    //    fn source(&self) -> Option<&(dyn Error + 'static)> {
-    //        match self  {
-    //            FromCapturesError::MissingField {..} => None,
-    //            FromCapturesError::Error(e) => Some(&e )
-    //        }
-    //    }
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
 }
 
 
@@ -65,14 +66,11 @@ pub type Captures<'a> = HashMap<&'a str, String>;
 /// Used for constructing `Properties` from URL matches.
 ///
 /// # Note
-/// FromCaptures, as derived, is pretty dumb and unreliable.
-/// It is only suggested to derive FromCaptures if the types in your struct are reliably convertible from `&str`.
-/// In practice, this means that `String`, and the numeric types are safe bets.
+/// FromCaptures derives relies on a trait called `FromStrOption`, which is the same as `std::str::FromStr`,
+/// but returns an `Option` instead of a `Result`.
+/// This is done to allow implementation of that trait for `Option<T>` and `Result<T>`.
 ///
-/// The derive relies on [FromStr](https://doc.rust-lang.org/std/str/trait.FromStr.html) for converting types.
-///
-/// # Suggestions
-/// * If you have one or more optional sections in your path matcher, you are best off implementing this yourself.
+
 pub trait FromCaptures: Sized {
     /// Produces the props from the hashmap.
     /// It is expected that `TryFrom<String>` be implemented on all of the types contained within the props.
@@ -88,6 +86,106 @@ impl FromCaptures for () {
         Ok(())
     }
 }
+
+
+pub use from_str_option::FromStrOption;
+
+/// Module for holding implementation details for the `FromStrOption` trait.
+mod from_str_option {
+    use std::num::*;
+    use std::path::PathBuf;
+    use std::net::{IpAddr, SocketAddr, Ipv4Addr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
+    use std::str::FromStr;
+
+    /// Some horrible hack to get around orphan rules so a `from_str` operation can be implemented on
+    /// `Option` and `Result`.
+    ///
+    /// * The `Option` case will succeed if the item isn't in the `Captures` map, but will fail if it can't parse.
+    /// * The `Result` case will succeed if the item can't be parsed, but will fail if it isn't present in the `Captures` map.
+    /// * To cause the `FromCaptures::from_captures` derivation to never fail outright if either the item isn't present, nor formatted correctly, specify `Option<Result<T>>`.
+    pub trait FromStrOption: Sized {
+        /// Reimplementation of `std::str::FromStr::from_str`, but returning an `Option` instead of a `Result`.
+        fn from_str(s: &str) -> Option<Self>;
+        /// If the key isn't available in the `Captures` map, the result of this function will be
+        /// returned from the derived `FromCaptures::from_captures` function.
+        fn key_not_available() -> Option<Self> {
+            None // By default, capturing will fail.
+        }
+    }
+
+    impl <T: FromStrOption> FromStrOption for Option<T> {
+        fn from_str(s: &str) -> Option<Self> {
+            Some(Some(FromStrOption::from_str(s)?))
+        }
+
+        /// This will cause the derivation of `from_matches` to not fail if the key can't be located
+        fn key_not_available() -> Option<Self> {
+            Some(None)
+        }
+    }
+
+    impl <T, E> FromStrOption for Result<T, E>
+        where
+            T: FromStr<Err=E>,
+    {
+        fn from_str(s: &str) -> Option<Self> {
+            Some(T::from_str(s))
+        }
+    }
+
+    macro_rules! from_str_option_impl {
+        ($SelfT: ty) => {
+            impl FromStrOption for $SelfT {
+                fn from_str(s: &str) -> Option<Self> {
+                    FromStr::from_str(s).ok()
+                }
+            }
+        }
+    }
+
+
+    from_str_option_impl!{String}
+    from_str_option_impl!{PathBuf}
+    from_str_option_impl!{bool}
+
+    from_str_option_impl!{IpAddr}
+    from_str_option_impl!{Ipv4Addr}
+    from_str_option_impl!{Ipv6Addr}
+    from_str_option_impl!{SocketAddr}
+    from_str_option_impl!{SocketAddrV4}
+    from_str_option_impl!{SocketAddrV6}
+
+    from_str_option_impl!{usize}
+    from_str_option_impl!{u128}
+    from_str_option_impl!{u64}
+    from_str_option_impl!{u32}
+    from_str_option_impl!{u16}
+    from_str_option_impl!{u8}
+
+    from_str_option_impl!{isize}
+    from_str_option_impl!{i128}
+    from_str_option_impl!{i64}
+    from_str_option_impl!{i32}
+    from_str_option_impl!{i16}
+    from_str_option_impl!{i8}
+
+    from_str_option_impl!{NonZeroU128}
+    from_str_option_impl!{NonZeroU64}
+    from_str_option_impl!{NonZeroU32}
+    from_str_option_impl!{NonZeroU16}
+    from_str_option_impl!{NonZeroU8}
+
+    from_str_option_impl!{NonZeroI128}
+    from_str_option_impl!{NonZeroI64}
+    from_str_option_impl!{NonZeroI32}
+    from_str_option_impl!{NonZeroI16}
+    from_str_option_impl!{NonZeroI8}
+
+    from_str_option_impl!{f64}
+    from_str_option_impl!{f32}
+}
+
+
 
 #[cfg(test)]
 mod test {
@@ -196,4 +294,5 @@ mod test {
         let expected = "The field: 'hello' was not present in your path matcher.";
         assert_eq!(displayed, expected);
     }
+
 }

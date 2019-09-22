@@ -77,6 +77,7 @@ pub use router_component::{
 #[cfg(any(feature = "matchers", feature= "router" ) )]
 pub mod matcher;
 
+
 #[cfg(feature = "matchers")]
 pub use yew_router_macro::FromCaptures;
 
@@ -113,7 +114,7 @@ pub use yew_router_macro::FromCaptures;
 /// * `{4}` - Consume the specified number of path separators (`/`) before being allowed to match against a terminating set of characters.
 /// * `{4:key} - Same as above, but stores the captured characters as a String inside a HashMap.
 ///
-/// There are a rule to remember here:
+/// There is a rule to remember here:
 /// * Because Any matchers use the subsequent exact section to terminate their search, no Any matchers cannot be next to each other.
 ///   * Optional matchers do not adequately separate Any matchers, because they may not match at all, leaving no exact section to separate the Any matchers.
 ///

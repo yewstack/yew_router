@@ -1,7 +1,10 @@
 //! Logic for matching and capturing route strings.
 use yew::{Component, Html};
 
-pub use yew_router_route_parser::{Captures, FromCaptures, FromCapturesError, CaptureVariant, MatcherToken};
+pub use yew_router_route_parser::{Captures, FromCapturesError, CaptureVariant, MatcherToken, FromStrOption};
+
+
+pub use yew_router_route_parser::FromCaptures;
 
 #[cfg(feature = "regex_matcher")]
 mod regex_matcher;
