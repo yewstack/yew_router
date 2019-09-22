@@ -47,6 +47,7 @@
     unstable_features,
     unused_qualifications
 )]
+#![allow(deprecated)] // TODO remove me once dispatchers lands
 use proc_macro_hack::proc_macro_hack;
 
 pub mod route_service;
