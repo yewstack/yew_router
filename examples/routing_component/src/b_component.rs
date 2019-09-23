@@ -2,8 +2,8 @@ use std::str::FromStr;
 use std::usize;
 use yew::prelude::*;
 use yew::Properties;
-use yew_router::matcher::{FromCaptures, Captures};
-use yew_router::matcher::FromCapturesError;
+use yew_router::{FromCaptures, Captures};
+use yew_router::FromCapturesError;
 use yew_router::route;
 use yew_router::agent::RouteRequest;
 use yew_router::{RouteAgent, RouteInfo};
@@ -143,7 +143,10 @@ impl FromCaptures for Props {
     fn from_captures(captures: &Captures) -> Result<Self, FromCapturesError> {
         let number = captures
             .get("number")
-            .map(|n: &String| usize::from_str(&n).map_err(|_| FromCapturesError::UnknownErr))
+            .map(|n: &String| {
+                usize::from_str(&n)
+                    .map_err(|_| FromCapturesError::FailedParse { field_name: "number".to_string(), source_string: n.to_string() })
+            })
             .transpose()?;
 
         let props = Props {

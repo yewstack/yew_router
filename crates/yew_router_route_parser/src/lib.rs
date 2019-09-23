@@ -200,7 +200,8 @@ mod test {
                     field_name: "hello".to_string(),
                 })
                 .and_then(|m: &String| {
-                    String::try_from(m.clone()).map_err(|_| FromCapturesError::UnknownErr)
+                    String::try_from(m.clone())
+                        .map_err(|_| FromCapturesError::FailedParse { field_name: "hello".to_string(), source_string: m.to_string() })
                 })?;
 
             let there = captures
@@ -209,7 +210,8 @@ mod test {
                     field_name: "there".to_string(),
                 })
                 .and_then(|m: &String| {
-                    String::try_from(m.clone()).map_err(|_| FromCapturesError::UnknownErr)
+                    String::try_from(m.clone())
+                        .map_err(|_| FromCapturesError::FailedParse { field_name: "there".to_string(), source_string: m.to_string() })
                 })?;
 
             let x = TestStruct { hello, there };

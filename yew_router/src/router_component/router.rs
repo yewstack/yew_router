@@ -23,7 +23,7 @@ use crate::matcher::RenderFn;
 /// # Example
 /// ```
 /// use yew::prelude::*;
-/// use yew_router::{Router, Route, route, render::component};
+/// use yew_router::{Router, Route, route, component};
 /// use yew_router::FromCaptures;
 ///
 /// pub struct AComponent {}

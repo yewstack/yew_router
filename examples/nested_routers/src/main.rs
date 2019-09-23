@@ -1,5 +1,5 @@
 use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
-use yew_router::{Router, Route, route, render::component};
+use yew_router::{Router, Route, route, component};
 use yew_router::components::RouterButton;
 use crate::page_not_found::PageNotFound;
 use crate::a_comp::AComp;

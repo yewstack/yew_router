@@ -18,10 +18,7 @@ fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
 
 /// Creates a `Render` that creates the specified component if its
 /// props can be created from the provided matches using `FromCaptures`.
-///
-/// # Note
-/// Allows specification of the router type.
-pub fn component_s<T, U>() -> Render<U>
+pub fn component<T, U>() -> Render<U>
 where
     T: Component + Renderable<T>,
     <T as Component>::Properties: FromCaptures,
@@ -33,26 +30,8 @@ where
     })
 }
 
-/// Creates a render that creates the specified component if its
-/// props can be created from the provided matches using `FromCaptures`.
-pub fn component<T>() -> Render<()>
-where
-    T: Component + Renderable<T>,
-    <T as Component>::Properties: FromCaptures,
-{
-    component_s::<T, ()>()
-}
-
 /// Shorthand for [Render::new()](structs.Render.html#new).
-pub fn render(render: impl RenderFn<Router<()>> + 'static) -> Render<()> {
-    Render::new(render)
-}
-
-/// Shorthand for [Render::new()](structs.Render.html#new).
-///
-/// # Note
-///// Allows specification of the router type.
-pub fn render_s<T: for<'de> YewRouterState<'de>>(
+pub fn render<T: for<'de> YewRouterState<'de>>(
     render: impl RenderFn<Router<T>> + 'static,
 ) -> Render<T> {
     Render::new(render)

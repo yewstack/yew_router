@@ -19,12 +19,10 @@
 //! As this behavior is uncommon, aliases using the unit type (`()`) are provided to remove the
 //! need to specify the storage type you likely aren't using.
 //!
-//! If you do indeed want to specify the data to be stored in the History API consider the following:
-//! * The aliased types are typically named the same as their implementations, but are importable from a module higher up the hierarchy. You will have to look around for them in the docs as they aren't reexported at the highest level like their respective aliases.
-//! * You should use the same state type parameter everywhere. Having different state types means multiple RouteAgents will be spawned and they will not communicate with routers of differing state types.
-//! * You probably want to wrap your type in an `Option` and alias your type to make specifying it easier.
-//! * There are varying, mostly undocumented, limits to the maximum size of objects you can store in the History API across different browsers (firefox appears to be the lowest bar at 640kb). Keeping this in mind for cross-browser compatibility is a must.
-//! * If you are building a large application, it is a good idea to alias all entities used from this crate to use your specific state type much like has already been done with `()`.
+//! If you want to store state using the history API it is recommended that you generate your own aliases using the `define_router_state` macro.
+//! Give it a typename, and it will generate a module containing aliases and functions useful for routing.
+//!
+//!
 //!
 //! ## Orphaning
 //! Currently it is possible to "orphan" components in Yew. This happens when a component doesn't display anymore,
@@ -50,17 +48,13 @@
 #![allow(deprecated)] // TODO remove me once dispatchers lands
 use proc_macro_hack::proc_macro_hack;
 
+mod alias;
 pub mod route_service;
 
 #[cfg(feature = "router_agent")]
 pub mod agent;
-#[cfg(feature = "router_agent")]
-/// Alias to [RouteAgent<()>](struct.RouteAgent.html).
-pub type RouteAgent = agent::RouteAgent<()>;
 
 pub mod route_info;
-/// Alias to [RouteInfo<()>](struct.RouteInfo.html).
-pub type RouteInfo = route_info::RouteInfo<()>;
 
 #[cfg(feature = "components")]
 pub mod components;
@@ -69,13 +63,21 @@ pub mod components;
 mod router_component;
 #[cfg(feature = "router")]
 pub use router_component::{
-    render, render::component, route, router, Render, Route, Router, YewRouterState,
+    render, route, router, YewRouterState,
 };
 
 
 
+// Use this alias to define a module containing type aliases.
+define_router_state!(());
+pub use router_state::*;
+
+pub use alias::*;
+
 #[cfg(any(feature = "matchers", feature= "router" ) )]
 pub mod matcher;
+#[cfg(any(feature = "matchers", feature= "router" ) )]
+pub use matcher::{MatcherProvider, Matcher, Captures, FromCaptures, FromCapturesError};
 
 
 #[cfg(feature = "matchers")]

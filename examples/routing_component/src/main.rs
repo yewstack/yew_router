@@ -14,8 +14,8 @@ use crate::b_component::BModel;
 use crate::c_component::CModel;
 
 use yew_router::matcher::Captures;
-use yew_router::render::component;
-use yew_router::render::render;
+use yew_router::component;
+use yew_router::render;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;

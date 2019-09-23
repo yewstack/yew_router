@@ -1,4 +1,7 @@
-//! Routing service
+//! Routing agent.
+//!
+//! It wraps a route service and allows calls to be sent to it to update every subscriber,
+//! or just the element that made the request.
 use crate::route_service::RouteService;
 
 use yew::prelude::worker::*;
@@ -16,10 +19,8 @@ use yew::callback::Callback;
 
 
 pub mod bridge;
-use bridge::RouteAgentBridge as RouteAgentBridgeImpl;
+use bridge::RouteAgentBridge;
 
-/// Alias to RouteAgentBridge<()>;
-pub type RouteAgentBridge = RouteAgentBridgeImpl<()>;
 
 
 /// Any state that can be used in the router agent must meet the criteria of this trait.
@@ -185,7 +186,7 @@ pub struct RouteSenderAgent<T>
             for<'de> T: RouterState<'de>,
 {
     /// This acts as a level of indirection.
-    router_agent: RouteAgentBridgeImpl<T>,
+    router_agent: RouteAgentBridge<T>,
 }
 
 impl<T: for<'de> RouterState<'de>> Debug for RouteSenderAgent<T> {
@@ -207,7 +208,7 @@ impl<T> Agent for RouteSenderAgent<T>
 
     fn create(link: AgentLink<Self>) -> Self {
         RouteSenderAgent {
-            router_agent: RouteAgentBridgeImpl::new(link.send_back(|_| ())),
+            router_agent: RouteAgentBridge::new(link.send_back(|_| ())),
         }
     }
 
@@ -233,8 +234,8 @@ impl<T: for<'de> RouterState<'de>> Debug for RouteSenderAgentBridge<T> {
 }
 
 impl<T> RouteSenderAgentBridge<T>
-    where
-            for<'de> T: RouterState<'de>,
+where
+        for<'de> T: RouterState<'de>,
 {
     /// Creates a new sender only bridge.
     pub fn new(callback: Callback<Void>) -> Self {

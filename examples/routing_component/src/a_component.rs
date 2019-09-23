@@ -2,7 +2,7 @@ use crate::c_component::CModel;
 use yew::prelude::*;
 use yew::Properties;
 use yew_router::components::router_button::RouterButton;
-use yew_router::render::component;
+use yew_router::component;
 use yew_router::route;
 use yew_router::FromCaptures;
 use yew_router::{Route, Router};

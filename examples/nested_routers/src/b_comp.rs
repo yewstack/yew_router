@@ -1,5 +1,5 @@
 use yew::prelude::*;
-use yew_router::render::component;
+use yew_router::component;
 use yew_router::route;
 use yew_router::{Route, Router};
 

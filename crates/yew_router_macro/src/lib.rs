@@ -17,7 +17,7 @@ use route::route_impl;
 ///
 /// #### Simple
 /// ```
-/// use yew_router::{FromCaptures, matcher::{Captures, FromCaptures}};
+/// use yew_router::{FromCaptures, Captures};
 /// #[derive(FromCaptures)]
 /// struct Test {
 ///     value: String,
@@ -32,7 +32,7 @@ use route::route_impl;
 /// #### Option and Result
 /// ```
 ///# use std::num::ParseIntError;
-/// use yew_router::{FromCaptures, matcher::{Captures, FromCaptures}};
+/// use yew_router::{FromCaptures, Captures};
 /// #[derive(FromCaptures)]
 /// struct Test {
 ///     not_required: Option<String>,
