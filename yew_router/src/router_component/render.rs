@@ -1,5 +1,5 @@
 //! Wrapper around RenderFn that allows clones.
-use crate::matcher::{Captures, FromCaptures, RenderFn};
+use crate::matcher::{Captures, FromCaptures};
 use crate::router::Router;
 use crate::router_component::YewRouterState;
 use std::fmt::{Debug, Error as FmtError, Formatter};
@@ -7,6 +7,19 @@ use std::rc::Rc;
 use yew::virtual_dom::vcomp::ScopeHolder;
 use yew::virtual_dom::{VComp, VNode};
 use yew::{Component, Html, Renderable};
+
+
+
+/// Render function.
+pub trait RenderFn<CTX: Component>: Fn(&Captures) -> Option<Html<CTX>> {}
+
+impl<CTX, T> RenderFn<CTX> for T
+    where
+        T: Fn(&Captures) -> Option<Html<CTX>>,
+        CTX: Component,
+{
+}
+
 
 /// Creates a component using supplied props and scope.
 pub(crate) fn create_component_with_scope<

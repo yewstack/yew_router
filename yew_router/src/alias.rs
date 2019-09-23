@@ -78,7 +78,7 @@ macro_rules! define_router_state {
             #[doc = "Renders the provided closure in terms of a `Router<"]
             #[doc = $StateName]
             #[doc = ">`."]
-            pub fn render(render: impl $crate::matcher::RenderFn<Router> + 'static) -> $crate::render::Render<$StateT> {
+            pub fn render(render: impl $crate::render::RenderFn<Router> + 'static) -> $crate::render::Render<$StateT> {
                 $crate::render::render(render)
             }
 

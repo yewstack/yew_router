@@ -1,7 +1,7 @@
 //! Router Component.
 
 use crate::agent::{bridge::RouteAgentBridge, RouteRequest};
-use crate::matcher::RenderFn;
+use crate::router_component::render::RenderFn;
 use crate::route_info::RouteInfo;
 use crate::router_component::route::Route;
 use crate::YewRouterState;

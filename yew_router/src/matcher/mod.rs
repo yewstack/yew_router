@@ -1,5 +1,4 @@
 //! Logic for matching and capturing route strings.
-use yew::{Component, Html};
 
 pub use yew_router_route_parser::{
     CaptureVariant, Captures, FromCapturedKeyValue, FromCapturesError, MatcherToken,
@@ -65,14 +64,4 @@ impl Matcher {
             Matcher::CustomMatcher(matcher) => matcher.match_route_string(route_string),
         }
     }
-}
-
-/// Render function.
-pub trait RenderFn<CTX: Component>: Fn(&Captures) -> Option<Html<CTX>> {}
-
-impl<CTX, T> RenderFn<CTX> for T
-where
-    T: Fn(&Captures) -> Option<Html<CTX>>,
-    CTX: Component,
-{
 }
