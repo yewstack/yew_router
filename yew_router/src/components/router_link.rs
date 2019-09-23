@@ -1,4 +1,4 @@
-//! A component wrapping an <a/> tag that changes the route.
+//! A component wrapping an `<a>` tag that changes the route.
 use crate::agent::{RouteRequest, RouteSenderBridge, Void};
 use crate::route_info::RouteInfo;
 use yew::prelude::*;

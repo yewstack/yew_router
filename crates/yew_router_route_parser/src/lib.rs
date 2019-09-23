@@ -35,19 +35,26 @@ pub enum FromCapturesError {
         /// The name of the field that failed to parse.
         field_name: String,
         /// The source string from which the field should have been parsed.
-        source_string: String
+        source_string: String,
     },
 }
 
 impl Display for FromCapturesError {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
         match self {
-            FromCapturesError::MissingField { field_name } => {
-                write!(f, "The field: '{}' was not present in your path matcher.", field_name)
-            }
-            FromCapturesError::FailedParse {field_name,  source_string} => {
-                write!(f, "The field: `{}` was not able to be parsed from the provided string: `{}`.", field_name, source_string)
-            }
+            FromCapturesError::MissingField { field_name } => write!(
+                f,
+                "The field: '{}' was not present in your path matcher.",
+                field_name
+            ),
+            FromCapturesError::FailedParse {
+                field_name,
+                source_string,
+            } => write!(
+                f,
+                "The field: `{}` was not able to be parsed from the provided string: `{}`.",
+                field_name, source_string
+            ),
         }
     }
 }
@@ -57,7 +64,6 @@ impl Error for FromCapturesError {
         None
     }
 }
-
 
 /// Captures contain keys corresponding to named match sections,
 /// and values containing the content captured by those sections.
@@ -80,14 +86,13 @@ impl FromCaptures for () {
     }
 }
 
-
 pub use captured_key_value::FromCapturedKeyValue;
 
 /// Module for holding implementation details for the `FromCapturedKeyValue` trait.
 mod captured_key_value {
+    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
     use std::num::*;
     use std::path::PathBuf;
-    use std::net::{IpAddr, SocketAddr, Ipv4Addr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
     use std::str::FromStr;
 
     /// Some horrible hack to get around orphan rules so a `from_str` operation can be implemented on
@@ -106,7 +111,7 @@ mod captured_key_value {
         }
     }
 
-    impl <T: FromCapturedKeyValue> FromCapturedKeyValue for Option<T> {
+    impl<T: FromCapturedKeyValue> FromCapturedKeyValue for Option<T> {
         fn from_value(s: &str) -> Option<Self> {
             Some(Some(FromCapturedKeyValue::from_value(s)?))
         }
@@ -117,9 +122,9 @@ mod captured_key_value {
         }
     }
 
-    impl <T, E> FromCapturedKeyValue for Result<T, E>
-        where
-            T: FromStr<Err=E>,
+    impl<T, E> FromCapturedKeyValue for Result<T, E>
+    where
+        T: FromStr<Err = E>,
     {
         fn from_value(s: &str) -> Option<Self> {
             Some(T::from_str(s))
@@ -133,52 +138,49 @@ mod captured_key_value {
                     FromStr::from_str(s).ok()
                 }
             }
-        }
+        };
     }
 
+    from_str_option_impl! {String}
+    from_str_option_impl! {PathBuf}
+    from_str_option_impl! {bool}
 
-    from_str_option_impl!{String}
-    from_str_option_impl!{PathBuf}
-    from_str_option_impl!{bool}
+    from_str_option_impl! {IpAddr}
+    from_str_option_impl! {Ipv4Addr}
+    from_str_option_impl! {Ipv6Addr}
+    from_str_option_impl! {SocketAddr}
+    from_str_option_impl! {SocketAddrV4}
+    from_str_option_impl! {SocketAddrV6}
 
-    from_str_option_impl!{IpAddr}
-    from_str_option_impl!{Ipv4Addr}
-    from_str_option_impl!{Ipv6Addr}
-    from_str_option_impl!{SocketAddr}
-    from_str_option_impl!{SocketAddrV4}
-    from_str_option_impl!{SocketAddrV6}
+    from_str_option_impl! {usize}
+    from_str_option_impl! {u128}
+    from_str_option_impl! {u64}
+    from_str_option_impl! {u32}
+    from_str_option_impl! {u16}
+    from_str_option_impl! {u8}
 
-    from_str_option_impl!{usize}
-    from_str_option_impl!{u128}
-    from_str_option_impl!{u64}
-    from_str_option_impl!{u32}
-    from_str_option_impl!{u16}
-    from_str_option_impl!{u8}
+    from_str_option_impl! {isize}
+    from_str_option_impl! {i128}
+    from_str_option_impl! {i64}
+    from_str_option_impl! {i32}
+    from_str_option_impl! {i16}
+    from_str_option_impl! {i8}
 
-    from_str_option_impl!{isize}
-    from_str_option_impl!{i128}
-    from_str_option_impl!{i64}
-    from_str_option_impl!{i32}
-    from_str_option_impl!{i16}
-    from_str_option_impl!{i8}
+    from_str_option_impl! {NonZeroU128}
+    from_str_option_impl! {NonZeroU64}
+    from_str_option_impl! {NonZeroU32}
+    from_str_option_impl! {NonZeroU16}
+    from_str_option_impl! {NonZeroU8}
 
-    from_str_option_impl!{NonZeroU128}
-    from_str_option_impl!{NonZeroU64}
-    from_str_option_impl!{NonZeroU32}
-    from_str_option_impl!{NonZeroU16}
-    from_str_option_impl!{NonZeroU8}
+    from_str_option_impl! {NonZeroI128}
+    from_str_option_impl! {NonZeroI64}
+    from_str_option_impl! {NonZeroI32}
+    from_str_option_impl! {NonZeroI16}
+    from_str_option_impl! {NonZeroI8}
 
-    from_str_option_impl!{NonZeroI128}
-    from_str_option_impl!{NonZeroI64}
-    from_str_option_impl!{NonZeroI32}
-    from_str_option_impl!{NonZeroI16}
-    from_str_option_impl!{NonZeroI8}
-
-    from_str_option_impl!{f64}
-    from_str_option_impl!{f32}
+    from_str_option_impl! {f64}
+    from_str_option_impl! {f32}
 }
-
-
 
 #[cfg(test)]
 mod test {
@@ -200,8 +202,10 @@ mod test {
                     field_name: "hello".to_string(),
                 })
                 .and_then(|m: &String| {
-                    String::try_from(m.clone())
-                        .map_err(|_| FromCapturesError::FailedParse { field_name: "hello".to_string(), source_string: m.to_string() })
+                    String::try_from(m.clone()).map_err(|_| FromCapturesError::FailedParse {
+                        field_name: "hello".to_string(),
+                        source_string: m.to_string(),
+                    })
                 })?;
 
             let there = captures
@@ -210,8 +214,10 @@ mod test {
                     field_name: "there".to_string(),
                 })
                 .and_then(|m: &String| {
-                    String::try_from(m.clone())
-                        .map_err(|_| FromCapturesError::FailedParse { field_name: "there".to_string(), source_string: m.to_string() })
+                    String::try_from(m.clone()).map_err(|_| FromCapturesError::FailedParse {
+                        field_name: "there".to_string(),
+                        source_string: m.to_string(),
+                    })
                 })?;
 
             let x = TestStruct { hello, there };

@@ -1,8 +1,7 @@
 //! Custom matcher implementation support via dynamic trait objects.
+use crate::matcher::{Matcher, MatcherProvider};
 use std::fmt;
 use std::rc::Rc;
-use crate::matcher::{Matcher, MatcherProvider};
-
 
 /// Wrapper for a user-defined matcher implementation.
 ///

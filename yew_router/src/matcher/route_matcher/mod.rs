@@ -5,13 +5,12 @@ pub use yew_router_route_parser::{CaptureVariant, FromCaptures, FromCapturesErro
 mod match_paths;
 mod util;
 
+use super::Captures;
+use super::Matcher;
 use nom::combinator::all_consuming;
 use nom::IResult;
 use std::collections::HashSet;
 use yew_router_route_parser::{optimize_tokens, parser};
-use super::Captures;
-use super::Matcher;
-
 
 /// Attempts to match routes, transform the route to Component props and render that Component.
 ///

@@ -1,10 +1,10 @@
 //! Route Component.
 use super::YewRouterState;
+use crate::matcher::Matcher;
 use crate::router_component::render::Render;
 use crate::router_component::router::Router;
 use std::fmt::{Debug, Error as FmtError, Formatter};
 use yew::{Children, Component, ComponentLink, Properties, ShouldRender};
-use crate::matcher::Matcher;
 
 /// A nested component used inside of [Router](../router/struct.Router.html) that can determine if a
 /// sub-component can be rendered.

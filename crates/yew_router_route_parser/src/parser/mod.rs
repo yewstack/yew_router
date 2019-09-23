@@ -1,9 +1,9 @@
 //! Parser that consumes a string and produces the first representation of the matcher.
+use self::util::vectorize;
 use nom::branch::alt;
 use nom::combinator::{all_consuming, map_opt, opt};
 use nom::error::{context, VerboseError};
 use nom::sequence::tuple;
-use self::util::vectorize;
 
 mod core;
 mod error;
@@ -130,7 +130,6 @@ pub fn parse_impl(i: &str) -> Result<Vec<RouteParserToken>, nom::Err<VerboseErro
     .map(|(_, tokens)| tokens) // because of all_consuming, there should either be an error, or a success, no intermediate remaining input.
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -194,7 +193,7 @@ mod tests {
 
     #[test]
     fn parser_cant_contain_multiple_matches_in_a_row_0() {
-         parse("/path{}{match}").expect_err("Should not validate");
+        parse("/path{}{match}").expect_err("Should not validate");
     }
     #[test]
     fn parser_cant_contain_multiple_matches_in_a_row_1() {

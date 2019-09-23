@@ -90,7 +90,6 @@ impl Parse for S {
     }
 }
 
-
 /// Expected to be used like: route!("/route/to/thing" => Component)
 pub fn route_impl(input: TokenStream) -> TokenStream {
     let s: S = parse_macro_input!(input as S);

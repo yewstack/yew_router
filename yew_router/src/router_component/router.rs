@@ -1,8 +1,9 @@
 //! Router Component.
 
-use crate::router_component::route::Route;
 use crate::agent::{bridge::RouteAgentBridge, RouteRequest};
+use crate::matcher::RenderFn;
 use crate::route_info::RouteInfo;
+use crate::router_component::route::Route;
 use crate::YewRouterState;
 use log::{trace, warn};
 use std::fmt::{Debug, Error as FmtError, Formatter};
@@ -12,7 +13,6 @@ use yew::virtual_dom::VChild;
 use yew::{
     html, virtual_dom::VNode, Component, ComponentLink, Html, Properties, Renderable, ShouldRender,
 };
-use crate::matcher::RenderFn;
 
 /// Rendering control flow component.
 ///
@@ -196,38 +196,36 @@ fn try_render_child<T: for<'de> YewRouterState<'de>>(
         .props
         .matcher
         .match_route_string(route_string)
-        .map(
-            |matches:  std::collections::HashMap<&str, String>| {
-                match render {
-                    Some(render) => {
-                        if children_present {
-                            match (render)(&matches) {
-                                Some(rendered) => Some(html! {
-                                    <>
-                                        {rendered}
-                                        {children.collect::<VNode<Router<T>>>()}
-                                    </>
-                                }),
-                                None => {
-                                    // If the component can't be created from the matches,
-                                    // the nested children will be rendered anyways
-                                    Some(children.collect())
-                                }
+        .map(|matches: std::collections::HashMap<&str, String>| {
+            match render {
+                Some(render) => {
+                    if children_present {
+                        match (render)(&matches) {
+                            Some(rendered) => Some(html! {
+                                <>
+                                    {rendered}
+                                    {children.collect::<VNode<Router<T>>>()}
+                                </>
+                            }),
+                            None => {
+                                // If the component can't be created from the matches,
+                                // the nested children will be rendered anyways
+                                Some(children.collect())
                             }
-                        } else {
-                            render(&matches)
                         }
-                    }
-                    None => {
-                        if children_present {
-                            Some(children.collect())
-                        } else {
-                            None // Neither matched
-                        }
+                    } else {
+                        render(&matches)
                     }
                 }
-            },
-        )
+                None => {
+                    if children_present {
+                        Some(children.collect())
+                    } else {
+                        None // Neither matched
+                    }
+                }
+            }
+        })
         .flatten_stable()
 }
 

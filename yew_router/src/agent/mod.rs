@@ -17,11 +17,8 @@ use crate::route_info::RouteState;
 use log::trace;
 use yew::callback::Callback;
 
-
 pub mod bridge;
 use bridge::RouteAgentBridge;
-
-
 
 /// Any state that can be used in the router agent must meet the criteria of this trait.
 pub trait RouterState<'de>: RouteState + Serialize + Deserialize<'de> + Debug {}
@@ -70,8 +67,8 @@ impl<T> Transferable for RouteRequest<T> where for<'de> T: Serialize + Deseriali
 /// routing components of different types.
 ///
 pub struct RouteAgent<T>
-    where
-            for<'de> T: RouterState<'de>,
+where
+    for<'de> T: RouterState<'de>,
 {
     // In order to have the AgentLink<Self> below, apparently T must be constrained like this. Unfortunately, this means that everything related to an agent requires this constraint.
     link: AgentLink<RouteAgent<T>>,
@@ -93,8 +90,8 @@ impl<T: for<'de> RouterState<'de>> Debug for RouteAgent<T> {
 }
 
 impl<T> Agent for RouteAgent<T>
-    where
-            for<'de> T: RouterState<'de>,
+where
+    for<'de> T: RouterState<'de>,
 {
     type Reach = Context;
     type Message = Msg<T>;
@@ -182,8 +179,8 @@ impl<T> Agent for RouteAgent<T>
 /// This may be subject to change
 #[deprecated(note = "Dispatchers should make having an indirection agent unnecessary.")]
 pub struct RouteSenderAgent<T>
-    where
-            for<'de> T: RouterState<'de>,
+where
+    for<'de> T: RouterState<'de>,
 {
     /// This acts as a level of indirection.
     router_agent: RouteAgentBridge<T>,
@@ -198,8 +195,8 @@ impl<T: for<'de> RouterState<'de>> Debug for RouteSenderAgent<T> {
 }
 
 impl<T> Agent for RouteSenderAgent<T>
-    where
-            for<'de> T: RouterState<'de>,
+where
+    for<'de> T: RouterState<'de>,
 {
     type Reach = Context;
     type Message = ();
@@ -224,8 +221,8 @@ pub type RouteSenderBridge = RouteSenderAgentBridge<()>;
 
 /// A simplified interface to the router agent
 pub struct RouteSenderAgentBridge<T>(Box<dyn Bridge<RouteSenderAgent<T>>>)
-    where
-            for<'de> T: RouterState<'de>;
+where
+    for<'de> T: RouterState<'de>;
 
 impl<T: for<'de> RouterState<'de>> Debug for RouteSenderAgentBridge<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
@@ -235,7 +232,7 @@ impl<T: for<'de> RouterState<'de>> Debug for RouteSenderAgentBridge<T> {
 
 impl<T> RouteSenderAgentBridge<T>
 where
-        for<'de> T: RouterState<'de>,
+    for<'de> T: RouterState<'de>,
 {
     /// Creates a new sender only bridge.
     pub fn new(callback: Callback<Void>) -> Self {
@@ -248,4 +245,3 @@ where
         self.0.send(request)
     }
 }
-

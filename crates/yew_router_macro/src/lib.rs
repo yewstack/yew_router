@@ -45,7 +45,7 @@ use route::route_impl;
 /// assert!(Test::from_captures(&captures).is_ok())
 /// ```
 #[proc_macro_derive(FromCaptures)]
-pub fn from_captures(tokens: TokenStream) -> TokenStream{
+pub fn from_captures(tokens: TokenStream) -> TokenStream {
     from_captures_impl(tokens)
 }
 
@@ -53,6 +53,3 @@ pub fn from_captures(tokens: TokenStream) -> TokenStream{
 pub fn route(tokens: TokenStream) -> TokenStream {
     route_impl(tokens)
 }
-
-
-

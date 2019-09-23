@@ -62,11 +62,7 @@ pub mod components;
 #[cfg(feature = "router")]
 mod router_component;
 #[cfg(feature = "router")]
-pub use router_component::{
-    render, route, router, YewRouterState,
-};
-
-
+pub use router_component::{render, route, router, YewRouterState};
 
 // Use this alias to define a module containing type aliases.
 define_router_state!(());
@@ -74,11 +70,10 @@ pub use router_state::*;
 
 pub use alias::*;
 
-#[cfg(any(feature = "matchers", feature= "router" ) )]
+#[cfg(any(feature = "matchers", feature = "router"))]
 pub mod matcher;
-#[cfg(any(feature = "matchers", feature= "router" ) )]
-pub use matcher::{MatcherProvider, Matcher, Captures, FromCaptures, FromCapturesError};
-
+#[cfg(any(feature = "matchers", feature = "router"))]
+pub use matcher::{Captures, FromCaptures, FromCapturesError, Matcher, MatcherProvider};
 
 #[cfg(feature = "matchers")]
 pub use yew_router_macro::FromCaptures;

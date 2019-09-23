@@ -46,4 +46,3 @@ impl Renderable<AComp> for AComp {
         }
     }
 }
-

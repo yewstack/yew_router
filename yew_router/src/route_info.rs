@@ -22,10 +22,7 @@ pub struct RouteInfo<T> {
     pub state: Option<T>,
 }
 
-impl<T> RouteInfo<T>
-//where
-//    T: RouteState,
-{
+impl<T> RouteInfo<T> {
     /// Gets the current route from the route service.
     ///
     /// # Note

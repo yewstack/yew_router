@@ -5,7 +5,7 @@ use nom::branch::alt;
 use nom::character::complete::char;
 use nom::combinator::{map, opt};
 use nom::error::{context, VerboseError};
-use nom::multi::{many1};
+use nom::multi::many1;
 use nom::sequence::pair;
 use nom::IResult;
 
@@ -41,25 +41,24 @@ pub fn path_parser(i: &str) -> IResult<&str, Vec<RouteParserToken>, VerboseError
 
     let either_option_or_concrete = map(
         many1(alt((many_inner_paths, many_optional_inner_paths))),
-        |x: Vec<Vec<RouteParserToken>>|{
-            x.into_iter().flatten().collect::<Vec<_>>()
-        }
+        |x: Vec<Vec<RouteParserToken>>| x.into_iter().flatten().collect::<Vec<_>>(),
     );
 
     // accept any number of /thing or just '/
     context(
         "path parser",
-        nom::combinator::verify(alt((
-            map(
-                pair(either_option_or_concrete, opt(separator_token)),
-                |(mut paths, ending_separator)| {
-                    paths.extend(ending_separator);
-                    paths
-                },
-            ),
-            map(separator_token, |x| vec![x]),
-        )),
-        validate_path_parser_tokens
+        nom::combinator::verify(
+            alt((
+                map(
+                    pair(either_option_or_concrete, opt(separator_token)),
+                    |(mut paths, ending_separator)| {
+                        paths.extend(ending_separator);
+                        paths
+                    },
+                ),
+                map(separator_token, |x| vec![x]),
+            )),
+            validate_path_parser_tokens,
         ),
     )(i)
 }
@@ -118,33 +117,27 @@ pub fn section_matchers(i: &str) -> IResult<&str, Vec<RouteParserToken>, Verbose
 fn validate_path_parser_tokens(tokens: &[RouteParserToken]) -> bool {
     let mut linearized_tokens = vec![];
     // Pull the tokens present in optional tokens into a single, non-nested collection of tokens.
-    tokens
-        .iter()
-        .for_each(|t| {
-            match t {
-                RouteParserToken::Optional(inner) => linearized_tokens.extend(inner),
-                token @ _ => linearized_tokens.push(token)
-            }
-        });
-    linearized_tokens
-        .windows(2)
-        .all(|win| {
-            match win {
-                [RouteParserToken::Capture(_), RouteParserToken::Capture(_)] => false, // TODO because of this, would it be possible to relax the restriction around mandating path optionals start with '/'
-                _ => true
-            }
-        })
+    tokens.iter().for_each(|t| match t {
+        RouteParserToken::Optional(inner) => linearized_tokens.extend(inner),
+        token @ _ => linearized_tokens.push(token),
+    });
+    linearized_tokens.windows(2).all(|win| {
+        match win {
+            [RouteParserToken::Capture(_), RouteParserToken::Capture(_)] => false, // TODO because of this, would it be possible to relax the restriction around mandating path optionals start with '/'
+            _ => true,
+        }
+    })
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::CaptureVariant;
     use nom::combinator::all_consuming;
     use nom::error::ErrorKind;
     use nom::error::ErrorKind::Alt;
     use nom::error::ParseError;
     use nom::error::VerboseErrorKind::{Char, Context, Nom};
-    use crate::CaptureVariant;
     use nom::Err;
 
     #[test]
@@ -228,7 +221,6 @@ mod test {
         assert_eq!(tokens, expected);
     }
 
-
     #[test]
     fn option_section_between_exacts() {
         let (_, tokens) = path_parser("/first(/second)/third").expect("Should validate");
@@ -245,7 +237,6 @@ mod test {
         assert_eq!(tokens, expected);
     }
 
-
     #[test]
     fn option_section_between_capture_then_exact() {
         let (_, tokens) = path_parser("/first(/{})/third").expect("Should validate");
@@ -254,14 +245,13 @@ mod test {
             RouteParserToken::Exact("first".to_string()),
             RouteParserToken::Optional(vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Capture(CaptureVariant::Unnamed)
+                RouteParserToken::Capture(CaptureVariant::Unnamed),
             ]),
             RouteParserToken::Separator,
             RouteParserToken::Exact("third".to_string()),
         ];
         assert_eq!(tokens, expected);
     }
-
 
     #[test]
     fn option_section_between_exact_then_capture() {
@@ -274,7 +264,7 @@ mod test {
                 RouteParserToken::Exact("second".to_string()),
             ]),
             RouteParserToken::Separator,
-            RouteParserToken::Capture(CaptureVariant::Unnamed)
+            RouteParserToken::Capture(CaptureVariant::Unnamed),
         ];
         assert_eq!(tokens, expected);
     }
@@ -283,7 +273,6 @@ mod test {
     fn option_section_between_captures_fails() {
         all_consuming(path_parser)("/first(/{}){}").expect_err("Should not validate");
     }
-
 
     #[test]
     fn option_section_can_start_matcher_string() {

@@ -1,23 +1,20 @@
 //! Bridge to RouteAgent.
-use yew::{Bridge, Callback};
-use yew::agent::Context;
-use std::fmt::{Debug, Formatter, Error as FmtError};
-use std::ops::{Deref, DerefMut};
+use crate::agent::{RouteAgent, RouterState};
 use crate::route_info::RouteInfo;
-use crate::agent::{RouterState, RouteAgent};
+use std::fmt::{Debug, Error as FmtError, Formatter};
+use std::ops::{Deref, DerefMut};
 use yew::agent::Bridged;
-
-
-
+use yew::agent::Context;
+use yew::{Bridge, Callback};
 
 /// A simplified interface to the router agent.
 pub struct RouteAgentBridge<T>(Box<dyn Bridge<RouteAgent<T>>>)
-    where
-            for<'de> T: RouterState<'de>;
+where
+    for<'de> T: RouterState<'de>;
 
 impl<T> RouteAgentBridge<T>
-    where
-            for<'de> T: RouterState<'de>,
+where
+    for<'de> T: RouterState<'de>,
 {
     /// Creates a new bridge.
     pub fn new(callback: Callback<RouteInfo<T>>) -> Self {

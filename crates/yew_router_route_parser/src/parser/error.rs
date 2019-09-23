@@ -3,10 +3,10 @@ use crate::parser::core::valid_exact_match_characters;
 use crate::parser::util::skip_until;
 use core::fmt::Write;
 use nom::branch::alt;
-use nom::character::complete::{char};
+use nom::character::complete::char;
 use nom::error::VerboseError;
 use nom::multi::many0_count;
-use nom::sequence::{terminated};
+use nom::sequence::terminated;
 use std::fmt::{Debug, Display, Error as FmtError, Formatter};
 use ExpectedConstruct as Ec;
 

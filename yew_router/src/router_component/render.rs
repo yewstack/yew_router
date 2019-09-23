@@ -1,19 +1,30 @@
 //! Wrapper around RenderFn that allows clones.
-use crate::router_component::YewRouterState;
+use crate::matcher::{Captures, FromCaptures, RenderFn};
 use crate::router::Router;
+use crate::router_component::YewRouterState;
 use std::fmt::{Debug, Error as FmtError, Formatter};
 use std::rc::Rc;
 use yew::virtual_dom::vcomp::ScopeHolder;
 use yew::virtual_dom::{VComp, VNode};
 use yew::{Component, Html, Renderable};
-use crate::matcher::{FromCaptures, Captures, RenderFn};
+
+/// Creates a component using supplied props and scope.
+pub(crate) fn create_component_with_scope<
+    COMP: Component + Renderable<COMP>,
+    CONTEXT: Component,
+>(
+    props: COMP::Properties,
+    scope_holder: ScopeHolder<CONTEXT>,
+) -> Html<CONTEXT> {
+    VNode::VComp(VComp::new::<COMP>(props, scope_holder))
+}
 
 /// Creates a component using supplied props.
-fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
+pub(crate) fn create_component<COMP: Component + Renderable<COMP>, CONTEXT: Component>(
     props: COMP::Properties,
 ) -> Html<CONTEXT> {
-    let vcomp_scope: ScopeHolder<_> = Default::default();
-    VNode::VComp(VComp::new::<COMP>(props, vcomp_scope))
+    let vcomp_scope: ScopeHolder<CONTEXT> = Default::default();
+    create_component_with_scope::<COMP, CONTEXT>(props, vcomp_scope)
 }
 
 /// Creates a `Render` that creates the specified component if its

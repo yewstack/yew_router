@@ -1,14 +1,15 @@
 //! Components that integrate with the [route agent](struct.RouteAgent.html).
 //!
+pub mod route_injector;
 pub mod router_button;
 pub mod router_link;
+
+use yew::Properties;
 
 pub use self::router_button::RouterButton;
 pub use self::router_link::RouterLink;
 
-use yew::Properties;
-
-/// Properties for Routing Components
+/// Properties for `RouterButton` and `RouterLink`.
 #[derive(Properties, Default, Clone, Debug, PartialEq)]
 pub struct Props {
     /// The route that will be set when the component is clicked.
@@ -23,7 +24,7 @@ pub struct Props {
     pub classes: String,
 }
 
-/// Message for Routing Components.
+/// Message for `RouterButton` and `RouterLink`.
 #[derive(Clone, Copy, Debug)]
 pub enum Msg {
     /// Perform no action

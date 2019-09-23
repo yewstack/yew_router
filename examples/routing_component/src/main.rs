@@ -13,8 +13,8 @@ use crate::a_component::AModel;
 use crate::b_component::BModel;
 use crate::c_component::CModel;
 
-use yew_router::matcher::Captures;
 use yew_router::component;
+use yew_router::matcher::Captures;
 use yew_router::render;
 
 #[global_allocator]
