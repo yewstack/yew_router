@@ -1,10 +1,10 @@
 //! Router Component.
 
 use crate::agent::{bridge::RouteAgentBridge, RouteRequest};
-use crate::router_component::render::RenderFn;
+use crate::router::render::RenderFn;
 use crate::route_info::RouteInfo;
-use crate::router_component::route::Route;
-use crate::YewRouterState;
+use crate::router::route::Route;
+use crate::router::RouterState;
 use log::{trace, warn};
 use std::fmt::{Debug, Error as FmtError, Formatter};
 use std::rc::Rc;
@@ -23,8 +23,7 @@ use yew::{
 /// # Example
 /// ```
 /// use yew::prelude::*;
-/// use yew_router::{Router, Route, route, component};
-/// use yew_router::FromCaptures;
+/// use yew_router::prelude::*;
 ///
 /// pub struct AComponent {}
 ///
@@ -74,20 +73,11 @@ use yew::{
 ///     }
 /// }
 /// ```
-pub struct Router<T: for<'de> YewRouterState<'de>> {
+#[derive(Debug)]
+pub struct Router<T: for<'de> RouterState<'de>> {
     route: RouteInfo<T>,
     props: Props<T>,
     router_agent: RouteAgentBridge<T>,
-}
-
-impl<T: for<'de> YewRouterState<'de>> Debug for Router<T> {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
-        f.debug_struct("Router")
-            .field("route", &self.props)
-            .field("props", &self.props)
-            .field("router_agent", &"Bridge to RouteAgent")
-            .finish()
-    }
 }
 
 /// Message for Router.
@@ -99,12 +89,12 @@ pub enum Msg<T> {
 
 /// Properties for Router.
 #[derive(Properties)]
-pub struct Props<T: for<'de> YewRouterState<'de>> {
+pub struct Props<T: for<'de> RouterState<'de>> {
     #[props(required)]
     children: ChildrenWithProps<Route<T>, Router<T>>,
 }
 
-impl<T: for<'de> YewRouterState<'de>> Debug for Props<T> {
+impl<T: for<'de> RouterState<'de>> Debug for Props<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("Props")
             .field("children (length)", &self.children.len())
@@ -114,7 +104,7 @@ impl<T: for<'de> YewRouterState<'de>> Debug for Props<T> {
 
 impl<T> Component for Router<T>
 where
-    T: for<'de> YewRouterState<'de>,
+    T: for<'de> RouterState<'de>,
 {
     type Message = Msg<T>;
     type Properties = Props<T>;
@@ -151,7 +141,7 @@ where
     }
 }
 
-impl<T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T> {
+impl<T: for<'de> RouterState<'de>> Renderable<Router<T>> for Router<T> {
     fn view(&self) -> VNode<Self> {
         trace!(
             "Routing one of {} routes for  {:?}",
@@ -183,7 +173,7 @@ impl<T: for<'de> YewRouterState<'de>> Renderable<Router<T>> for Router<T> {
 /// # Arguments
 /// * route_child - The child attempting to be rendered.
 /// * route_string - The string representing the route.
-fn try_render_child<T: for<'de> YewRouterState<'de>>(
+fn try_render_child<T: for<'de> RouterState<'de>>(
     route_child: VChild<Route<T>, Router<T>>,
     route_string: &str,
 ) -> Option<Html<Router<T>>> {

@@ -1,5 +1,5 @@
 //! Components that integrate with the [route agent](struct.RouteAgent.html).
-//!
+
 pub mod route_injector;
 pub mod router_button;
 pub mod router_link;

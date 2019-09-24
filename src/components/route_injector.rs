@@ -2,7 +2,7 @@
 //! to indicate the route.
 use crate::agent::{bridge::RouteAgentBridge, RouteRequest};
 use crate::route_info::RouteInfo;
-use crate::router_component::YewRouterState;
+use crate::router::RouterState;
 use std::fmt::{Debug, Error as FmtError, Formatter};
 use yew::virtual_dom::VNode;
 use yew::{
@@ -10,16 +10,16 @@ use yew::{
 };
 
 /// A trait allowing user-defined components to have their props rewritten by a parent `RouteInjector` when the route changes.
-pub trait RouteInjectable<T: for<'de> YewRouterState<'de>>: Properties {
+pub trait RouteInjectable<T: for<'de> RouterState<'de>>: Properties {
     /// Changes the props based on a route.
     ///
     ///
     /// # Example
     /// ```
     /// use yew_router::components::route_injector::RouteInjectable;
-    /// use yew_router::State;
-    ///# use yew_router::{RouteInfo, Matcher};
+    /// use yew_router::prelude::*;
     ///# use yew::{Children, Component, ComponentLink, Properties};
+    ///
     ///
     ///# struct ListElement;
     ///# impl Component for ListElement {
@@ -50,9 +50,8 @@ pub trait RouteInjectable<T: for<'de> YewRouterState<'de>>: Properties {
 /// ```
 /// use yew_router::matcher::{Matcher, MatcherProvider};
 /// # use yew::{Component, ComponentLink, Renderable, Html, Properties, html, Classes, Children};
-/// use yew_router::{RouteInjector, State};
-/// use yew_router::components::route_injector::RouteInjectable;
-/// # use yew_router::{RouteInfo, route};
+/// use yew_router::prelude::*;
+/// use yew_router::components::route_injector::{RouteInjectable};
 /// pub struct ListElement {
 ///     props: ListElementProps
 /// }
@@ -116,7 +115,7 @@ pub trait RouteInjectable<T: for<'de> YewRouterState<'de>>: Properties {
 #[derive(Debug)]
 pub struct RouteInjector<T, C>
 where
-    T: for<'de> YewRouterState<'de>,
+    T: for<'de> RouterState<'de>,
     C: Component + Renderable<C>,
     <C as Component>::Properties: RouteInjectable<T>,
 {
@@ -127,7 +126,7 @@ where
 
 /// Properties for `RouteInjector`.
 #[derive(Properties)]
-pub struct Props<T: for<'de> YewRouterState<'de>, C: Component + Renderable<C>>
+pub struct Props<T: for<'de> RouterState<'de>, C: Component + Renderable<C>>
 where
     <C as Component>::Properties: RouteInjectable<T>,
 {
@@ -136,7 +135,7 @@ where
 
 impl<T, C> Debug for Props<T, C>
 where
-    T: for<'de> YewRouterState<'de>,
+    T: for<'de> RouterState<'de>,
     C: Component + Renderable<C>,
     <C as Component>::Properties: RouteInjectable<T>,
 {
@@ -152,14 +151,14 @@ where
 
 /// Message type for `RouteInjector`.
 #[derive(Debug)]
-pub enum Msg<T: for<'de> YewRouterState<'de>> {
+pub enum Msg<T: for<'de> RouterState<'de>> {
     /// Message indicating that the route has changed
     RouteUpdated(RouteInfo<T>),
 }
 
 impl<T, C> Component for RouteInjector<T, C>
 where
-    T: for<'de> YewRouterState<'de>,
+    T: for<'de> RouterState<'de>,
     C: Component + Renderable<C>,
     <C as Component>::Properties: RouteInjectable<T>,
 {
@@ -195,7 +194,7 @@ where
 
 impl<T, C> Renderable<RouteInjector<T, C>> for RouteInjector<T, C>
 where
-    T: for<'de> YewRouterState<'de>,
+    T: for<'de> RouterState<'de>,
     C: Component + Renderable<C>,
     <C as Component>::Properties: RouteInjectable<T>,
 {
@@ -209,7 +208,7 @@ where
                     child.props.inject_route(&route_info)
                 }
                 // TODO, is this necessary to render children from an iter over children?
-                crate::router_component::render::create_component_with_scope::<C, Self>(
+                crate::router::create_component_with_scope::<C, Self>(
                     child.props,
                     child.scope,
                 )

@@ -4,9 +4,10 @@ use yew::prelude::*;
 use yew::Properties;
 use yew_router::agent::RouteRequest;
 use yew_router::route;
-use yew_router::FromCapturesError;
-use yew_router::{Captures, FromCaptures};
-use yew_router::{RouteAgent, RouteInfo};
+use yew_router::prelude::*;
+//use yew_router::FromCapturesError;
+//use yew_router::{Captures, FromCaptures};
+//use yew_router::{RouteAgent, RouteInfo};
 
 pub struct BModel {
     props: Props,

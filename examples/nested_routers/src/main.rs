@@ -3,7 +3,9 @@ use crate::b_comp::BComp;
 use crate::page_not_found::PageNotFound;
 use yew::{html, Component, ComponentLink, Html, Renderable, ShouldRender};
 use yew_router::components::RouterButton;
-use yew_router::{component, route, Route, Router};
+use yew_router::{route};
+use yew_router::prelude::*;
+
 
 mod a_comp;
 mod b_comp;

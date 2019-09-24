@@ -45,13 +45,20 @@
     unstable_features,
     unused_qualifications
 )]
-#![allow(deprecated)] // TODO remove me once dispatchers lands
+// TODO remove me once dispatchers lands
+#![allow(deprecated)]
+// This will break the project at some point, but it will break yew as well.
+// It can be dealt with at the same time.
+#![allow(macro_expanded_macro_exports_accessed_by_absolute_paths)]
+
+#[cfg(feature = "matchers")]
 use proc_macro_hack::proc_macro_hack;
 
+#[macro_use]
 mod alias;
 pub mod route_service;
 
-#[cfg(feature = "router_agent")]
+#[cfg(feature = "agent")]
 pub mod agent;
 
 pub mod route_info;
@@ -60,23 +67,50 @@ pub mod route_info;
 pub mod components;
 
 #[cfg(feature = "router")]
-mod router_component;
-#[cfg(feature = "router")]
-pub use router_component::{render, route, router, YewRouterState};
+pub mod router;
 
-// Use this alias to define a module containing type aliases.
-define_router_state!(());
-pub use router_state::*;
+
+/// Contains aliases and functions for working with this library using a state of type  `()`.
+#[cfg(feature = "unit_alias")]
+pub mod unit_state {
+    define_router_state!(());
+    pub use router_state::*;
+}
+
+/// Prelude crate that can be imported when working with the yew_router
+pub mod prelude {
+    #[cfg(feature = "unit_alias")]
+    pub use super::unit_state::*;
+    #[cfg(any(feature = "matchers", feature = "router"))]
+    pub use super::matcher::{Captures, FromCaptures, FromCapturesError, Matcher, MatcherProvider, RouteMatcher, CustomMatcher};
+    #[cfg(feature = "matchers")]
+    pub use yew_router_macro::FromCaptures;
+    #[cfg(feature = "matchers")]
+    pub use crate::route;
+    // State restrictions
+    #[cfg(feature = "router")]
+    pub use crate::router::RouterState;
+    #[cfg(feature = "agent")]
+    pub use crate::agent::AgentState;
+    pub use crate::route_info::RouteState;
+}
 
 pub use alias::*;
 
 #[cfg(any(feature = "matchers", feature = "router"))]
 pub mod matcher;
-#[cfg(any(feature = "matchers", feature = "router"))]
-pub use matcher::{Captures, FromCaptures, FromCapturesError, Matcher, MatcherProvider};
 
 #[cfg(feature = "matchers")]
 pub use yew_router_macro::FromCaptures;
+#[cfg(feature = "matchers")]
+pub use matcher::{FromCaptures, MatcherProvider};
+
+
+#[cfg(feature = "router")]
+pub use crate::router::RouterState;
+#[cfg(feature = "agent")]
+pub use crate::agent::AgentState;
+pub use crate::route_info::RouteState;
 
 /// The route macro produces a Matcher which can be used to determine if a route string should cause
 /// a section of html or component should render.

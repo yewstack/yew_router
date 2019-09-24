@@ -1,13 +1,12 @@
 //! Wrapper around RenderFn that allows clones.
 use crate::matcher::{Captures, FromCaptures};
 use crate::router::Router;
-use crate::router_component::YewRouterState;
+use crate::router::RouterState;
 use std::fmt::{Debug, Error as FmtError, Formatter};
 use std::rc::Rc;
 use yew::virtual_dom::vcomp::ScopeHolder;
 use yew::virtual_dom::{VComp, VNode};
 use yew::{Component, Html, Renderable};
-
 
 
 /// Render function.
@@ -19,7 +18,6 @@ impl<CTX, T> RenderFn<CTX> for T
         CTX: Component,
 {
 }
-
 
 /// Creates a component using supplied props and scope.
 pub(crate) fn create_component_with_scope<
@@ -46,7 +44,7 @@ pub fn component<T, U>() -> Render<U>
 where
     T: Component + Renderable<T>,
     <T as Component>::Properties: FromCaptures,
-    U: for<'de> YewRouterState<'de>,
+    U: for<'de> RouterState<'de>,
 {
     Render::new(|captures: &Captures| {
         let props = T::Properties::from_captures(captures).ok()?;
@@ -55,7 +53,7 @@ where
 }
 
 /// Shorthand for [Render::new()](structs.Render.html#new).
-pub fn render<T: for<'de> YewRouterState<'de>>(
+pub fn render<T: for<'de> RouterState<'de>>(
     render: impl RenderFn<Router<T>> + 'static,
 ) -> Render<T> {
     Render::new(render)
@@ -66,22 +64,22 @@ pub fn render<T: for<'de> YewRouterState<'de>>(
 /// even after it has successfully matched a URL,
 /// as well as controlling what will be rendered if it routes successfully.
 #[derive(Clone)]
-pub struct Render<T: for<'de> YewRouterState<'de>>(pub(crate) Option<Rc<dyn RenderFn<Router<T>>>>);
+pub struct Render<T: for<'de> RouterState<'de>>(pub(crate) Option<Rc<dyn RenderFn<Router<T>>>>);
 
-impl<T: for<'de> YewRouterState<'de>> Default for Render<T> {
+impl<T: for<'de> RouterState<'de>> Default for Render<T> {
     fn default() -> Self {
         Render(None)
     }
 }
 
-impl<T: for<'de> YewRouterState<'de>> Render<T> {
+impl<T: for<'de> RouterState<'de>> Render<T> {
     /// Wraps a `RenderFn` in an optional Rc pointer, producing a new `Render`.
     pub fn new(render: impl RenderFn<Router<T>> + 'static) -> Self {
         Render(Some(Rc::new(render)))
     }
 }
 
-impl<T: for<'de> YewRouterState<'de>> Debug for Render<T> {
+impl<T: for<'de> RouterState<'de>> Debug for Render<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.write_str("Render")
     }

@@ -37,13 +37,13 @@ macro_rules! define_router_state {
             #[doc = ">](route_service/struct.RouteService.html)."]
             pub type RouteService = $crate::route_service::RouteService<$StateT>;
 
-            #[cfg(feature="router_agent")]
+            #[cfg(feature="agent")]
             #[doc = "Alias to [RouteAgent<"]
             #[doc = $StateName]
             #[doc = ">](agent/struct.RouteAgent.html)."]
             pub type RouteAgent = $crate::agent::RouteAgent<$StateT>;
 
-            #[cfg(feature="router_agent")]
+            #[cfg(feature="agent")]
             #[doc = "Alias to [RouteAgentBridge<"]
             #[doc = $StateName]
             #[doc = ">](agent/bridge/struct.RouteAgentBridge.html)`."]
@@ -52,20 +52,20 @@ macro_rules! define_router_state {
             #[cfg(feature="router")]
             #[doc = "Alias to [Router<"]
             #[doc = $StateName]
-            #[doc = ">](router_component/router/struct.Router.html)."]
+            #[doc = ">](router/router/struct.Router.html)."]
             pub type Router = $crate::router::Router<$StateT>;
 
             #[cfg(feature="router")]
             #[doc = "Alias to [Route<"]
             #[doc = $StateName]
-            #[doc = ">](router_component/route/struct.Route.html)."]
-            pub type Route = $crate::route::Route<$StateT>;
+            #[doc = ">](router/struct.Route.html)."]
+            pub type Route = $crate::router::Route<$StateT>;
 
             #[cfg(feature="router")]
             #[doc = "Alias to [Render<"]
             #[doc = $StateName]
-            #[doc = ">](router_component/render/struct.Render.html)."]
-            pub type Render = $crate::render::Render<$StateT>;
+            #[doc = ">](router/struct.Render.html)."]
+            pub type Render = $crate::router::Render<$StateT>;
 
             #[cfg(feature="components")]
             #[doc = "Alias to [RouteInjector<"]
@@ -78,8 +78,8 @@ macro_rules! define_router_state {
             #[doc = "Renders the provided closure in terms of a `Router<"]
             #[doc = $StateName]
             #[doc = ">`."]
-            pub fn render(render: impl $crate::render::RenderFn<Router> + 'static) -> $crate::render::Render<$StateT> {
-                $crate::render::render(render)
+            pub fn render(render: impl $crate::router::RenderFn<Router> + 'static) -> $crate::router::Render<$StateT> {
+                $crate::router::render(render)
             }
 
             #[cfg(feature="router")]
@@ -88,12 +88,12 @@ macro_rules! define_router_state {
             #[doc = ">`."]
             #[doc = "\n"]
             #[doc = "Use a turbofish (`::<YourComponent>`) to indicate what component should be rendered."]
-            pub fn component<T>() -> $crate::render::Render<$StateT>
+            pub fn component<T>() -> $crate::router::Render<$StateT>
             where
                 T: yew::Component + yew::Renderable<T>,
                 <T as yew::Component>::Properties: $crate::matcher::FromCaptures,
             {
-                $crate::render::component::<T, $StateT>()
+                $crate::router::component::<T, $StateT>()
             }
         }
     }

@@ -1,15 +1,15 @@
 //! Route Component.
-use super::YewRouterState;
+use super::RouterState;
 use crate::matcher::Matcher;
-use crate::router_component::render::Render;
-use crate::router_component::router::Router;
+use crate::router::render::Render;
+use crate::router::router::Router;
 use std::fmt::{Debug, Error as FmtError, Formatter};
 use yew::{Children, Component, ComponentLink, Properties, ShouldRender};
 
 /// A nested component used inside of [Router](../router/struct.Router.html) that can determine if a
 /// sub-component can be rendered.
 #[derive(Debug)]
-pub struct Route<T: for<'de> YewRouterState<'de>> {
+pub struct Route<T: for<'de> RouterState<'de>> {
     props: RouteProps<T>,
 }
 
@@ -24,7 +24,7 @@ pub struct Route<T: for<'de> YewRouterState<'de>> {
 /// (`render` elements above the `children` elements in the DOM)
 /// if the `render` returns `Some`.
 #[derive(Properties)]
-pub struct RouteProps<T: for<'de> YewRouterState<'de>> {
+pub struct RouteProps<T: for<'de> RouterState<'de>> {
     /// Matches the url and can extract sections as matches to be used by the `Render`.
     #[props(required)]
     pub matcher: Matcher,
@@ -34,7 +34,7 @@ pub struct RouteProps<T: for<'de> YewRouterState<'de>> {
     pub children: Children<Router<T>>,
 }
 
-impl<T: for<'de> YewRouterState<'de>> Debug for RouteProps<T> {
+impl<T: for<'de> RouterState<'de>> Debug for RouteProps<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("RouteProps")
             .field("matcher", &self.matcher)
@@ -44,7 +44,7 @@ impl<T: for<'de> YewRouterState<'de>> Debug for RouteProps<T> {
     }
 }
 
-impl<T: for<'de> YewRouterState<'de>> Component for Route<T> {
+impl<T: for<'de> RouterState<'de>> Component for Route<T> {
     type Message = ();
     type Properties = RouteProps<T>;
 
