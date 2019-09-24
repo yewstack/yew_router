@@ -3,7 +3,6 @@ use std::usize;
 use yew::prelude::*;
 use yew::Properties;
 use yew_router::agent::RouteRequest;
-use yew_router::route;
 use yew_router::prelude::*;
 //use yew_router::FromCapturesError;
 //use yew_router::{Captures, FromCaptures};
@@ -27,7 +26,7 @@ pub enum Msg {
     Increment,
     Decrement,
     UpdateSubpath(String),
-    HandleRoute(RouteInfo),
+    NoOp,
 }
 
 impl Component for BModel {
@@ -35,10 +34,8 @@ impl Component for BModel {
     type Properties = Props;
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-        let callback = link.send_back(Msg::HandleRoute);
-        let mut router = RouteAgent::bridge(callback);
-
-        router.send(RouteRequest::GetCurrentRoute);
+        let callback = link.send_back(|_| Msg::NoOp);
+        let router = RouteAgent::bridge(callback);
 
         BModel {
             props,
@@ -75,17 +72,8 @@ impl Component for BModel {
                     .send(RouteRequest::ChangeRouteNoBroadcast(route));
                 true
             }
-            Msg::HandleRoute(route) => {
-                // When the route changes, you can opt to re-parse the route. and update the props.
-                // TODO I'm not sure about the utility of this if the router is passing updated props anyways.
-                let path_matcher = route!("/b(?sub_path={sub_path})(#{number})");
-                if let Some(captures) = path_matcher.match_route_string(&route.to_string()) {
-                    let props = Props::from_captures(&captures).unwrap();
-                    self.props = props;
-                    true
-                } else {
-                    false
-                }
+            Msg::NoOp => {
+                false
             }
             Msg::Increment => {
                 let n = if let Some(number) = self.props.number {
