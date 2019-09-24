@@ -248,8 +248,8 @@ mod test {
 
     #[test]
     fn conversion_cap_or_exact_to_matcher_token_exact() {
-        let mt = MatcherToken::from(CaptureOrExact::Exact("hello".to_string()));
-        assert_eq!(mt, MatcherToken::Exact("hello".to_string()))
+        let mt = MatcherToken::from(CaptureOrExact::Exact("lorem".to_string()));
+        assert_eq!(mt, MatcherToken::Exact("lorem".to_string()))
     }
 
     #[test]
@@ -324,16 +324,16 @@ mod test {
     fn optimize_optional() {
         let tokens = vec![
             RouteParserToken::Separator,
-            RouteParserToken::Exact("hello".to_string()),
+            RouteParserToken::Exact("lorem".to_string()),
             RouteParserToken::Optional(vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Exact("hello".to_string()),
+                RouteParserToken::Exact("lorem".to_string()),
             ]),
         ];
         let optimized = optimize_tokens(tokens, false);
         let expected = vec![
-            MatcherToken::Exact("/hello".to_string()),
-            MatcherToken::Optional(vec![MatcherToken::Exact("/hello".to_string())]),
+            MatcherToken::Exact("/lorem".to_string()),
+            MatcherToken::Optional(vec![MatcherToken::Exact("/lorem".to_string())]),
         ];
         assert_eq!(expected, optimized);
     }
@@ -342,16 +342,16 @@ mod test {
     fn optimize_optional_with_optional_slash() {
         let tokens = vec![
             RouteParserToken::Separator,
-            RouteParserToken::Exact("hello".to_string()),
+            RouteParserToken::Exact("lorem".to_string()),
             RouteParserToken::Optional(vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Exact("hello".to_string()),
+                RouteParserToken::Exact("lorem".to_string()),
             ]),
         ];
         let optimized = optimize_tokens(tokens, true);
         let expected = vec![
-            MatcherToken::Exact("/hello".to_string()),
-            MatcherToken::Optional(vec![MatcherToken::Exact("/hello".to_string())]),
+            MatcherToken::Exact("/lorem".to_string()),
+            MatcherToken::Optional(vec![MatcherToken::Exact("/lorem".to_string())]),
             MatcherToken::Optional(vec![MatcherToken::Exact("/".to_string())]),
         ];
         assert_eq!(expected, optimized);
@@ -360,11 +360,11 @@ mod test {
     #[test]
     fn optimize_capture_all() {
         let tokens = vec![RouteParserToken::Capture(CaptureVariant::ManyNamed(
-            "hello".to_string(),
+            "lorem".to_string(),
         ))];
         let optimized = optimize_tokens(tokens, true);
         let expected = vec![MatcherToken::Capture(CaptureVariant::ManyNamed(
-            "hello".to_string(),
+            "lorem".to_string(),
         ))];
         assert_eq!(expected, optimized);
     }
@@ -373,12 +373,12 @@ mod test {
     fn optimize_capture_everything_after_initial_slash() {
         let tokens = vec![
             RouteParserToken::Separator,
-            RouteParserToken::Capture(CaptureVariant::ManyNamed("hello".to_string())),
+            RouteParserToken::Capture(CaptureVariant::ManyNamed("lorem".to_string())),
         ];
         let optimized = optimize_tokens(tokens, true);
         let expected = vec![
             MatcherToken::Exact("/".to_string()),
-            MatcherToken::Capture(CaptureVariant::ManyNamed("hello".to_string())),
+            MatcherToken::Capture(CaptureVariant::ManyNamed("lorem".to_string())),
         ];
         assert_eq!(expected, optimized);
     }
@@ -388,13 +388,13 @@ mod test {
         let tokens = vec![
             RouteParserToken::QueryBegin,
             RouteParserToken::QueryCapture {
-                ident: "hello".to_string(),
+                ident: "lorem".to_string(),
                 capture_or_match: CaptureOrExact::Capture(CaptureVariant::Unnamed),
             },
         ];
         let optimized = optimize_tokens(tokens, true);
         let expected = vec![
-            MatcherToken::Exact("?hello=".to_string()),
+            MatcherToken::Exact("?lorem=".to_string()),
             MatcherToken::Capture(CaptureVariant::Unnamed),
         ];
         assert_eq!(expected, optimized);

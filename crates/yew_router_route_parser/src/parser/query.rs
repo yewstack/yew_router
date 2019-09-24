@@ -141,27 +141,27 @@ mod test {
 
     #[test]
     fn single_match() {
-        query_parser("?hello=there").expect("should match");
+        query_parser("?lorem=ipsum").expect("should match");
     }
 
     #[test]
     fn single_capture() {
-        query_parser("?hello={there}").expect("should match");
+        query_parser("?lorem={ipsum}").expect("should match");
     }
 
     #[test]
     fn multiple_match() {
-        query_parser("?hello=there&general=kenobi").expect("should match");
+        query_parser("?lorem=impsum&dolor=sit").expect("should match");
     }
 
     #[test]
     fn multiple_capture() {
-        query_parser("?hello={there}&general={}").expect("should match");
+        query_parser("?lorem={ipsum}&dolor={}").expect("should match");
     }
 
     #[test]
     fn multiple_mixed() {
-        query_parser("?hello=there&general={}").expect("should match");
+        query_parser("?lorem=ipsum&dolor={}").expect("should match");
     }
 
     #[test]

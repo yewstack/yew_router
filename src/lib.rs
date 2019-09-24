@@ -106,7 +106,7 @@ pub mod matcher;
 #[cfg(feature = "matchers")]
 pub use yew_router_macro::FromCaptures;
 #[cfg(feature = "matchers")]
-pub use matcher::{FromCaptures, MatcherProvider};
+pub use matcher::{FromCaptures, MatcherProvider, Captures};
 
 
 #[cfg(feature = "router")]

@@ -127,12 +127,12 @@ mod test {
 
     #[test]
     fn capture_named_test() {
-        let cap = capture("{hellothere}").unwrap();
+        let cap = capture("{loremipsum}").unwrap();
         assert_eq!(
             cap,
             (
                 "",
-                RouteParserToken::Capture(CaptureVariant::Named("hellothere".to_string()))
+                RouteParserToken::Capture(CaptureVariant::Named("loremipsum".to_string()))
             )
         );
     }
@@ -196,12 +196,12 @@ mod test {
 
     #[test]
     fn rejects_invalid_ident() {
-        valid_ident_characters("+-Hello").expect_err("Should reject at +");
+        valid_ident_characters("+-lorem").expect_err("Should reject at +");
     }
 
     #[test]
     fn accepts_valid_ident() {
-        valid_ident_characters("Hello").expect("Should accept");
+        valid_ident_characters("Lorem").expect("Should accept");
     }
 
     #[test]

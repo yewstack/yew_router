@@ -190,51 +190,51 @@ mod test {
     #[allow(unused)]
     #[derive(Debug)]
     struct TestStruct {
-        hello: String,
-        there: String,
+        lorem: String,
+        ipsum: String,
     }
 
     impl FromCaptures for TestStruct {
         fn from_captures(captures: &HashMap<&str, String>) -> Result<Self, FromCapturesError> {
-            let hello = captures
-                .get("hello")
+            let lorem = captures
+                .get("lorem")
                 .ok_or_else(|| FromCapturesError::MissingField {
-                    field_name: "hello".to_string(),
+                    field_name: "lorem".to_string(),
                 })
                 .and_then(|m: &String| {
                     String::try_from(m.clone()).map_err(|_| FromCapturesError::FailedParse {
-                        field_name: "hello".to_string(),
+                        field_name: "lorem".to_string(),
                         source_string: m.to_string(),
                     })
                 })?;
 
-            let there = captures
-                .get("there")
+            let ipsum = captures
+                .get("ipsum")
                 .ok_or_else(|| FromCapturesError::MissingField {
-                    field_name: "there".to_string(),
+                    field_name: "ipsum".to_string(),
                 })
                 .and_then(|m: &String| {
                     String::try_from(m.clone()).map_err(|_| FromCapturesError::FailedParse {
-                        field_name: "there".to_string(),
+                        field_name: "ipsum".to_string(),
                         source_string: m.to_string(),
                     })
                 })?;
 
-            let x = TestStruct { hello, there };
+            let x = TestStruct { lorem, ipsum};
             Ok(x)
         }
 
         fn verify(field_names: &HashSet<String>) {
-            if !field_names.contains(&"hello".to_string()) {
+            if !field_names.contains(&"lorem".to_string()) {
                 panic!(
                     "The struct expected the matches to contain a field named '{}'",
-                    "hello".to_string()
+                    "lorem".to_string()
                 )
             }
-            if !field_names.contains(&"there".to_string()) {
+            if !field_names.contains(&"ipsum".to_string()) {
                 panic!(
                     "The struct expected the matches to contain a field named '{}'",
-                    "there".to_string()
+                    "ipsum".to_string()
                 )
             }
         }
@@ -243,56 +243,56 @@ mod test {
     #[test]
     fn underived_verify_impl_is_valid() {
         let mut hs = HashSet::new();
-        hs.insert("hello".to_string());
-        hs.insert("there".to_string());
+        hs.insert("lorem".to_string());
+        hs.insert("ipsum".to_string());
         TestStruct::verify(&hs);
     }
 
     #[test]
     #[should_panic]
-    fn underived_verify_impl_rejects_incomplete_matches_hello() {
+    fn underived_verify_impl_rejects_incomplete_matches_lorem() {
         let mut hs = HashSet::new();
-        hs.insert("hello".to_string());
+        hs.insert("lorem".to_string());
         TestStruct::verify(&hs);
     }
 
     #[test]
     #[should_panic]
-    fn underived_verify_impl_rejects_incomplete_matches_there() {
+    fn underived_verify_impl_rejects_incomplete_matches_ipsum() {
         let mut hs = HashSet::new();
-        hs.insert("there".to_string());
+        hs.insert("ipsum".to_string());
         TestStruct::verify(&hs);
     }
 
     #[test]
     fn underived_matches_impl_is_valid() {
         let mut hm = HashMap::new();
-        hm.insert("hello", "You are".to_string());
-        hm.insert("there", "a".to_string());
+        hm.insert("lorem", "dolor".to_string());
+        hm.insert("ipsum", "sit".to_string());
         TestStruct::from_captures(&hm).expect("should generate struct");
     }
 
     #[test]
-    fn underived_matches_rejects_incomplete_hello() {
+    fn underived_matches_rejects_incomplete_lorem() {
         let mut hm = HashMap::new();
-        hm.insert("hello", "You are".to_string());
+        hm.insert("lorem", "dolor".to_string());
         TestStruct::from_captures(&hm).expect_err("should not generate struct");
     }
 
     #[test]
-    fn underived_matches_rejects_incomplete_there() {
+    fn underived_matches_rejects_incomplete_ipsum() {
         let mut hm = HashMap::new();
-        hm.insert("there", "You are".to_string());
+        hm.insert("ipsum", "sit".to_string());
         TestStruct::from_captures(&hm).expect_err("should not generate struct");
     }
 
     #[test]
     fn error_display_missing_field() {
         let err = FromCapturesError::MissingField {
-            field_name: "hello".to_string(),
+            field_name: "lorem".to_string(),
         };
         let displayed = format!("{}", err);
-        let expected = "The field: 'hello' was not present in your path matcher.";
+        let expected = "The field: 'lorem' was not present in your path matcher.";
         assert_eq!(displayed, expected);
     }
 

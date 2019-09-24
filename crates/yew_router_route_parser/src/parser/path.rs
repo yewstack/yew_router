@@ -142,7 +142,7 @@ mod test {
 
     #[test]
     fn path_must_start_with_separator() {
-        all_consuming(path_parser)("hello").expect_err("Should reject at absence of /");
+        all_consuming(path_parser)("lorem").expect_err("Should reject at absence of /");
     }
 
     #[test]
@@ -195,12 +195,12 @@ mod test {
 
     #[test]
     fn option_section() {
-        path_parser("/hello(/hello)").expect("Should validate");
+        path_parser("/lorem(/ipsum)").expect("Should validate");
     }
 
     #[test]
     fn option_section_with_trailing_sep() {
-        path_parser("/hello(/hello)/").expect("Should validate");
+        path_parser("/lorem(/ipsum)/").expect("Should validate");
     }
 
     #[test]
@@ -276,7 +276,7 @@ mod test {
 
     #[test]
     fn option_section_can_start_matcher_string() {
-        path_parser("(/hello)").expect("Should validate");
+        path_parser("(/lorem)").expect("Should validate");
     }
 
 }

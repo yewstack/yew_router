@@ -139,39 +139,39 @@ mod tests {
     fn multiple_tokens() {
         let tokens = vec![
             RouteParserToken::Separator,
-            RouteParserToken::Exact("hello".to_string()),
+            RouteParserToken::Exact("lorem".to_string()),
             RouteParserToken::Separator,
         ];
 
         let path_matcher = RouteMatcher::from(tokens);
-        path_matcher.match_route("/hello/").expect("should parse");
+        path_matcher.match_route("/lorem/").expect("should parse");
     }
 
     #[test]
     fn simple_capture() {
         let tokens = vec![
             RouteParserToken::Separator,
-            RouteParserToken::Capture(CaptureVariant::Named("hello".to_string())),
+            RouteParserToken::Capture(CaptureVariant::Named("lorem".to_string())),
             RouteParserToken::Separator,
         ];
         let path_matcher = RouteMatcher::from(tokens);
         let (_, matches) = path_matcher
-            .match_route("/general_kenobi/")
+            .match_route("/ipsum/")
             .expect("should parse");
-        assert_eq!(matches["hello"], "general_kenobi".to_string())
+        assert_eq!(matches["lorem"], "ipsum".to_string())
     }
 
     #[test]
     fn simple_capture_with_no_trailing_separator() {
         let tokens = vec![
             RouteParserToken::Separator,
-            RouteParserToken::Capture(CaptureVariant::Named("hello".to_string())),
+            RouteParserToken::Capture(CaptureVariant::Named("lorem".to_string())),
         ];
         let path_matcher = RouteMatcher::from(tokens);
         let (_, matches) = path_matcher
-            .match_route("/general_kenobi")
+            .match_route("/ipsum")
             .expect("should parse");
-        assert_eq!(matches["hello"], "general_kenobi".to_string())
+        assert_eq!(matches["lorem"], "ipsum".to_string())
     }
 
     #[test]
@@ -188,7 +188,6 @@ mod tests {
 
     #[test]
     fn match_n() {
-        //        setup_logs();
         let tokens = vec![
             RouteParserToken::Separator,
             RouteParserToken::Capture(CaptureVariant::NumberedUnnamed { sections: 3 }),

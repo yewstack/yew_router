@@ -136,26 +136,26 @@ mod tests {
 
     #[test]
     fn parse_can_handle_multiple_literals() {
-        let parsed = parse("/hello/there").expect("should parse");
+        let parsed = parse("/lorem/ipsum").expect("should parse");
         assert_eq!(
             parsed,
             vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Exact("hello".to_string()),
+                RouteParserToken::Exact("lorem".to_string()),
                 RouteParserToken::Separator,
-                RouteParserToken::Exact("there".to_string())
+                RouteParserToken::Exact("ipsum".to_string())
             ]
         );
     }
 
     #[test]
     fn parse_can_handle_trailing_path_separator() {
-        let parsed = parse("/hello/").expect("should parse");
+        let parsed = parse("/lorem/").expect("should parse");
         assert_eq!(
             parsed,
             vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Exact("hello".to_string()),
+                RouteParserToken::Exact("lorem".to_string()),
                 RouteParserToken::Separator
             ]
         );
@@ -163,29 +163,29 @@ mod tests {
 
     #[test]
     fn parse_can_capture_section() {
-        let parsed = parse("/hello/{there}").expect("should parse");
+        let parsed = parse("/lorem/{ipsum}").expect("should parse");
         assert_eq!(
             parsed,
             vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Exact("hello".to_string()),
+                RouteParserToken::Exact("lorem".to_string()),
                 RouteParserToken::Separator,
-                RouteParserToken::Capture(CaptureVariant::Named("there".to_string())),
+                RouteParserToken::Capture(CaptureVariant::Named("ipsum".to_string())),
             ]
         )
     }
 
     #[test]
     fn parse_can_handle_multiple_matches_per_section() {
-        let parsed = parse("/hello/{there}general{}").expect("should parse");
+        let parsed = parse("/lorem/{ipsum}dolor{}").expect("should parse");
         assert_eq!(
             parsed,
             vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Exact("hello".to_string()),
+                RouteParserToken::Exact("lorem".to_string()),
                 RouteParserToken::Separator,
-                RouteParserToken::Capture(CaptureVariant::Named("there".to_string())),
-                RouteParserToken::Exact("general".to_string()),
+                RouteParserToken::Capture(CaptureVariant::Named("ipsum".to_string())),
+                RouteParserToken::Exact("dolor".to_string()),
                 RouteParserToken::Capture(CaptureVariant::Unnamed)
             ]
         )
@@ -206,7 +206,7 @@ mod tests {
 
     #[test]
     fn parse_consumes_all_input() {
-        parse("/hello/{").expect_err("Should not complete");
+        parse("/lorem/{").expect_err("Should not complete");
     }
 
     #[test]
@@ -221,6 +221,6 @@ mod tests {
 
     #[test]
     fn expected_slash_question_or_hash() {
-        parse("hello").expect_err("Should not parse");
+        parse("lorem").expect_err("Should not parse");
     }
 }

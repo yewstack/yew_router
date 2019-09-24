@@ -22,16 +22,16 @@ mod test {
     use super::*;
     #[test]
     fn case_sensitive() {
-        let parser = tag_possibly_case_sensitive("hello", true);
-        parser("hello").expect("Should match");
-        parser("HeLLo").expect_err("Should not match");
+        let parser = tag_possibly_case_sensitive("lorem", true);
+        parser("lorem").expect("Should match");
+        parser("LoReM").expect_err("Should not match");
     }
 
     #[test]
     fn case_insensitive() {
-        let parser = tag_possibly_case_sensitive("hello", false);
-        parser("hello").expect("Should match");
-        parser("HeLLo").expect("Should match");
+        let parser = tag_possibly_case_sensitive("lorem", false);
+        parser("lorem").expect("Should match");
+        parser("LoREm").expect("Should match");
     }
 
 }

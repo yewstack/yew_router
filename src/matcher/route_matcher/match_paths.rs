@@ -255,18 +255,18 @@ mod integration_test {
 
     #[test]
     fn match_query_after_path() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path?hello=there", true)
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path?lorem=ipsum", true)
             .expect("Should parse");
-        match_path_impl(&x, MatcherSettings::default(), "/a/path?hello=there")
+        match_path_impl(&x, MatcherSettings::default(), "/a/path?lorem=ipsum")
             .expect("should match");
     }
 
     #[test]
     fn match_query_after_path_trailing_slash() {
         let x =
-            yew_router_route_parser::parse_str_and_optimize_tokens("/a/path/?hello=there", true)
+            yew_router_route_parser::parse_str_and_optimize_tokens("/a/path/?lorem=ipsum", true)
                 .expect("Should parse");
-        match_path_impl(&x, MatcherSettings::default(), "/a/path/?hello=there")
+        match_path_impl(&x, MatcherSettings::default(), "/a/path/?lorem=ipsum")
             .expect("should match");
     }
 
@@ -280,18 +280,18 @@ mod integration_test {
 
     #[test]
     fn match_query() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("?hello=there", true)
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("?lorem=ipsum", true)
             .expect("Should parse");
-        match_path_impl(&x, MatcherSettings::default(), "?hello=there").expect("should match");
+        match_path_impl(&x, MatcherSettings::default(), "?lorem=ipsum").expect("should match");
     }
 
     #[test]
     fn named_capture_query() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("?hello={there}", true)
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("?lorem={ipsum}", true)
             .expect("Should parse");
         let (_, matches) =
-            match_path_impl(&x, MatcherSettings::default(), "?hello=there").expect("should match");
-        assert_eq!(matches["there"], "there".to_string())
+            match_path_impl(&x, MatcherSettings::default(), "?lorem=ipsum").expect("should match");
+        assert_eq!(matches["ipsum"], "ipsum".to_string())
     }
 
     #[test]

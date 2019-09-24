@@ -302,22 +302,22 @@ mod test_conditions {
     use super::*;
     #[test]
     fn double_slash_true() {
-        assert!(double_slash("//hello", "/hello", 1))
+        assert!(double_slash("//lorem", "/lorem", 1))
     }
 
     #[test]
     fn double_slash_true_in_later_substring() {
-        assert!(double_slash("/hello//there", "/there", 7))
+        assert!(double_slash("/lorem//ipsum", "/ipsum", 7))
     }
 
     #[test]
     fn double_slash_reject_same() {
-        assert!(!double_slash("/hello", "/hello", 0))
+        assert!(!double_slash("/lorem", "/lorem", 0))
     }
 
     #[test]
     fn double_slash_reject_displaced_substring() {
-        assert!(!double_slash("/hello/there", "/there", 6))
+        assert!(!double_slash("/lorem/ipsum", "/ipsum", 6))
     }
 
     // ----------------
@@ -343,16 +343,16 @@ mod test_conditions {
     #[test]
     fn multiple_query_beginnings_test() {
         assert!(multiple_query_beginnings(
-            "?hello=there&bold=one?general=kenobi",
-            "?general=kenobi"
+            "?lorem=ipsum&dolor=sit?amet=consectetur",
+            "?amet=consectetur"
         ));
     }
 
     #[test]
     fn multiple_query_beginnings_avoids_false_positive() {
         assert!(!multiple_query_beginnings(
-            "(?hello=there)(?general=kenobi)",
-            "(?general=kenobi)"
+            "(?lorem=ipsum)(?dolor=sit)",
+            "(?dolor=sit)"
         ));
     }
 
@@ -391,7 +391,7 @@ mod test {
 
     #[test]
     fn double_slash_error() {
-        let input = "/hello//there";
+        let input = "/lorem//ipsum";
         let error = parse(input).expect_err("should fail");
 
         let expected = YewRouterParseError {
@@ -411,11 +411,11 @@ mod test {
 
     #[test]
     fn double_slash_error_displays_correctly() {
-        let input = "/hello//there";
+        let input = "/lorem//ipsum";
         let error = parse(input).expect_err("should fail");
         let printed_error = format!("{}", error);
         let expected = r##"
-/hello//there
+/lorem//ipsum
 -------^
 Expected one of: <Exact Text>, '{', '(', '?', '#'.
 Message:         'Double slashes ('//') are not allowed.'"##;
@@ -458,7 +458,7 @@ Message:         'Double slashes ('//') are not allowed.'"##;
 
     #[test]
     fn nested_capture_error() {
-        let input = "/hello/{{}}";
+        let input = "/lorem/{{}}";
         let error = parse(input).expect_err("should fail");
 
         let expected = YewRouterParseError {
@@ -479,7 +479,7 @@ Message:         'Double slashes ('//') are not allowed.'"##;
 
     #[test]
     fn malformed_capture_error() {
-        let input = "/hello/{/}";
+        let input = "/lorem/{/}";
         let error = parse(input).expect_err("should fail");
 
         let expected = YewRouterParseError {
@@ -500,7 +500,7 @@ Message:         'Double slashes ('//') are not allowed.'"##;
 
     #[test]
     fn capture_malformed_after_ident_error() {
-        let input = "/hello/{ident/}";
+        let input = "/lorem/{ident/}";
         let error = parse(input).expect_err("should fail");
 
         let expected = YewRouterParseError {
