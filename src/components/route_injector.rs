@@ -37,7 +37,7 @@ pub trait RouteInjectable<T: for<'de> RouterState<'de>>: Properties {
     /// }
     /// impl RouteInjectable<State> for ListElementProps {
     ///     fn inject_route(&mut self, route_info: &RouteInfo) {
-    ///          self.is_active = self.matcher.match_route_string(&route_info.route).is_some();
+    ///          self.is_active = self.matcher.match_route_string(&route_info.to_string()).is_some();
     ///     }
     /// }
     /// ```
@@ -89,7 +89,7 @@ pub trait RouteInjectable<T: for<'de> RouterState<'de>>: Properties {
 /// }
 /// impl RouteInjectable<State> for ListElementProps {
 ///     fn inject_route(&mut self, route_info: &RouteInfo) {
-///          self.is_active = self.matcher.match_route_string(&route_info.route).is_some();
+///          self.is_active = self.matcher.match_route_string(&route_info.to_string()).is_some();
 ///     }
 /// }
 ///# pub struct Comp;

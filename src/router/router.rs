@@ -152,7 +152,7 @@ impl<T: for<'de> RouterState<'de>> Renderable<Router<T>> for Router<T> {
         self.props
             .children
             .iter()
-            .filter_map(|route| -> Option<Html<Self>> { try_render_child(route, &self.route) })
+            .filter_map(|route| -> Option<Html<Self>> { try_render_child(route, &self.route.to_string()) })
             .next() // Take the first path that succeeds.
             .map(|x| -> Html<Self> {
                 trace!("Route matched.");

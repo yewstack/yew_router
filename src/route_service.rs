@@ -52,13 +52,10 @@ impl<T> RouteService<T> {
         let path = location.pathname().unwrap();
         let query = location.search().unwrap();
         let fragment = location.hash().unwrap();
-        format!(
-            "{path}{query}{fragment}",
-            path = path,
-            query = query,
-            fragment = fragment
-        )
+        crate::route_info::format_route_string(&path, &query, &fragment)
     }
+
+
 
     /// Gets the concatenated path, query, and fragment strings
     pub fn get_route(&self) -> String {

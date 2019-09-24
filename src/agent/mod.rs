@@ -130,7 +130,7 @@ where
     fn handle(&mut self, msg: Self::Input, who: HandlerId) {
         match msg {
             RouteRequest::ReplaceRoute(route) => {
-                let route_string: String = route.route;
+                let route_string: String = route.to_string();
                 self.route_service
                     .replace_route(&route_string, route.state.unwrap_or_default());
                 let route = RouteInfo::current_route(&self.route_service);
@@ -139,12 +139,12 @@ where
                 }
             }
             RouteRequest::ReplaceRouteNoBroadcast(route) => {
-                let route_string: String = route.route;
+                let route_string: String = route.to_string();
                 self.route_service
                     .replace_route(&route_string, route.state.unwrap_or_default());
             }
             RouteRequest::ChangeRoute(route) => {
-                let route_string: String = route.route;
+                let route_string: String = route.to_string();
                 // set the route
                 self.route_service
                     .set_route(&route_string, route.state.unwrap_or_default());
@@ -156,7 +156,7 @@ where
                 }
             }
             RouteRequest::ChangeRouteNoBroadcast(route) => {
-                let route_string: String = route.route;
+                let route_string: String = route.to_string();
                 self.route_service
                     .set_route(&route_string, route.state.unwrap_or_default());
             }

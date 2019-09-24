@@ -61,7 +61,7 @@ impl Renderable<Guide> for Guide {
                 .children
                 .iter()
                 .filter_map(|child| {
-                    if child.props.page_url == route.route {
+                    if child.props.page_url == route.to_string() {
                         Some(child.props.uri)
                     } else {
                         None
@@ -102,7 +102,7 @@ impl Renderable<Guide> for Guide {
 
 fn render_page_list_item(props: PageProps, route: &RouteInfo) -> Html<Guide> {
     let pm: RouteMatcher = RouteMatcher::try_from(&props.page_url).unwrap();
-    if pm.match_route(route).is_ok() {
+    if pm.match_route(&route.to_string()).is_ok() {
         log::debug!("Found an active");
         html! {
             <li style="padding-left: 4px; padding-right: 4px; padding-top: 6px; padding-bottom: 6px; background-color: lightgray;">

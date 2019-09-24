@@ -41,8 +41,6 @@ impl Component for BModel {
         router.send(RouteRequest::GetCurrentRoute);
 
         BModel {
-            //            number: props.number,
-            //            sub_path: props.sub_path,
             props,
             router,
         }
@@ -81,7 +79,7 @@ impl Component for BModel {
                 // When the route changes, you can opt to re-parse the route. and update the props.
                 // TODO I'm not sure about the utility of this if the router is passing updated props anyways.
                 let path_matcher = route!("/b(?sub_path={sub_path})(#{number})");
-                if let Some(captures) = path_matcher.match_route_string(&route.route) {
+                if let Some(captures) = path_matcher.match_route_string(&route.to_string()) {
                     let props = Props::from_captures(&captures).unwrap();
                     self.props = props;
                     true
