@@ -132,7 +132,7 @@ fn validate_path_parser_tokens(tokens: &[RouteParserToken]) -> bool {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::CaptureVariant;
+    use crate::{Capture, CaptureVariant};
     use nom::combinator::all_consuming;
     use nom::error::ErrorKind;
     use nom::error::ErrorKind::Alt;
@@ -205,7 +205,7 @@ mod test {
 
     #[test]
     fn many_option_section() {
-        let (_, tokens) = path_parser("/first(/second)(/third)").expect("Should validate");
+        let (_, tokens) = path_parser("/first[/second][/third]").expect("Should validate");
         let expected = vec![
             RouteParserToken::Separator,
             RouteParserToken::Exact("first".to_string()),
@@ -223,7 +223,7 @@ mod test {
 
     #[test]
     fn option_section_between_exacts() {
-        let (_, tokens) = path_parser("/first(/second)/third").expect("Should validate");
+        let (_, tokens) = path_parser("/first[/second]/third").expect("Should validate");
         let expected = vec![
             RouteParserToken::Separator,
             RouteParserToken::Exact("first".to_string()),
@@ -239,13 +239,13 @@ mod test {
 
     #[test]
     fn option_section_between_capture_then_exact() {
-        let (_, tokens) = path_parser("/first(/{})/third").expect("Should validate");
+        let (_, tokens) = path_parser("/first[/{}]/third").expect("Should validate");
         let expected = vec![
             RouteParserToken::Separator,
             RouteParserToken::Exact("first".to_string()),
             RouteParserToken::Optional(vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Capture(CaptureVariant::Unnamed),
+                RouteParserToken::Capture(Capture::from(CaptureVariant::Unnamed)),
             ]),
             RouteParserToken::Separator,
             RouteParserToken::Exact("third".to_string()),
@@ -255,7 +255,7 @@ mod test {
 
     #[test]
     fn option_section_between_exact_then_capture() {
-        let (_, tokens) = path_parser("/first(/second)/{}").expect("Should validate");
+        let (_, tokens) = path_parser("/first[/second]/{}").expect("Should validate");
         let expected = vec![
             RouteParserToken::Separator,
             RouteParserToken::Exact("first".to_string()),
@@ -264,19 +264,19 @@ mod test {
                 RouteParserToken::Exact("second".to_string()),
             ]),
             RouteParserToken::Separator,
-            RouteParserToken::Capture(CaptureVariant::Unnamed),
+            RouteParserToken::Capture(Capture::from(CaptureVariant::Unnamed)),
         ];
         assert_eq!(tokens, expected);
     }
 
     #[test]
     fn option_section_between_captures_fails() {
-        all_consuming(path_parser)("/first(/{}){}").expect_err("Should not validate");
+        all_consuming(path_parser)("/first[/{}]{}").expect_err("Should not validate");
     }
 
     #[test]
     fn option_section_can_start_matcher_string() {
-        path_parser("(/lorem)").expect("Should validate");
+        path_parser("[/lorem]").expect("Should validate");
     }
 
 }

@@ -13,7 +13,6 @@ use yew::agent::Transferable;
 pub trait RouteState: Clone + Default + JsSerialize + TryFrom<Value> + 'static {}
 impl<T> RouteState for T where T: Clone + Default + JsSerialize + TryFrom<Value> + 'static {}
 
-
 /// An abstraction over how the string for the router was created.
 ///
 /// # Note
@@ -23,14 +22,14 @@ pub enum RouteString {
     /// An unstructured route string.
     Unstructured(String),
     /// A structured route string.
-    Structured{
+    Structured {
         /// The path.
         path: String,
         /// The query
         query: String,
         /// The Fragment
-        fragment: String
-    }
+        fragment: String,
+    },
 }
 
 impl Default for RouteString {
@@ -52,7 +51,7 @@ pub struct RouteInfo<T> {
 ///
 /// # Note
 /// This expects that all three already have their expected separators (?, #, etc)
-pub (crate) fn format_route_string(path: &str, query: &str, fragment: &str) -> String {
+pub(crate) fn format_route_string(path: &str, query: &str, fragment: &str) -> String {
     format!(
         "{path}{query}{fragment}",
         path = path,
@@ -76,7 +75,7 @@ impl<T> RouteInfo<T> {
             route: RouteString::Structured {
                 path,
                 query,
-                fragment
+                fragment,
             },
             state: None,
         }
@@ -86,7 +85,11 @@ impl<T> RouteInfo<T> {
     pub fn to_string(&self) -> String {
         match &self.route {
             RouteString::Unstructured(s) => s.to_owned(),
-            RouteString::Structured {path, query, fragment} => format_route_string(path, query, fragment)
+            RouteString::Structured {
+                path,
+                query,
+                fragment,
+            } => format_route_string(path, query, fragment),
         }
     }
 
@@ -95,7 +98,7 @@ impl<T> RouteInfo<T> {
     /// # Note
     /// This expects that all three already have their expected separators (?, #, etc)
     pub fn get_path(&self) -> Option<&str> {
-        if let RouteString::Structured {path, ..}  = &self.route {
+        if let RouteString::Structured { path, .. } = &self.route {
             Some(&path)
         } else {
             None
@@ -107,7 +110,7 @@ impl<T> RouteInfo<T> {
     /// # Note
     /// This expects that all three already have their expected separators (?, #, etc)
     pub fn get_query(&self) -> Option<&str> {
-        if let RouteString::Structured {query, ..}  = &self.route {
+        if let RouteString::Structured { query, .. } = &self.route {
             Some(&query)
         } else {
             None
@@ -118,7 +121,7 @@ impl<T> RouteInfo<T> {
     /// # Note
     /// This expects that all three already have their expected separators (?, #, etc)
     pub fn get_fragment(&self) -> Option<&str> {
-        if let RouteString::Structured {fragment, ..}  = &self.route {
+        if let RouteString::Structured { fragment, .. } = &self.route {
             Some(&fragment)
         } else {
             None

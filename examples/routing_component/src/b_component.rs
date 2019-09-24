@@ -4,9 +4,6 @@ use yew::prelude::*;
 use yew::Properties;
 use yew_router::agent::RouteRequest;
 use yew_router::prelude::*;
-//use yew_router::FromCapturesError;
-//use yew_router::{Captures, FromCaptures};
-//use yew_router::{RouteAgent, RouteInfo};
 
 pub struct BModel {
     props: Props,
@@ -37,10 +34,7 @@ impl Component for BModel {
         let callback = link.send_back(|_| Msg::NoOp);
         let router = RouteAgent::bridge(callback);
 
-        BModel {
-            props,
-            router,
-        }
+        BModel { props, router }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
@@ -72,9 +66,7 @@ impl Component for BModel {
                     .send(RouteRequest::ChangeRouteNoBroadcast(route));
                 true
             }
-            Msg::NoOp => {
-                false
-            }
+            Msg::NoOp => false,
             Msg::Increment => {
                 let n = if let Some(number) = self.props.number {
                     number + 1

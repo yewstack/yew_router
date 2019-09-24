@@ -1,5 +1,5 @@
 //! Bridge to RouteAgent.
-use crate::agent::{RouteAgent, AgentState};
+use crate::agent::{AgentState, RouteAgent};
 use crate::route_info::RouteInfo;
 use std::fmt::{Debug, Error as FmtError, Formatter};
 use std::ops::{Deref, DerefMut};

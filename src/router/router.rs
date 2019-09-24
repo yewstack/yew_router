@@ -1,8 +1,8 @@
 //! Router Component.
 
 use crate::agent::{bridge::RouteAgentBridge, RouteRequest};
-use crate::router::render::RenderFn;
 use crate::route_info::RouteInfo;
+use crate::router::render::RenderFn;
 use crate::router::route::Route;
 use crate::router::RouterState;
 use log::{trace, warn};
@@ -152,7 +152,9 @@ impl<T: for<'de> RouterState<'de>> Renderable<Router<T>> for Router<T> {
         self.props
             .children
             .iter()
-            .filter_map(|route| -> Option<Html<Self>> { try_render_child(route, &self.route.to_string()) })
+            .filter_map(|route| -> Option<Html<Self>> {
+                try_render_child(route, &self.route.to_string())
+            })
             .next() // Take the first path that succeeds.
             .map(|x| -> Html<Self> {
                 trace!("Route matched.");

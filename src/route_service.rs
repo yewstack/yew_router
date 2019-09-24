@@ -55,8 +55,6 @@ impl<T> RouteService<T> {
         crate::route_info::format_route_string(&path, &query, &fragment)
     }
 
-
-
     /// Gets the concatenated path, query, and fragment strings
     pub fn get_route(&self) -> String {
         Self::get_route_from_location(&self.location)

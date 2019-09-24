@@ -244,8 +244,8 @@ fn multiple_query_beginnings(input: &str, substring: &str) -> bool {
 
 /// Detects if there are more open than closed parenthesis.
 fn unclosed_optional(input: &str) -> bool {
-    if let Ok((_, open_count)) = many0_count(skip_until::<_, _, (), _>(char('(')))(input) {
-        if let Ok((_, close_count)) = many0_count(skip_until::<_, _, (), _>(char(')')))(input) {
+    if let Ok((_, open_count)) = many0_count(skip_until::<_, _, (), _>(char('[')))(input) {
+        if let Ok((_, close_count)) = many0_count(skip_until::<_, _, (), _>(char(']')))(input) {
             open_count > close_count
         } else {
             false
@@ -257,8 +257,8 @@ fn unclosed_optional(input: &str) -> bool {
 
 /// Detects if there are more closed than open parenthesis.
 fn too_many_closed_optional(input: &str) -> bool {
-    if let Ok((_, open_count)) = many0_count(skip_until::<_, _, (), _>(char('(')))(input) {
-        if let Ok((_, close_count)) = many0_count(skip_until::<_, _, (), _>(char(')')))(input) {
+    if let Ok((_, open_count)) = many0_count(skip_until::<_, _, (), _>(char('[')))(input) {
+        if let Ok((_, close_count)) = many0_count(skip_until::<_, _, (), _>(char(']')))(input) {
             open_count < close_count
         } else {
             false
@@ -531,7 +531,7 @@ Message:         'Double slashes ('//') are not allowed.'"##;
     // --------------
     #[test]
     fn too_many_open_parens() {
-        let input = "(/thing)(/other)((/thing)";
+        let input = "[/thing][/other][[/thing]";
         let error = parse(input).expect_err("should fail");
 
         let expected = YewRouterParseError {
@@ -545,7 +545,7 @@ Message:         'Double slashes ('//') are not allowed.'"##;
 
     #[test]
     fn too_many_close_parens() {
-        let input = "(/thing)(/other)(/thing))";
+        let input = "[/thing][/other][/thing]]";
         let error = parse(input).expect_err("should fail");
 
         let expected = YewRouterParseError {

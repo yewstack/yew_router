@@ -30,7 +30,7 @@ pub enum RouteParserToken {
     /// Match a specific string.
     Exact(String),
     /// Match {_}. See `CaptureVariant` for more.
-    Capture(CaptureVariant),
+    Capture(Capture),
     /// Match ?
     QueryBegin,
     /// Match &
@@ -75,13 +75,31 @@ pub enum CaptureVariant {
     },
 }
 
+/// A capture section with one of a  variety of capture types and a possible set of strings to restrict matching to.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Capture {
+    /// The type of capture
+    pub capture_variant: CaptureVariant,
+    /// Restrict matching to only strings that appear in this list if present.
+    pub allowed_captures: Option<Vec<String>>,
+}
+
 /// Either a Capture, or an Exact match
 #[derive(Debug, Clone, PartialEq)]
 pub enum CaptureOrExact {
     /// Match a specific string.
     Exact(String),
     /// Match a capture variant.
-    Capture(CaptureVariant),
+    Capture(Capture),
+}
+
+impl From<CaptureVariant> for Capture {
+    fn from(capture_variant: CaptureVariant) -> Capture {
+        Capture {
+            capture_variant,
+            allowed_captures: None,
+        }
+    }
 }
 
 /// Parse "matcher string".
@@ -170,7 +188,9 @@ mod tests {
                 RouteParserToken::Separator,
                 RouteParserToken::Exact("lorem".to_string()),
                 RouteParserToken::Separator,
-                RouteParserToken::Capture(CaptureVariant::Named("ipsum".to_string())),
+                RouteParserToken::Capture(Capture::from(CaptureVariant::Named(
+                    "ipsum".to_string()
+                ))),
             ]
         )
     }
@@ -184,9 +204,11 @@ mod tests {
                 RouteParserToken::Separator,
                 RouteParserToken::Exact("lorem".to_string()),
                 RouteParserToken::Separator,
-                RouteParserToken::Capture(CaptureVariant::Named("ipsum".to_string())),
+                RouteParserToken::Capture(Capture::from(CaptureVariant::Named(
+                    "ipsum".to_string()
+                ))),
                 RouteParserToken::Exact("dolor".to_string()),
-                RouteParserToken::Capture(CaptureVariant::Unnamed)
+                RouteParserToken::Capture(Capture::from(CaptureVariant::Unnamed))
             ]
         )
     }

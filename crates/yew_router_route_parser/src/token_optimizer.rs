@@ -1,6 +1,6 @@
 use crate::parser::parse;
 use crate::parser::RouteParserToken;
-use crate::parser::{CaptureOrExact, CaptureVariant};
+use crate::parser::{Capture, CaptureOrExact};
 use nom::IResult;
 use std::iter::Peekable;
 use std::slice::Iter;
@@ -16,7 +16,7 @@ pub enum MatcherToken {
     /// Section-related tokens can be condensed into a match.
     Exact(String),
     /// Capture section.
-    Capture(CaptureVariant),
+    Capture(Capture),
     /// Section that doesn't have to match.
     Optional(Vec<MatcherToken>),
 }
@@ -245,6 +245,7 @@ fn token_is_not_present_or_is_either_a_slash_or_question(token: Option<&RoutePar
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::parser::CaptureVariant;
 
     #[test]
     fn conversion_cap_or_exact_to_matcher_token_exact() {
@@ -254,8 +255,13 @@ mod test {
 
     #[test]
     fn conversion_cap_or_exact_to_matcher_token_capture() {
-        let mt = MatcherToken::from(CaptureOrExact::Capture(CaptureVariant::Unnamed));
-        assert_eq!(mt, MatcherToken::Capture(CaptureVariant::Unnamed))
+        let mt = MatcherToken::from(CaptureOrExact::Capture(Capture::from(
+            CaptureVariant::Unnamed,
+        )));
+        assert_eq!(
+            mt,
+            MatcherToken::Capture(Capture::from(CaptureVariant::Unnamed))
+        )
     }
 
     #[test]
@@ -359,12 +365,12 @@ mod test {
 
     #[test]
     fn optimize_capture_all() {
-        let tokens = vec![RouteParserToken::Capture(CaptureVariant::ManyNamed(
-            "lorem".to_string(),
+        let tokens = vec![RouteParserToken::Capture(Capture::from(
+            CaptureVariant::ManyNamed("lorem".to_string()),
         ))];
         let optimized = optimize_tokens(tokens, true);
-        let expected = vec![MatcherToken::Capture(CaptureVariant::ManyNamed(
-            "lorem".to_string(),
+        let expected = vec![MatcherToken::Capture(Capture::from(
+            CaptureVariant::ManyNamed("lorem".to_string()),
         ))];
         assert_eq!(expected, optimized);
     }
@@ -373,12 +379,16 @@ mod test {
     fn optimize_capture_everything_after_initial_slash() {
         let tokens = vec![
             RouteParserToken::Separator,
-            RouteParserToken::Capture(CaptureVariant::ManyNamed("lorem".to_string())),
+            RouteParserToken::Capture(Capture::from(CaptureVariant::ManyNamed(
+                "lorem".to_string(),
+            ))),
         ];
         let optimized = optimize_tokens(tokens, true);
         let expected = vec![
             MatcherToken::Exact("/".to_string()),
-            MatcherToken::Capture(CaptureVariant::ManyNamed("lorem".to_string())),
+            MatcherToken::Capture(Capture::from(CaptureVariant::ManyNamed(
+                "lorem".to_string(),
+            ))),
         ];
         assert_eq!(expected, optimized);
     }
@@ -389,13 +399,13 @@ mod test {
             RouteParserToken::QueryBegin,
             RouteParserToken::QueryCapture {
                 ident: "lorem".to_string(),
-                capture_or_match: CaptureOrExact::Capture(CaptureVariant::Unnamed),
+                capture_or_match: CaptureOrExact::Capture(Capture::from(CaptureVariant::Unnamed)),
             },
         ];
         let optimized = optimize_tokens(tokens, true);
         let expected = vec![
             MatcherToken::Exact("?lorem=".to_string()),
-            MatcherToken::Capture(CaptureVariant::Unnamed),
+            MatcherToken::Capture(Capture::from(CaptureVariant::Unnamed)),
         ];
         assert_eq!(expected, optimized);
     }

@@ -8,14 +8,13 @@ use yew::virtual_dom::vcomp::ScopeHolder;
 use yew::virtual_dom::{VComp, VNode};
 use yew::{Component, Html, Renderable};
 
-
 /// Render function.
 pub trait RenderFn<CTX: Component>: Fn(&Captures) -> Option<Html<CTX>> {}
 
 impl<CTX, T> RenderFn<CTX> for T
-    where
-        T: Fn(&Captures) -> Option<Html<CTX>>,
-        CTX: Component,
+where
+    T: Fn(&Captures) -> Option<Html<CTX>>,
+    CTX: Component,
 {
 }
 

@@ -14,7 +14,7 @@
 pub mod parser;
 mod token_optimizer;
 
-pub use parser::CaptureVariant;
+pub use parser::{Capture, CaptureVariant};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
@@ -220,7 +220,7 @@ mod test {
                     })
                 })?;
 
-            let x = TestStruct { lorem, ipsum};
+            let x = TestStruct { lorem, ipsum };
             Ok(x)
         }
 

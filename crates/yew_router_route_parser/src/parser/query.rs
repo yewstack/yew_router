@@ -176,37 +176,37 @@ mod test {
 
     #[test]
     fn optional_second_query() {
-        query_parser("?query=this(&another=query)").expect("should parse");
+        query_parser("?query=this[&another=query]").expect("should parse");
     }
 
     #[test]
     fn optional_second_and_third_query() {
-        query_parser("?query=this(&another=query)(&yet_another=query)").expect("should parse");
+        query_parser("?query=this[&another=query][&yet_another=query]").expect("should parse");
     }
 
     #[test]
     fn optional_many_first_queries() {
-        query_parser("?(query=this)(another=query)").expect("should parse");
+        query_parser("?[query=this][another=query]").expect("should parse");
     }
 
     #[test]
     fn cant_have_second_query_after_optional_first_queries() {
-        all_consuming(query_parser)("?(query=this)(another=query)&other=thing")
+        all_consuming(query_parser)("?[query=this][another=query]&other=thing")
             .expect_err("should not parse");
     }
 
     #[test]
     fn optional_query_parser() {
-        query_parser("(?query=this)").expect("should parse");
+        query_parser("[?query=this]").expect("should parse");
     }
 
     #[test]
     fn optional_nested_query_parser() {
-        query_parser("(?(query=this))").expect("should parse");
+        query_parser("[?[query=this]]").expect("should parse");
     }
 
     #[test]
     fn optional_nested_query_parser_2() {
-        query_parser("(?query=this(&otherquery=this))").expect("should parse");
+        query_parser("[?query=this[&otherquery=this]]").expect("should parse");
     }
 }

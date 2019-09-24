@@ -27,7 +27,7 @@ where
 {
     move |i: &str| -> IResult<&str, RouteParserToken, VerboseError<&str>> {
         let f = &f;
-        context("optional matches", delimited(char('('), f, char(')')))(i)
+        context("optional matches", delimited(char('['), f, char(']')))(i)
             .map(|(i, t)| (i, RouteParserToken::Optional(t)))
     }
 }
@@ -50,7 +50,7 @@ where
 {
     move |i: &str| -> IResult<&str, RouteParserToken, VerboseError<&str>> {
         let f = &f;
-        context("optional match", delimited(char('('), f, char(')')))(i)
+        context("optional match", delimited(char('['), f, char(']')))(i)
             .map(|(i, t)| (i, RouteParserToken::Optional(vec![t])))
     }
 }

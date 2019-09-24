@@ -65,16 +65,16 @@ mod test {
 
     #[test]
     fn optional_fragment() {
-        fragment_parser("#(lorem)").expect("should parse");
+        fragment_parser("#[lorem]").expect("should parse");
     }
 
     #[test]
     fn entirely_optional_simple_fragment() {
-        fragment_parser("(#)").expect("should parse");
+        fragment_parser("[#]").expect("should parse");
     }
 
     #[test]
     fn entirely_optional_fragment() {
-        fragment_parser("(#lorem)").expect("should parse");
+        fragment_parser("[#lorem]").expect("should parse");
     }
 }

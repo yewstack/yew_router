@@ -3,10 +3,10 @@ mod render;
 mod route;
 mod router;
 
-pub use router::{Router, Props};
+pub(crate) use render::create_component_with_scope;
+pub use render::{component, render, Render, RenderFn};
 pub use route::{Route, RouteProps};
-pub use render::{RenderFn, Render, render, component};
-pub(crate) use render::{create_component_with_scope};
+pub use router::{Props, Router};
 
 use crate::agent::AgentState;
 

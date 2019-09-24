@@ -1,16 +1,17 @@
 //! Core functions for working with the route parser.
 use crate::parser::CaptureOrExact;
-use crate::parser::CaptureVariant;
 use crate::parser::RouteParserToken;
+use crate::parser::{Capture, CaptureVariant};
 use nom::branch::alt;
 use nom::bytes::complete::{is_not, tag, take};
 use nom::character::complete::char;
 use nom::character::complete::digit1;
 use nom::character::is_digit;
-use nom::combinator::{map, peek};
+use nom::combinator::{map, opt, peek};
 use nom::error::ParseError;
 use nom::error::{context, ErrorKind, VerboseError};
-use nom::sequence::{delimited, preceded, separated_pair};
+use nom::multi::separated_list;
+use nom::sequence::{delimited, pair, preceded, separated_pair};
 use nom::IResult;
 
 /// Captures a string up to the point where a character not possible to be present in Rust's identifier is encountered.
@@ -32,7 +33,7 @@ pub fn valid_ident_characters(i: &str) -> IResult<&str, &str, VerboseError<&str>
 
 /// A more permissive set of characters than those specified in `valid_ident_characters that the route string will need to match exactly.
 pub fn valid_exact_match_characters(i: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    const INVALID_CHARACTERS: &str = " /?&#=\t\n(){}";
+    const INVALID_CHARACTERS: &str = " /?&#=\t\n()|[]{}";
     context("valid exact match", |i: &str| is_not(INVALID_CHARACTERS)(i))(i)
 }
 
@@ -54,50 +55,61 @@ pub fn match_exact(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str
 /// * {name}
 /// * {*:name}
 /// * {5:name}
+/// With optional specification of exact matches.
+///
+///
+/// * {(yes|no)}
+/// * {*(yes|no)}
+/// * {5(yes|no)}
+/// * {name(yes|no)}
+/// * {*:name(yes|no)}
+/// * {5:name(yes|no)}
 pub fn capture(i: &str) -> IResult<&str, RouteParserToken, VerboseError<&str>> {
+    // Capture the variant.
     let capture_variants = alt((
-        context(
-            "capture unnamed",
-            map(peek(char('}')), |_| CaptureVariant::Unnamed),
-        ), // just empty {}
-        context(
-            "capture many named",
-            map(preceded(tag("*:"), valid_ident_characters), |s| {
-                CaptureVariant::ManyNamed(s.to_string())
-            }),
+        // This can be terminated by either the end of the match section, or by the beginning of a allowed_matches section.
+        map(peek(alt((char('}'), char('(')))), |_| {
+            CaptureVariant::Unnamed
+        }),
+        map(preceded(tag("*:"), valid_ident_characters), |s| {
+            CaptureVariant::ManyNamed(s.to_string())
+        }),
+        map(char('*'), |_| CaptureVariant::ManyUnnamed),
+        map(valid_ident_characters, |s| {
+            CaptureVariant::Named(s.to_string())
+        }),
+        map(
+            separated_pair(digit1, char(':'), valid_ident_characters),
+            |(n, s)| CaptureVariant::NumberedNamed {
+                sections: n.parse().expect("Should parse digits"),
+                name: s.to_string(),
+            },
         ),
-        context(
-            "capture many unnamed",
-            map(char('*'), |_| CaptureVariant::ManyUnnamed),
-        ),
-        context(
-            "capture named",
-            map(valid_ident_characters, |s| {
-                CaptureVariant::Named(s.to_string())
-            }),
-        ),
-        context(
-            "capture number named",
-            map(
-                separated_pair(digit1, char(':'), valid_ident_characters),
-                |(n, s)| CaptureVariant::NumberedNamed {
-                    sections: n.parse().expect("Should parse digits"),
-                    name: s.to_string(),
-                },
-            ),
-        ),
-        context(
-            "capture number unnamed",
-            map(digit1, |num: &str| CaptureVariant::NumberedUnnamed {
-                sections: num.parse().expect("should parse digits"),
-            }),
-        ),
+        map(digit1, |num: &str| CaptureVariant::NumberedUnnamed {
+            sections: num.parse().expect("should parse digits"),
+        }),
     ));
 
+    let allowed_matches = map(
+        separated_list(char('|'), valid_exact_match_characters), // TODO this character set may be too limiting (you may want / to appear in the matched section).
+        |x: Vec<&str>| x.into_iter().map(String::from).collect::<Vec<_>>(),
+    );
+    let allowed_matches = delimited(char('('), allowed_matches, char(')'));
+
+    // Allow capturing the variant, and optionally a list of strings in the form of (string|string|string|...)
+    let capture_inner = map(
+        pair(capture_variants, opt(allowed_matches)),
+        |(cv, allowed_matches): (CaptureVariant, Option<Vec<String>>)| Capture {
+            capture_variant: cv,
+            allowed_captures: allowed_matches,
+        },
+    );
+
+    // wraps the variant and allowed_matches list between `{` and `}`.
     context(
         "capture",
         map(
-            delimited(char('{'), capture_variants, char('}')),
+            delimited(char('{'), capture_inner, char('}')),
             RouteParserToken::Capture,
         ),
     )(i)
@@ -122,7 +134,10 @@ mod test {
     #[test]
     fn match_any() {
         let cap = capture("{}").expect("Should match").1;
-        assert_eq!(cap, RouteParserToken::Capture(CaptureVariant::Unnamed));
+        assert_eq!(
+            cap,
+            RouteParserToken::Capture(Capture::from(CaptureVariant::Unnamed))
+        );
     }
 
     #[test]
@@ -132,7 +147,9 @@ mod test {
             cap,
             (
                 "",
-                RouteParserToken::Capture(CaptureVariant::Named("loremipsum".to_string()))
+                RouteParserToken::Capture(Capture::from(CaptureVariant::Named(
+                    "loremipsum".to_string()
+                )))
             )
         );
     }
@@ -142,7 +159,10 @@ mod test {
         let cap = capture("{*}").unwrap();
         assert_eq!(
             cap,
-            ("", RouteParserToken::Capture(CaptureVariant::ManyUnnamed))
+            (
+                "",
+                RouteParserToken::Capture(Capture::from(CaptureVariant::ManyUnnamed))
+            )
         );
     }
 
@@ -151,7 +171,10 @@ mod test {
         let cap = capture("{}").unwrap();
         assert_eq!(
             cap,
-            ("", RouteParserToken::Capture(CaptureVariant::Unnamed))
+            (
+                "",
+                RouteParserToken::Capture(Capture::from(CaptureVariant::Unnamed))
+            )
         );
     }
 
@@ -162,7 +185,9 @@ mod test {
             cap,
             (
                 "",
-                RouteParserToken::Capture(CaptureVariant::NumberedUnnamed { sections: 5 })
+                RouteParserToken::Capture(Capture::from(CaptureVariant::NumberedUnnamed {
+                    sections: 5
+                }))
             )
         );
     }
@@ -174,10 +199,10 @@ mod test {
             cap,
             (
                 "",
-                RouteParserToken::Capture(CaptureVariant::NumberedNamed {
+                RouteParserToken::Capture(Capture::from(CaptureVariant::NumberedNamed {
                     sections: 5,
                     name: "name".to_string()
-                })
+                }))
             )
         );
     }
@@ -189,7 +214,9 @@ mod test {
             cap,
             (
                 "",
-                RouteParserToken::Capture(CaptureVariant::ManyNamed("name".to_string()))
+                RouteParserToken::Capture(Capture::from(CaptureVariant::ManyNamed(
+                    "name".to_string()
+                )))
             )
         );
     }
@@ -207,6 +234,11 @@ mod test {
     #[test]
     fn capture_consumes() {
         capture("{aoeu").expect_err("Should not complete");
+    }
+
+    #[test]
+    fn can_specify_exact_match_option() {
+        capture("{(lorem|ipsum)}").expect("Should complete");
     }
 
 }
