@@ -19,21 +19,24 @@
 //! As this behavior is uncommon, aliases using the unit type (`()`) are provided to remove the
 //! need to specify the storage type you likely aren't using.
 //!
-//! If you want to store state using the history API it is recommended that you generate your own aliases using the `define_router_state` macro.
+//! If you want to store state using the history API it is recommended that you generate your own aliases
+//! using the `define_router_state` macro.
 //! Give it a typename, and it will generate a module containing aliases and functions useful for routing.
+//! If you specify your own router_state aliases and functions, you will want to disable the
+//! `unit_alias` feature to prevent the default `()` aliases from showing up in the prelude.
 //!
-//!
-//!
-//! ## Orphaning
-//! Currently it is possible to "orphan" components in Yew. This happens when a component doesn't display anymore,
-//! but isn't entirely cleaned up, causing it to still exist and respond to messages sent to it by agents.
-//! This can have negative effects on your program when enough of these accumulate, if for example,
-//! one of the orphaned components makes fetch requests at part of its component lifecycle.
-//!
-//! This library is particularly good at causing this bug to appear.
-//!
-//! To avoid the orphaning problem, it is recommended to only have one top-level Router component in your project for the moment.
-//! Use this Router to collect as much information as needed for any sub-routes, and pass that along to children components via Properties.
+//! ## Features
+//! This crate has a bunch of feature-flags.
+//! * "default" - Everything is included by default.
+//! * "core" - The fully feature complete ("router", "components", "matchers"), but without unit_alias.
+//! * "unit_alias" - If enabled, a module will be added to the route and expanded within the prelude
+//! for aliases of Router<T> types to their `()` variants. This is useful if want state
+//! * "router" - If enabled, the Router component and its dependent infrastructure (including "agent") will be included.
+//! * "agent" - If enabled, the RouteAgent and its associated types will be included.
+//! * "components" - If enabled, the accessory components will be made available.
+//! * "matchers" - If enabled, the full matcher suite will be available.
+//! * "regex_matcher" - If enabled, the regex matcher will be available. This can be disabled to avoid including the Regex package.
+//! * "route_matcher" - If enabled, the RouteMatcher will be available.
 
 #![deny(
     missing_docs,
