@@ -27,7 +27,7 @@ where
     /// Directly spawn a new Router
     pub fn spawn(callback: Callback<RouteInfo<T>>) -> Self {
         use yew::agent::Discoverer;
-        let router_agent = Context::spawn_or_join(callback);
+        let router_agent = Context::spawn_or_join(Some(callback));
         RouteAgentBridge(router_agent)
     }
 }

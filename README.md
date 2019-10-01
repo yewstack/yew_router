@@ -24,9 +24,9 @@ You can use it in your project by adding it to your dependencies like so:
 ```toml
 [dependencies]
 yew_router = { git = "https://github.com/yewstack/yew_router", branch="master" }
-yew = { git = "https://github.com/yewstack/yew", branch="master" }
+yew = "0.9.0"
 ```
-Currently, this crate relies on unreleased features of yew, and so can't be released itself.
+Currently, this crate is ready to release, but is waiting on determining a namespace it can use.
 
 
 -----

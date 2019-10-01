@@ -26,7 +26,7 @@ route_matcher = ["yew_router_route_parser", "yew_router_macro", "nom"]
 log = "0.4"
 serde = "1.0"
 serde_derive = "1.0"
-yew = { git = "https://github.com/yewstack/yew", branch="master" }
+yew = "0.9.0"
 stdweb = "0.4"
 
 yew_router_route_parser = {path = "crates/yew_router_route_parser", optional=true}
