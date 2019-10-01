@@ -57,7 +57,7 @@ impl Renderable<Model> for Model {
                     <Router>
                         <Route matcher=route!("/a/{}"  Strict CaseInsensitive) render=component::<AModel>() />
                         <Route matcher=route!("/c") render=component::<CModel>() />
-                        <Route matcher=route!("/b(?sub_path={sub_path})(#{number})") render=component::<BModel>()/>
+                        <Route matcher=route!("/b[?sub_path={sub_path}][#{number}]") render=component::<BModel>()/>
                         <Route matcher=route!("/e")>
                              {"Hello there from the E \"child\""}
                         </Route>
