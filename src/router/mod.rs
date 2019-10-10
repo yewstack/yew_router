@@ -2,6 +2,7 @@
 mod render;
 mod route;
 mod router;
+pub mod router2; // TODO make this private before stabilizing
 
 pub(crate) use render::create_component_with_scope;
 pub use render::{component, render, Render, RenderFn};

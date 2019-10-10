@@ -9,11 +9,12 @@ mod util;
 
 use super::Captures;
 use super::Matcher;
+use crate::matcher::YewRouterParseError;
+use crate::matcher::YewRouterParseError;
 use nom::combinator::all_consuming;
 use nom::IResult;
 use std::collections::HashSet;
 use yew_router_route_parser::{optimize_tokens, parser};
-use crate::matcher::YewRouterParseError;
 
 /// Attempts to match routes, transform the route to Component props and render that Component.
 ///
@@ -59,7 +60,6 @@ impl RouteMatcher {
         Ok(pm)
     }
 
-    // TODO see if more error handling can be done here.
     /// Match a route string, collecting the results into a map.
     pub fn capture_route_into_map<'a, 'b: 'a>(
         &'b self,

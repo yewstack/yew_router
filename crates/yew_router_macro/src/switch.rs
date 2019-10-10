@@ -112,8 +112,6 @@ fn generate_trait_impl(enum_ident: Ident, switch_variants: Vec<SwitchVariant>) -
                 }
             }
             Fields::Unnamed(unnamed_fields) => {
-                // todo, I need a vecdeque/ or zip a vec of captured strings
-
                 let fields = unnamed_fields.unnamed.iter()
                     .enumerate()
                     .map(|(index, f): (usize, &Field)|{
