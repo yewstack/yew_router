@@ -102,7 +102,7 @@ impl Renderable<Guide> for Guide {
 
 fn render_page_list_item(props: PageProps, route: &RouteInfo) -> Html<Guide> {
     let pm: RouteMatcher = RouteMatcher::try_from(&props.page_url).unwrap();
-    if pm.match_route(&route.to_string()).is_ok() {
+    if pm.capture_route_into_map(&route.to_string()).is_ok() {
         log::debug!("Found an active");
         html! {
             <li style="padding-left: 4px; padding-right: 4px; padding-top: 6px; padding-bottom: 6px; background-color: lightgray;">

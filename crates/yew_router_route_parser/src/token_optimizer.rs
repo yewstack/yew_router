@@ -437,5 +437,4 @@ mod test {
         next_delimiters(tokens.iter().peekable())("/thing").expect("should match");
         next_delimiters(tokens.iter().peekable())("/thing/").expect("should match");
     }
-
 }

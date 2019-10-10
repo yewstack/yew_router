@@ -381,7 +381,6 @@ mod test_conditions {
     fn dangling_query_avoids_false_positive_capture() {
         assert!(!dangling_query("?thing={}"))
     }
-
 }
 
 #[cfg(test)]
@@ -586,5 +585,4 @@ Message:         'Double slashes ('//') are not allowed.'"##;
         };
         assert_eq!(error, expected)
     }
-
 }

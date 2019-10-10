@@ -13,6 +13,7 @@ use nom::combinator::all_consuming;
 use nom::IResult;
 use std::collections::HashSet;
 use yew_router_route_parser::{optimize_tokens, parser};
+use crate::matcher::YewRouterParseError;
 
 /// Attempts to match routes, transform the route to Component props and render that Component.
 ///
@@ -48,9 +49,8 @@ impl Default for MatcherSettings {
 
 impl RouteMatcher {
     /// Attempt to create a PathMatcher from a "matcher string".
-    pub fn try_from(i: &str) -> Result<Self, ()> // TODO: Error handling
-        where {
-        let tokens = parser::parse(i).map_err(|_| ())?;
+    pub fn try_from(i: &str) -> Result<Self, YewRouterParseError> {
+        let tokens = parser::parse(i)?;
         let settings = MatcherSettings::default();
         let pm = RouteMatcher {
             tokens: optimize_tokens(tokens, !settings.strict),
@@ -60,13 +60,27 @@ impl RouteMatcher {
     }
 
     // TODO see if more error handling can be done here.
-
-    /// Match a route string.
-    pub fn match_route<'a, 'b: 'a>(&'b self, i: &'a str) -> IResult<&'a str, Captures<'a>> {
+    /// Match a route string, collecting the results into a map.
+    pub fn capture_route_into_map<'a, 'b: 'a>(
+        &'b self,
+        i: &'a str,
+    ) -> IResult<&'a str, Captures<'a>> {
         if self.settings.complete {
             all_consuming(match_paths::match_path(&self.tokens, &self.settings))(i)
         } else {
             match_paths::match_path(&self.tokens, &self.settings)(i)
+        }
+    }
+
+    /// Match a route string, collecting the results into a vector.
+    pub fn capture_route_into_vec<'a, 'b: 'a>(
+        &'b self,
+        i: &'a str,
+    ) -> IResult<&'a str, Vec<(&'b str, String)>> {
+        if self.settings.complete {
+            all_consuming(match_paths::match_path_list(&self.tokens, &self.settings))(i)
+        } else {
+            match_paths::match_path_list(&self.tokens, &self.settings)(i)
         }
     }
 
@@ -135,7 +149,9 @@ mod tests {
     fn basic_separator() {
         let tokens = vec![RouteParserToken::Separator];
         let path_matcher = RouteMatcher::from(tokens);
-        path_matcher.match_route("/").expect("should parse");
+        path_matcher
+            .capture_route_into_map("/")
+            .expect("should parse");
     }
 
     #[test]
@@ -147,7 +163,9 @@ mod tests {
         ];
 
         let path_matcher = RouteMatcher::from(tokens);
-        path_matcher.match_route("/lorem/").expect("should parse");
+        path_matcher
+            .capture_route_into_map("/lorem/")
+            .expect("should parse");
     }
 
     #[test]
@@ -158,7 +176,9 @@ mod tests {
             RouteParserToken::Separator,
         ];
         let path_matcher = RouteMatcher::from(tokens);
-        let (_, matches) = path_matcher.match_route("/ipsum/").expect("should parse");
+        let (_, matches) = path_matcher
+            .capture_route_into_map("/ipsum/")
+            .expect("should parse");
         assert_eq!(matches["lorem"], "ipsum".to_string())
     }
 
@@ -169,7 +189,9 @@ mod tests {
             RouteParserToken::Capture(Capture::from(CaptureVariant::Named("lorem".to_string()))),
         ];
         let path_matcher = RouteMatcher::from(tokens);
-        let (_, matches) = path_matcher.match_route("/ipsum").expect("should parse");
+        let (_, matches) = path_matcher
+            .capture_route_into_map("/ipsum")
+            .expect("should parse");
         assert_eq!(matches["lorem"], "ipsum".to_string())
     }
 
@@ -182,7 +204,9 @@ mod tests {
             RouteParserToken::Capture(Capture::from(CaptureVariant::Unnamed)),
         ];
         let path_matcher = RouteMatcher::from(tokens);
-        let (_, _matches) = path_matcher.match_route("/a/").expect("should parse");
+        let (_, _matches) = path_matcher
+            .capture_route_into_map("/a/")
+            .expect("should parse");
     }
 
     #[test]
@@ -197,7 +221,7 @@ mod tests {
         ];
         let path_matcher = RouteMatcher::from(tokens);
         let (_, _matches) = path_matcher
-            .match_route("/garbage1/garbage2/garbage3/a")
+            .capture_route_into_map("/garbage1/garbage2/garbage3/a")
             .expect("should parse");
     }
 
@@ -211,7 +235,7 @@ mod tests {
         ];
         let path_matcher = RouteMatcher::from(tokens);
         let (s, _matches) = path_matcher
-            .match_route("/garbage1/garbage2/garbage3")
+            .capture_route_into_map("/garbage1/garbage2/garbage3")
             .expect("should parse");
         assert_eq!(s.len(), 0)
     }
@@ -229,7 +253,7 @@ mod tests {
         ];
         let path_matcher = RouteMatcher::from(tokens);
         let (_, matches) = path_matcher
-            .match_route("/garbage1/garbage2/garbage3/a")
+            .capture_route_into_map("/garbage1/garbage2/garbage3/a")
             .expect("should parse");
         assert_eq!(
             matches["captured"],
@@ -247,7 +271,7 @@ mod tests {
         ];
         let path_matcher = RouteMatcher::from(tokens);
         let (_, _matches) = path_matcher
-            .match_route("/garbage1/garbage2/garbage3/a")
+            .capture_route_into_map("/garbage1/garbage2/garbage3/a")
             .expect("should parse");
     }
 
@@ -263,12 +287,11 @@ mod tests {
         ];
         let path_matcher = RouteMatcher::from(tokens);
         let (_, matches) = path_matcher
-            .match_route("/garbage1/garbage2/garbage3/a")
+            .capture_route_into_map("/garbage1/garbage2/garbage3/a")
             .expect("should parse");
         assert_eq!(
             matches["captured"],
             "garbage1/garbage2/garbage3".to_string()
         )
     }
-
 }

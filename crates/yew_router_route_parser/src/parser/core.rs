@@ -240,5 +240,4 @@ mod test {
     fn can_specify_exact_match_option() {
         capture("{(lorem|ipsum)}").expect("Should complete");
     }
-
 }

@@ -72,7 +72,7 @@ pub type Captures<'a> = HashMap<&'a str, String>;
 /// Used for constructing `Properties` from URL matches.
 pub trait FromCaptures: Sized {
     /// Produces the props from the hashmap.
-    /// It is expected that `TryFrom<String>` be implemented on all of the types contained within the props.
+    /// For deriving, it is expected that `TryFrom<String>` be implemented on all of the types contained within the props.
     fn from_captures(captures: &Captures) -> Result<Self, FromCapturesError>;
     /// Verifies that all of the field names produced by the PathMatcher exist on the target props.
     /// Should panic if not all match.
@@ -295,5 +295,4 @@ mod test {
         let expected = "The field: 'lorem' was not present in your path matcher.";
         assert_eq!(displayed, expected);
     }
-
 }

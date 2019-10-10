@@ -13,6 +13,41 @@ use std::slice::Iter;
 use yew_router_route_parser::parser::util::consume_until;
 use yew_router_route_parser::{CaptureVariant, MatcherToken};
 
+/// Allows abstracting over capturing into a HashMap (Captures) or a Vec.
+pub trait CaptureCollection<'a> {
+    fn new2() -> Self;
+    fn insert2(&mut self, key: &'a str, value: String);
+    fn extend2(&mut self, other: Self);
+}
+
+impl<'a> CaptureCollection<'a> for Captures<'a> {
+    fn new2() -> Self {
+        Captures::new()
+    }
+
+    fn insert2(&mut self, key: &'a str, value: String) {
+        self.insert(key, value);
+    }
+
+    fn extend2(&mut self, other: Self) {
+        self.extend(other)
+    }
+}
+
+impl<'a> CaptureCollection<'a> for Vec<(&'a str, String)> {
+    fn new2() -> Self {
+        Vec::new()
+    }
+
+    fn insert2(&mut self, key: &'a str, value: String) {
+        self.push((key, value))
+    }
+
+    fn extend2(&mut self, other: Self) {
+        self.extend(other)
+    }
+}
+
 #[allow(clippy::trivially_copy_pass_by_ref)]
 pub(super) fn match_path<'a, 'b: 'a>(
     tokens: &'b [MatcherToken],
@@ -21,17 +56,24 @@ pub(super) fn match_path<'a, 'b: 'a>(
     move |i: &str| match_path_impl(tokens, *settings, i)
 }
 
-/// TODO return a parser instead of the result so it can be made all_consuming.
-fn match_path_impl<'a, 'b: 'a>(
+#[allow(clippy::trivially_copy_pass_by_ref)]
+pub(super) fn match_path_list<'a, 'b: 'a>(
+    tokens: &'b [MatcherToken],
+    settings: &'b MatcherSettings,
+) -> impl Fn(&'a str) -> IResult<&'a str, Vec<(&'b str, String)>> {
+    move |i: &str| match_path_impl(tokens, *settings, i)
+}
+
+fn match_path_impl<'a, 'b: 'a, CAP: CaptureCollection<'b>>(
     tokens: &'b [MatcherToken],
     settings: MatcherSettings,
     mut i: &'a str,
-) -> IResult<&'a str, Captures<'b>> {
+) -> IResult<&'a str, CAP> {
     trace!("Attempting to match path: {:?} using: {:?}", i, tokens);
 
     let mut iter = tokens.iter().peekable();
 
-    let mut captures: Captures = Captures::new();
+    let mut captures: CAP = CAP::new2();
 
     while let Some(token) = iter.next() {
         i = match token {
@@ -43,7 +85,7 @@ fn match_path_impl<'a, 'b: 'a>(
                 match opt(|i| match_path_impl(&inner_tokens, settings, i))(i) {
                     Ok((ii, inner_captures)) => {
                         if let Some(inner_captures) = inner_captures {
-                            captures.extend(inner_captures);
+                            captures.extend2(inner_captures);
                         }
                         ii
                     }
@@ -57,7 +99,7 @@ fn match_path_impl<'a, 'b: 'a>(
                 CaptureVariant::ManyUnnamed => {
                     capture_many_unnamed(i, &mut iter, &capture.allowed_captures)?
                 }
-                CaptureVariant::NumberedUnnamed { sections } => capture_numbered_named(
+                CaptureVariant::NumberedUnnamed { sections } => capture_numbered_named::<CAP>(
                     i,
                     &mut iter,
                     None,
@@ -149,11 +191,11 @@ fn capture_many_unnamed<'a>(
     Ok(ii)
 }
 
-fn capture_named<'a, 'b>(
+fn capture_named<'a, 'b: 'a, CAP: CaptureCollection<'b>>(
     i: &'a str,
     iter: &mut Peekable<Iter<MatcherToken>>,
     capture_key: &'b str,
-    matches: &mut Captures<'b>,
+    matches: &mut CAP,
     allowed_captures: &Option<Vec<String>>,
 ) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     log::trace!("Matching Named ({})", capture_key);
@@ -163,23 +205,23 @@ fn capture_named<'a, 'b>(
             consume_until(delimiter),
             allowed_captures,
         )(i)?;
-        matches.insert(capture_key, captured);
+        matches.insert2(capture_key, captured);
         Ok(ii)
     } else {
         let (ii, captured) = optionally_check_if_parsed_is_allowed_capture(
             map(valid_capture_characters, String::from),
             allowed_captures,
         )(i)?;
-        matches.insert(capture_key, captured.to_string());
+        matches.insert2(capture_key, captured.to_string());
         Ok(ii)
     }
 }
 
-fn capture_many_named<'a, 'b>(
+fn capture_many_named<'a, 'b, CAP: CaptureCollection<'b>>(
     i: &'a str,
     iter: &mut Peekable<Iter<MatcherToken>>,
     capture_key: &'b str,
-    matches: &mut Captures<'b>,
+    matches: &mut CAP,
     allowed_captures: &Option<Vec<String>>,
 ) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
     log::trace!("Matching NumberedUnnamed ({})", capture_key);
@@ -189,25 +231,25 @@ fn capture_many_named<'a, 'b>(
             consume_until(delimiter),
             allowed_captures,
         )(i)?;
-        matches.insert(&capture_key, captured);
+        matches.insert2(&capture_key, captured);
         Ok(ii)
     } else if i.is_empty() {
-        matches.insert(&capture_key, "".to_string()); // TODO Is this a thing I want?
+        matches.insert2(&capture_key, "".to_string()); // TODO Is this a thing I want?
         Ok(i) // Match even if nothing is left
     } else {
         let (ii, c) = optionally_check_if_parsed_is_allowed_capture(
             map(valid_many_capture_characters, String::from),
             allowed_captures,
         )(i)?;
-        matches.insert(&capture_key, c.to_string());
+        matches.insert2(&capture_key, c.to_string());
         Ok(ii)
     }
 }
 
-fn capture_numbered_named<'a, 'b>(
+fn capture_numbered_named<'a, 'b, CAP: CaptureCollection<'b>>(
     mut i: &'a str,
     iter: &mut Peekable<Iter<MatcherToken>>,
-    name_and_captures: Option<(&'b str, &mut Captures<'b>)>,
+    name_and_captures: Option<(&'b str, &mut CAP)>,
     mut sections: usize,
     allowed_captures: &Option<Vec<String>>,
 ) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
@@ -250,7 +292,7 @@ fn capture_numbered_named<'a, 'b>(
     if let Some(allowed_captures) = allowed_captures {
         if allowed_captures.iter().any(|x| x == &captured) {
             if let Some((name, captures)) = name_and_captures {
-                captures.insert(&name, captured);
+                captures.insert2(&name, captured);
             }
             Ok(i)
         } else {
@@ -258,7 +300,7 @@ fn capture_numbered_named<'a, 'b>(
         }
     } else {
         if let Some((name, captures)) = name_and_captures {
-            captures.insert(&name, captured);
+            captures.insert2(&name, captured);
         }
         Ok(i)
     }

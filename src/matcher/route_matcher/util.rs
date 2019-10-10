@@ -33,5 +33,4 @@ mod test {
         parser("lorem").expect("Should match");
         parser("LoREm").expect("Should match");
     }
-
 }

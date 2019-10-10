@@ -278,5 +278,4 @@ mod test {
     fn option_section_can_start_matcher_string() {
         path_parser("[/lorem]").expect("Should validate");
     }
-
 }

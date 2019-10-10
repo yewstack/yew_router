@@ -1,7 +1,7 @@
 //! Logic for matching and capturing route strings.
 
 pub use yew_router_route_parser::{
-    Capture, CaptureVariant, Captures, FromCapturedKeyValue, FromCapturesError, MatcherToken,
+    Capture, CaptureVariant, Captures, FromCapturedKeyValue, FromCapturesError, MatcherToken, parser::YewRouterParseError
 };
 
 pub use yew_router_route_parser::FromCaptures;
@@ -58,7 +58,10 @@ impl Matcher {
     pub fn match_route_string<'a, 'b: 'a>(&'b self, route_string: &'a str) -> Option<Captures<'a>> {
         match self {
             #[cfg(feature = "route_matcher")]
-            Matcher::RouteMatcher(matcher) => matcher.match_route(route_string).map(|x| x.1).ok(),
+            Matcher::RouteMatcher(matcher) => matcher
+                .capture_route_into_map(route_string)
+                .map(|x| x.1)
+                .ok(),
             #[cfg(feature = "regex_matcher")]
             Matcher::RegexMatcher(regex) => regex.match_route_string(route_string),
             Matcher::CustomMatcher(matcher) => matcher.match_route_string(route_string),

@@ -116,6 +116,10 @@ pub use crate::route_info::RouteState;
 #[cfg(feature = "router")]
 pub use crate::router::RouterState;
 
+mod switch;
+pub use switch::Switch;
+pub use yew_router_macro::Switch;
+
 /// The route macro produces a Matcher which can be used to determine if a route string should cause
 /// a section of html or component should render.
 ///
