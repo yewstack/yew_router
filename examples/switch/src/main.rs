@@ -11,6 +11,11 @@ fn main() {
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
+
+    let route = RouteInfo::<()>::from("/inner/left");
+    let app_route = AppRoute::switch(route);
+    dbg!(app_route);
+
     let route = RouteInfo::<()>::from("/yeet");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
@@ -26,4 +31,14 @@ pub enum AppRoute {
     Something { thing: String },
     #[to = "/another/{thing}"]
     Another(String),
+    #[to = "/inner{*:inner}"]
+    Nested(InnerRoute)
+}
+
+#[derive(Switch, Debug)]
+pub enum InnerRoute {
+    #[to = "/left"]
+    Left,
+    #[to = "/right"]
+    Right
 }

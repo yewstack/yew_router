@@ -48,15 +48,19 @@ impl Default for MatcherSettings {
 }
 
 impl RouteMatcher {
-    /// Attempt to create a PathMatcher from a "matcher string".
+    /// Attempt to create a RouteMatcher from a "matcher string".
     pub fn try_from(i: &str) -> Result<Self, YewRouterParseError> {
-        let tokens = parser::parse(i)?;
         let settings = MatcherSettings::default();
-        let pm = RouteMatcher {
+        Self::new(i, settings)
+    }
+
+    /// Creates a new Matcher with settings.
+    pub fn new(i: &str, settings: MatcherSettings) -> Result<Self, YewRouterParseError> {
+        let tokens = parser::parse(i)?;
+        Ok(RouteMatcher {
             tokens: optimize_tokens(tokens, !settings.strict),
             settings,
-        };
-        Ok(pm)
+        })
     }
 
     /// Match a route string, collecting the results into a map.

@@ -85,11 +85,11 @@ fn generate_trait_impl(enum_ident: Ident, switch_variants: Vec<SwitchVariant>) -
                     })
                     .map(|(field_name, key, field_ty): (Ident, String, Type)|{
                         quote!{
-                            #field_name: captures.get(#key)
+                            #field_name: captures.get(#key) // TODO try to get an Option<T> instead of an Option<&T> out of the map.
                                 .map_or_else(
-                                    || <#field_ty as ::yew_router::matcher::FromCapturedKeyValue>::key_not_available(), // If the key isn't present, possibly resolve the case where the item is an option
-                                    |c| {
-                                        <#field_ty as ::yew_router::matcher::FromCapturedKeyValue>::from_value(c.as_str())
+                                    || <#field_ty as ::yew_router::Switch>::key_not_available(), // If the key isn't present, possibly resolve the case where the item is an option
+                                    |value: &String| {
+                                        <#field_ty as ::yew_router::Switch>::switch(::yew_router::route_info::RouteInfo{route: value.clone(), state})
                                     }
                                 )?
                         }
@@ -119,9 +119,9 @@ fn generate_trait_impl(enum_ident: Ident, switch_variants: Vec<SwitchVariant>) -
                         quote!{
                             captures.get(#index)
                                 .map_or_else(
-                                    || <#field_ty as ::yew_router::matcher::FromCapturedKeyValue>::key_not_available(), // If the key isn't present, possibly resolve the case where the item is an option
-                                    |c: &(&str, String)| {
-                                        <#field_ty as ::yew_router::matcher::FromCapturedKeyValue>::from_value(c.1.as_str())
+                                    || <#field_ty as ::yew_router::Switch>::key_not_available(), // If the key isn't present, possibly resolve the case where the item is an option
+                                    |(_key, value): &(&str, String)| {
+                                        <#field_ty as ::yew_router::Switch>::switch(::yew_router::route_info::RouteInfo{route: value.clone(), state}) // TODO add the actual state here.
                                     }
                                 )?
                         }
@@ -160,8 +160,15 @@ fn generate_trait_impl(enum_ident: Ident, switch_variants: Vec<SwitchVariant>) -
             let build_from_captures = build_variant_from_captures(&enum_ident, ident, fields);
 
             quote! {
-                let matcher = ::yew_router::matcher::route_matcher::RouteMatcher::try_from(#route_string)
-                    .expect("Invalid Matcher"); // TODO this doesn't give adequate diagnostics. Figure out how to parse the failed generation and give useful feedback.
+                let settings = ::yew_router::matcher::route_matcher::MatcherSettings {
+                    strict: true, // Don't add optional sections
+                    complete: false, // Allow incomplete matches. // TODO investigate if this is necessary here.
+                    case_insensitive: true,
+                };
+                let matcher = ::yew_router::matcher::route_matcher::RouteMatcher::new(#route_string, settings)
+                    .expect("Invalid Matcher");
+
+                let state = route.state.clone(); // TODO State gets cloned a bunch here. Some refactorings should aim to remove this.
                 #build_from_captures
             }
         })
@@ -169,7 +176,7 @@ fn generate_trait_impl(enum_ident: Ident, switch_variants: Vec<SwitchVariant>) -
 
     let token_stream = quote! {
         impl ::yew_router::Switch for #enum_ident {
-            fn switch<T>(route: ::yew_router::route_info::RouteInfo<T>) -> Option<Self> {
+            fn switch<T: yew_router::route_info::RouteState>(route: ::yew_router::route_info::RouteInfo<T>) -> Option<Self> {
                 #(#variant_matchers)*
 
                 return None
