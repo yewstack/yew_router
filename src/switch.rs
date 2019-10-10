@@ -31,3 +31,5 @@ pub trait Switch: Sized {
     /// Based on a route, possibly produce an itself.
     fn switch<T>(route: RouteInfo<T>) -> Option<Self>;
 }
+
+

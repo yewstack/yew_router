@@ -1,6 +1,6 @@
 //! A component wrapping a `<button>` tag that changes the route.
 use crate::agent::{RouteRequest, RouteSenderBridge, Void};
-use crate::route_info::{RouteInfo, RouteString};
+use crate::route_info::{RouteInfo};
 use yew::prelude::*;
 
 use super::Msg;
@@ -29,7 +29,7 @@ impl Component for RouterButton {
             Msg::NoOp => false,
             Msg::Clicked => {
                 let route_info = RouteInfo {
-                    route: RouteString::Unstructured(self.props.link.clone()),
+                    route: self.props.link.clone(),
                     state: self.props.state,
                 };
                 self.router.send(RouteRequest::ChangeRoute(route_info));

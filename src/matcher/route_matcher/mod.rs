@@ -10,7 +10,6 @@ mod util;
 use super::Captures;
 use super::Matcher;
 use crate::matcher::YewRouterParseError;
-use crate::matcher::YewRouterParseError;
 use nom::combinator::all_consuming;
 use nom::IResult;
 use std::collections::HashSet;
