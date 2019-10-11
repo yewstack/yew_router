@@ -11,12 +11,12 @@ pub fn generate_struct_impl(item: SwitchItem) -> TokenStream {
     let build_from_captures = build_variant_from_captures(&ident, fields);
 
     let item_matcher = quote! {
-        let settings = ::yew_router::matcher::route_matcher::MatcherSettings {
+        let settings = ::yew_router::matcher::MatcherSettings {
             strict: true, // Don't add optional sections
             complete: false, // Allow incomplete matches. // TODO investigate if this is necessary here.
             case_insensitive: true,
         };
-        let matcher = ::yew_router::matcher::route_matcher::RouteMatcher::new(#route_string, settings)
+        let matcher = ::yew_router::matcher::RouteMatcher::new(#route_string, settings)
             .expect("Invalid Matcher");
 
         let state = route.state.clone(); // TODO State gets cloned a bunch here. Some refactorings should aim to remove this.
@@ -25,7 +25,7 @@ pub fn generate_struct_impl(item: SwitchItem) -> TokenStream {
 
     let token_stream = quote! {
         impl ::yew_router::Switch for #ident {
-            fn switch<T: yew_router::route_info::RouteState>(route: ::yew_router::route_info::RouteInfo<T>) -> Option<Self> {
+            fn switch<T: yew_router::route::RouteState>(route: ::yew_router::route::Route<T>) -> Option<Self> {
                 #item_matcher
 
                 return None
@@ -55,7 +55,7 @@ fn build_variant_from_captures(
                             .map_or_else(
                                 || <#field_ty as ::yew_router::Switch>::key_not_available(), // If the key isn't present, possibly resolve the case where the item is an option
                                 |value: &String| {
-                                    <#field_ty as ::yew_router::Switch>::switch(::yew_router::route_info::RouteInfo{route: value.clone(), state})
+                                    <#field_ty as ::yew_router::Switch>::switch(::yew_router::route::Route{route: value.clone(), state})
                                 }
                             )?
                     }
@@ -87,7 +87,7 @@ fn build_variant_from_captures(
                             .map_or_else(
                                 || <#field_ty as ::yew_router::Switch>::key_not_available(), // If the key isn't present, possibly resolve the case where the item is an option
                                 |(_key, value): &(&str, String)| {
-                                    <#field_ty as ::yew_router::Switch>::switch(::yew_router::route_info::RouteInfo{route: value.clone(), state}) // TODO add the actual state here.
+                                    <#field_ty as ::yew_router::Switch>::switch(::yew_router::route::Route{route: value.clone(), state}) // TODO add the actual state here.
                                 }
                             )?
                     }

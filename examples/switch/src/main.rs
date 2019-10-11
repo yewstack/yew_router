@@ -22,11 +22,11 @@ fn main() {
 
 
 
-    let route = RouteInfo::<()>::from("/single/32");
+    let route = Route::<()>::from("/single/32");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-    let route = RouteInfo::<()>::from("/othersingle/472");
+    let route = Route::<()>::from("/othersingle/472");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 }
