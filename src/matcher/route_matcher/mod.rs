@@ -8,7 +8,7 @@ mod match_paths;
 mod util;
 
 use super::Captures;
-use super::Matcher;
+//use super::Matcher;
 use crate::matcher::YewRouterParseError;
 use nom::combinator::all_consuming;
 use nom::IResult;
@@ -118,11 +118,7 @@ impl RouteMatcher {
     }
 }
 
-impl From<RouteMatcher> for Matcher {
-    fn from(value: RouteMatcher) -> Self {
-        Matcher::RouteMatcher(value)
-    }
-}
+
 
 #[cfg(test)]
 mod tests {

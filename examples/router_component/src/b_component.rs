@@ -13,9 +13,9 @@ pub struct BModel {
 #[derive(PartialEq, Properties)]
 pub struct Props {
     #[props(required)]
-    number: Option<usize>,
+    pub number: Option<usize>,
     #[props(required)]
-    sub_path: Option<String>,
+    pub sub_path: Option<String>,
 }
 
 pub enum Msg {
@@ -56,7 +56,7 @@ impl Component for BModel {
                     None => route_string,
                 };
 
-                let route = RouteInfo::from(route_string);
+                let route = Route::from(route_string);
 
                 // Don't tell the router to alert its subscribers,
                 // because the changes made here only affect the current component,

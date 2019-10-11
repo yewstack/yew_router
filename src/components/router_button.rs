@@ -1,38 +1,36 @@
 //! A component wrapping a `<button>` tag that changes the route.
-use crate::agent::{RouteRequest, RouteSenderBridge, Void};
-use crate::route_info::{RouteInfo};
+use crate::agent::{RouteRequest, RouteAgentDispatcher};
+use crate::route::{Route};
 use yew::prelude::*;
 
 use super::Msg;
 use super::Props;
+use crate::RouterState;
 
 /// Changes the route when clicked.
 #[derive(Debug)]
-pub struct RouterButton {
-    router: RouteSenderBridge,
-    props: Props,
+pub struct RouterButton<T: for<'de>RouterState<'de>> {
+    router: RouteAgentDispatcher<T>,
+    props: Props<T>,
 }
 
-impl Component for RouterButton {
+impl <T: for<'de>RouterState<'de>> Component for RouterButton<T> {
     type Message = Msg;
-    type Properties = Props;
+    type Properties = Props<T>;
 
-    fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-        let callback = link.send_back(|_: Void| Msg::NoOp);
-        let router = RouteSenderBridge::new(callback);
-
+    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+        let router = RouteAgentDispatcher::new();
         RouterButton { router, props }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::NoOp => false,
             Msg::Clicked => {
-                let route_info = RouteInfo {
+                let route = Route {
                     route: self.props.link.clone(),
-                    state: self.props.state,
+                    state: self.props.state.clone(),
                 };
-                self.router.send(RouteRequest::ChangeRoute(route_info));
+                self.router.send(RouteRequest::ChangeRoute(route));
                 false
             }
         }
@@ -43,8 +41,8 @@ impl Component for RouterButton {
     }
 }
 
-impl Renderable<RouterButton> for RouterButton {
-    fn view(&self) -> Html<RouterButton> {
+impl <T: for<'de>RouterState<'de>> Renderable<RouterButton<T>> for RouterButton<T> {
+    fn view(&self) -> Html<RouterButton<T>> {
         html! {
             <button
                 class=self.props.classes.clone(),

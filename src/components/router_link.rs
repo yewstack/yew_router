@@ -1,37 +1,36 @@
 //! A component wrapping an `<a>` tag that changes the route.
-use crate::agent::{RouteRequest, RouteSenderBridge, Void};
-use crate::route_info::{RouteInfo};
+use crate::agent::{RouteRequest, RouteAgentDispatcher};
+use crate::route::{Route};
 use yew::prelude::*;
 
 use super::Msg;
 use super::Props;
+use crate::RouterState;
 
 /// An anchor tag Component that when clicked, will navigate to the provided route.
 #[derive(Debug)]
-pub struct RouterLink {
-    router: RouteSenderBridge,
-    props: Props,
+pub struct RouterLink<T: for <'de> RouterState<'de>> {
+    router: RouteAgentDispatcher<T>,
+    props: Props<T>,
 }
 
-impl Component for RouterLink {
+impl <T: for<'de>RouterState<'de>> Component for RouterLink<T> {
     type Message = Msg;
-    type Properties = Props;
+    type Properties = Props<T>;
 
-    fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-        let callback = link.send_back(|_: Void| Msg::NoOp);
-        let router = RouteSenderBridge::new(callback);
+    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+        let router = RouteAgentDispatcher::new();
         RouterLink { router, props }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::NoOp => false,
             Msg::Clicked => {
-                let route_info = RouteInfo {
+                let route = Route {
                     route: self.props.link.clone(),
-                    state: self.props.state,
+                    state: self.props.state.clone(),
                 };
-                self.router.send(RouteRequest::ChangeRoute(route_info));
+                self.router.send(RouteRequest::ChangeRoute(route));
                 false
             }
         }
@@ -43,8 +42,8 @@ impl Component for RouterLink {
     }
 }
 
-impl Renderable<RouterLink> for RouterLink {
-    fn view(&self) -> Html<RouterLink> {
+impl <T: for<'de>RouterState<'de>> Renderable<RouterLink<T>> for RouterLink<T> {
+    fn view(&self) -> Html<Self> {
         use stdweb::web::event::IEvent;
         let target: &str = &self.props.link;
 

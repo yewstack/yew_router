@@ -34,7 +34,7 @@ impl Renderable<Model> for Model {
                     title="Intro"
                 />
                 <Page
-                    uri="https://raw.githubusercontent.com/hgzimmerman/YewRouter/master/examples/guide/chapters/02_router.md"
+                    uri="https://raw.githubusercontent.com/hgzimmerman/YewRouter/master/examples/guide/chapters/02_router_component.md"
                     page_url="/router"
                     title="Router Component"
                 />

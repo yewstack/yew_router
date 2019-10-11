@@ -54,17 +54,16 @@
 // It can be dealt with at the same time.
 #![allow(macro_expanded_macro_exports_accessed_by_absolute_paths)]
 
-#[cfg(feature = "matchers")]
-use proc_macro_hack::proc_macro_hack;
+pub use yew_router_route_parser;
 
 #[macro_use]
 mod alias;
-pub mod route_service;
+pub mod service;
 
 #[cfg(feature = "agent")]
 pub mod agent;
 
-pub mod route_info;
+pub mod route;
 
 #[cfg(feature = "components")]
 pub mod components;
@@ -81,38 +80,31 @@ pub mod unit_state {
 
 /// Prelude crate that can be imported when working with the yew_router
 pub mod prelude {
-    #[cfg(any(feature = "matchers", feature = "router"))]
     pub use super::matcher::{
-        Captures, CustomMatcher, FromCaptures, FromCapturesError, Matcher, MatcherProvider,
-        RouteMatcher,
+        Captures, FromCaptures, FromCapturesError,
     };
     #[cfg(feature = "unit_alias")]
     pub use super::unit_state::*;
-    #[cfg(feature = "matchers")]
     pub use crate::route;
-    #[cfg(feature = "matchers")]
     pub use yew_router_macro::FromCaptures;
     // State restrictions
     #[cfg(feature = "agent")]
     pub use crate::agent::AgentState;
-    pub use crate::route_info::RouteState;
+    pub use crate::route::RouteState;
     #[cfg(feature = "router")]
     pub use crate::router::RouterState;
 }
 
 pub use alias::*;
 
-#[cfg(any(feature = "matchers", feature = "router"))]
 pub mod matcher;
 
-#[cfg(feature = "matchers")]
-pub use matcher::{Captures, FromCaptures, MatcherProvider};
-#[cfg(feature = "matchers")]
+pub use matcher::{Captures, FromCaptures};
 pub use yew_router_macro::FromCaptures;
 
 #[cfg(feature = "agent")]
 pub use crate::agent::AgentState;
-pub use crate::route_info::RouteState;
+pub use crate::route::RouteState;
 #[cfg(feature = "router")]
 pub use crate::router::RouterState;
 

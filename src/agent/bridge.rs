@@ -1,6 +1,6 @@
 //! Bridge to RouteAgent.
 use crate::agent::{AgentState, RouteAgent};
-use crate::route_info::RouteInfo;
+use crate::route::Route;
 use std::fmt::{Debug, Error as FmtError, Formatter};
 use std::ops::{Deref, DerefMut};
 use yew::agent::Bridged;
@@ -17,7 +17,7 @@ where
     for<'de> T: AgentState<'de>,
 {
     /// Creates a new bridge.
-    pub fn new(callback: Callback<RouteInfo<T>>) -> Self {
+    pub fn new(callback: Callback<Route<T>>) -> Self {
         let router_agent = RouteAgent::bridge(callback);
         RouteAgentBridge(router_agent)
     }
@@ -25,7 +25,7 @@ where
     /// Experimental, may be removed
     ///
     /// Directly spawn a new Router
-    pub fn spawn(callback: Callback<RouteInfo<T>>) -> Self {
+    pub fn spawn(callback: Callback<Route<T>>) -> Self {
         use yew::agent::Discoverer;
         let router_agent = Context::spawn_or_join(Some(callback));
         RouteAgentBridge(router_agent)

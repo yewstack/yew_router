@@ -1,38 +1,38 @@
 fn main() {
-    let route = RouteInfo::<()>::from("/some/route");
+    let route = Route::<()>::from("/some/route");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-    let route = RouteInfo::<()>::from("/some/other");
+    let route = Route::<()>::from("/some/other");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-    let route = RouteInfo::<()>::from("/another/other");
+    let route = Route::<()>::from("/another/other");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
 
-    let route = RouteInfo::<()>::from("/inner/left");
+    let route = Route::<()>::from("/inner/left");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-    let route = RouteInfo::<()>::from("/yeet");
+    let route = Route::<()>::from("/yeet");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 }
-use yew_router::route_info::RouteInfo;
+use yew_router::route::Route;
 use yew_router::Switch;
 
 #[derive(Switch, Debug)]
 pub enum AppRoute {
     #[to = "/some/route"]
     SomeRoute,
-    #[to = "/some/{thing}"]
-    Something { thing: String },
+    #[to = "/some/{thing}/{other}"]
+    Something { thing: String, other: String},
     #[to = "/another/{thing}"]
     Another(String),
     #[to = "/inner{*:inner}"]
-    Nested(InnerRoute)
+    Nested(InnerRoute),
 }
 
 #[derive(Switch, Debug)]

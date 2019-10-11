@@ -4,14 +4,12 @@ use yew::html::ChildrenWithProps;
 use yew::prelude::*;
 use yew::Properties;
 use yew_router::agent::RouteRequest::GetCurrentRoute;
-use yew_router::components::RouterLink;
 use yew_router::matcher::RouteMatcher;
 use yew_router::prelude::*;
-//use yew_router::{RouteAgent, RouteInfo};
 
 pub struct Guide {
     router_agent: Box<dyn Bridge<RouteAgent>>,
-    route: Option<RouteInfo>,
+    route: Option<Route>,
     props: GuideProps,
 }
 
@@ -21,7 +19,7 @@ pub struct GuideProps {
 }
 
 pub enum Msg {
-    UpdateRoute(RouteInfo),
+    UpdateRoute(Route),
 }
 
 impl Component for Guide {
@@ -78,7 +76,7 @@ impl Renderable<Guide> for Guide {
                 x
             });
 
-            html! {
+            return html! {
                 <div style="display: flex; overflow-y: hidden; height: 100%">
                     <div style="min-width: 280px; border-right: 2px solid black; overflow-y: auto">
                         <ul style="list-style: none; padding: 0; margin: 0">
@@ -95,22 +93,22 @@ impl Renderable<Guide> for Guide {
                 </div>
             }
         } else {
-            html! {}
+            return html! {}
         }
     }
 }
 
-fn render_page_list_item(props: PageProps, route: &RouteInfo) -> Html<Guide> {
+fn render_page_list_item(props: PageProps, route: &Route) -> Html<Guide> {
     let pm: RouteMatcher = RouteMatcher::try_from(&props.page_url).unwrap();
     if pm.capture_route_into_map(&route.to_string()).is_ok() {
         log::debug!("Found an active");
-        html! {
+        return html! {
             <li style="padding-left: 4px; padding-right: 4px; padding-top: 6px; padding-bottom: 6px; background-color: lightgray;">
                 <RouterLink link=props.page_url text={props.title} />
             </li>
         }
     } else {
-        html! {
+       return html! {
             <li style="padding-left: 4px; padding-right: 4px; padding-top: 6px; padding-bottom: 6px; background-color: white;">
                 <RouterLink link=props.page_url text={props.title} />
             </li>

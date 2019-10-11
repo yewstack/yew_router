@@ -1,13 +1,14 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
-use proc_macro_hack::proc_macro_hack;
+//use proc_macro_hack::proc_macro_hack;
 
 mod from_captures;
 use from_captures::from_captures_impl;
 mod switch;
 
-mod route;
-use route::route_impl;
+//mod route;
+//use route::route_impl;
+
 
 /// Derives `FromCaptures` for the specified struct.
 ///
@@ -50,10 +51,10 @@ pub fn from_captures(tokens: TokenStream) -> TokenStream {
     from_captures_impl(tokens)
 }
 
-#[proc_macro_hack]
-pub fn route(tokens: TokenStream) -> TokenStream {
-    route_impl(tokens)
-}
+//#[proc_macro_hack]
+//pub fn route(tokens: TokenStream) -> TokenStream {
+//    route_impl(tokens)
+//}
 
 #[proc_macro_derive(Switch, attributes(to))]
 pub fn switch(tokens: TokenStream) -> TokenStream {

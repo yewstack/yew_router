@@ -1,17 +1,14 @@
 //! Router Component.
 
-use crate::agent::{bridge::RouteAgentBridge, RouteRequest};
-use crate::route_info::RouteInfo;
-use crate::router::render::RenderFn;
-use crate::router::route::Route;
+use crate::agent::{RouteAgentBridge, RouteRequest};
+use crate::route::Route;
 use crate::router::RouterState;
-use log::{trace, warn};
-use std::fmt::{Debug, Error as FmtError, Formatter};
+use crate::Switch;
+use std::fmt::{self, Debug, Error as FmtError, Formatter};
 use std::rc::Rc;
-use yew::html::ChildrenWithProps;
-use yew::virtual_dom::VChild;
 use yew::{
-    html, virtual_dom::VNode, Component, ComponentLink, Html, Properties, Renderable, ShouldRender,
+    virtual_dom::VNode, Callback, Component, ComponentLink, Html, Properties, Renderable,
+    ShouldRender,
 };
 
 /// Rendering control flow component.
@@ -23,37 +20,15 @@ use yew::{
 /// # Example
 /// ```
 /// use yew::prelude::*;
-/// use yew_router::prelude::*;
+/// use yew_router::router::Router;
+/// use yew_router::Switch;
 ///
-/// pub struct AComponent {}
-///
-/// #[derive(Properties, FromCaptures)]
-/// pub struct AComponentProps {
-///     value: String,
-///     other: Option<String>
-/// }
-///
-/// impl Component for AComponent {
-/// # type Message = ();
-///    type Properties = AComponentProps;
-///    //...
-/// # fn create(props: Self::Properties,link: ComponentLink<Self>) -> Self {
-/// #        unimplemented!()
-/// #    }
-/// # fn update(&mut self,msg: Self::Message) -> bool {
-/// #        unimplemented!()
-/// #    }
-/// }
-/// # impl Renderable<AComponent> for AComponent {
-///  #     fn view(&self) -> Html<Self> {
-/// #        unimplemented!()
-/// #    }
-///# }
+/// pub enum Msg {}
 ///
 /// pub struct Model {}
 /// impl Component for Model {
 ///     //...
-/// #   type Message = ();
+/// #   type Message = Msg;
 /// #   type Properties = ();
 /// #   fn create(_: Self::Properties, _link: ComponentLink<Self>) -> Self {
 /// #       Model {}
@@ -63,51 +38,127 @@ use yew::{
 /// #   }
 /// }
 ///
+/// #[derive(Switch)]
+/// enum S {
+///     #[to = "/v"]
+///     Variant
+/// }
+///
 /// impl Renderable<Model> for Model {
 ///     fn view(&self) -> Html<Self> {
 ///         html! {
-///             <Router>
-///                 <Route matcher=route!("/a/{value}") render=component::<AComponent>() />
-///             </Router>
+///             <Router<(), S, Msg>
+///                callback = From::from
+///                render = Router::render(|switch: Option<&S>| {
+///                    match switch {
+///                        Some(S::Variant) => html!{"variant route was matched"},
+///                        _ => unimplemented!()
+///                    }
+///                })
+///             />
 ///         }
 ///     }
 /// }
 /// ```
 #[derive(Debug)]
-pub struct Router<T: for<'de> RouterState<'de>> {
-    route: RouteInfo<T>,
-    props: Props<T>,
+pub struct Router<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> {
+    route: Route<T>,
+    props: Props<T, SW, M>,
     router_agent: RouteAgentBridge<T>,
+}
+
+impl<T, SW, M> Router<T, SW, M>
+where
+    T: for<'de> RouterState<'de>,
+    SW: Switch + 'static,
+    M: 'static,
+{
+    /// Wrap a render closure so that it can be used by the Router.
+    /// # Example
+    /// ```
+    ///# use yew_router::Switch;
+    ///# use yew_router::router::Router;
+    ///# use yew::{html, Html};
+    ///# #[derive(Switch)]
+    ///# enum S {
+    ///#     #[to = "/route"]
+    ///#     Variant
+    ///# }
+    ///# pub enum Msg {}
+    ///
+    ///# fn dont_execute() {
+    /// let render = Router::render(|switch: Option<&S>| -> Html<Router<(), S, Msg>> {
+    ///    match switch {
+    ///        Some(S::Variant) => html!{"Variant"},
+    ///        None => html!{"404"}
+    ///    }
+    /// });
+    ///# }
+    /// ```
+    pub fn render<F: RenderFn<Router<T, SW, M>, SW> + 'static>(f: F) -> Render<T, SW, M> {
+        Render::new(f)
+    }
 }
 
 /// Message for Router.
 #[derive(Debug, Clone)]
-pub enum Msg<T> {
+pub enum Msg<T, M> {
     /// Updates the route
-    UpdateRoute(RouteInfo<T>),
+    UpdateRoute(Route<T>),
+    /// Inner message
+    InnerMessage(M),
+}
+
+impl<T, M> From<M> for Msg<T, M> {
+    fn from(inner: M) -> Self {
+        Msg::InnerMessage(inner)
+    }
+}
+
+// TODO consider removing the Option, and creating two different render functions - one for rendering the switch, and one for a 404 case.
+/// Render function definition
+pub trait RenderFn<CTX: Component, SW>: Fn(Option<&SW>) -> Html<CTX> {}
+impl<T, CTX: Component, SW> RenderFn<CTX, SW> for T where T: Fn(Option<&SW>) -> Html<CTX> {}
+/// Owned Render function.
+pub struct Render<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static>(
+    pub(crate) Rc<dyn RenderFn<Router<T, SW, M>, SW>>,
+);
+impl<T: for<'de> RouterState<'de>, SW: Switch, M> Render<T, SW, M> {
+    /// New render function
+    fn new<F: RenderFn<Router<T, SW, M>, SW> + 'static>(f: F) -> Self {
+        Render(Rc::new(f))
+    }
+}
+impl<T: for<'de> RouterState<'de>, SW: Switch, M> Debug for Render<T, SW, M> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Render2").finish()
+    }
 }
 
 /// Properties for Router.
 #[derive(Properties)]
-pub struct Props<T: for<'de> RouterState<'de>> {
+pub struct Props<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> {
+    /// Render fn
     #[props(required)]
-    children: ChildrenWithProps<Route<T>, Router<T>>,
+    pub render: Render<T, SW, M>,
+    /// Optional Callback for propagating messages to parent components.
+    pub callback: Option<Callback<M>>,
 }
 
-impl<T: for<'de> RouterState<'de>> Debug for Props<T> {
+impl<T: for<'de> RouterState<'de>, SW: Switch, M> Debug for Props<T, SW, M> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
-        f.debug_struct("Props")
-            .field("children (length)", &self.children.len())
-            .finish()
+        f.debug_struct("Props").finish()
     }
 }
 
-impl<T> Component for Router<T>
+impl<T, SW, M> Component for Router<T, SW, M>
 where
     T: for<'de> RouterState<'de>,
+    SW: Switch + 'static,
+    M: 'static,
 {
-    type Message = Msg<T>;
-    type Properties = Props<T>;
+    type Message = Msg<T, M>;
+    type Properties = Props<T, SW, M>;
 
     fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
         let callback = link.send_back(Msg::UpdateRoute);
@@ -132,106 +183,26 @@ where
                 self.route = route;
                 did_change
             }
+            Msg::InnerMessage(m) => {
+                if let Some(cb) = &self.props.callback {
+                    cb.emit(m)
+                }
+                false
+            }
         }
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         self.props = props;
-        true
+        true // TODO, this can probably be better now.
     }
 }
 
-impl<T: for<'de> RouterState<'de>> Renderable<Router<T>> for Router<T> {
+impl<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> Renderable<Router<T, SW, M>>
+    for Router<T, SW, M>
+{
     fn view(&self) -> VNode<Self> {
-        trace!(
-            "Routing one of {} routes for  {:?}",
-            self.props.children.iter().count(),
-            &self.route
-        );
-
-        self.props
-            .children
-            .iter()
-            .filter_map(|route| -> Option<Html<Self>> {
-                try_render_child(route, &self.route.to_string())
-            })
-            .next() // Take the first path that succeeds.
-            .map(|x| -> Html<Self> {
-                trace!("Route matched.");
-                x
-            })
-            .unwrap_or_else(|| {
-                warn!("Routing failed. No default case was provided.");
-                html! { <></>}
-            })
-    }
-}
-
-/// Tries to render a child.
-///
-/// It will run the route string against the matcher provided by the `route_child`.
-/// If it matches, it will attempt to render content using either the render fn or the children..
-///
-/// # Arguments
-/// * route_child - The child attempting to be rendered.
-/// * route_string - The string representing the route.
-fn try_render_child<T: for<'de> RouterState<'de>>(
-    route_child: VChild<Route<T>, Router<T>>,
-    route_string: &str,
-) -> Option<Html<Router<T>>> {
-    let children_present: bool = !route_child.props.children.is_empty();
-
-    let children = route_child.props.children.iter();
-    let render: Option<Rc<dyn RenderFn<Router<T>>>> = route_child.props.render.clone().0;
-
-    route_child
-        .props
-        .matcher
-        .match_route_string(route_string)
-        .map(|matches: std::collections::HashMap<&str, String>| {
-            match render {
-                Some(render) => {
-                    if children_present {
-                        match (render)(&matches) {
-                            Some(rendered) => Some(html! {
-                                <>
-                                    {rendered}
-                                    {children.collect::<VNode<Router<T>>>()}
-                                </>
-                            }),
-                            None => {
-                                // If the component can't be created from the matches,
-                                // the nested children will be rendered anyways
-                                Some(children.collect())
-                            }
-                        }
-                    } else {
-                        render(&matches)
-                    }
-                }
-                None => {
-                    if children_present {
-                        Some(children.collect())
-                    } else {
-                        None // Neither matched
-                    }
-                }
-            }
-        })
-        .flatten_stable()
-}
-
-trait Flatten<T> {
-    /// Because flatten is a nightly feature. I'm making a new variant of the function here for stable use.
-    /// The naming is changed to avoid this getting clobbered when object_flattening 60258 is stabilized.
-    fn flatten_stable(self) -> Option<T>;
-}
-
-impl<T> Flatten<T> for Option<Option<T>> {
-    fn flatten_stable(self) -> Option<T> {
-        match self {
-            None => None,
-            Some(v) => v,
-        }
+        let switch = SW::switch(self.route.clone());
+        (&self.props.render.0)(switch.as_ref())
     }
 }

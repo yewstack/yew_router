@@ -2,7 +2,7 @@
 //!
 //! It wraps a route service and allows calls to be sent to it to update every subscriber,
 //! or just the element that made the request.
-use crate::route_service::RouteService;
+use crate::service::RouteService;
 
 use yew::prelude::worker::*;
 
@@ -12,13 +12,16 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::fmt::{Debug, Error as FmtError, Formatter};
 
-use crate::route_info::RouteInfo;
-use crate::route_info::RouteState;
+use crate::route::Route;
+use crate::route::RouteState;
 use log::trace;
-use yew::callback::Callback;
 
-pub mod bridge;
-use bridge::RouteAgentBridge;
+mod bridge;
+pub use bridge::RouteAgentBridge;
+
+mod dispatcher;
+pub use dispatcher::RouteAgentDispatcher;
+
 
 /// Any state that can be used in the router agent must meet the criteria of this trait.
 pub trait AgentState<'de>: RouteState + Serialize + Deserialize<'de> + Debug {}
@@ -40,13 +43,13 @@ pub enum Msg<T> {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum RouteRequest<T> {
     /// Replaces the most recent Route with a new one and alerts connected components to the route change.
-    ReplaceRoute(RouteInfo<T>),
+    ReplaceRoute(Route<T>),
     /// Replaces the most recent Route with a new one, but does not alert connected components to the route change.
-    ReplaceRouteNoBroadcast(RouteInfo<T>),
+    ReplaceRouteNoBroadcast(Route<T>),
     /// Changes the route using a Route struct and alerts connected components to the route change.
-    ChangeRoute(RouteInfo<T>),
+    ChangeRoute(Route<T>),
     /// Changes the route using a Route struct, but does not alert connected components to the route change.
-    ChangeRouteNoBroadcast(RouteInfo<T>),
+    ChangeRouteNoBroadcast(Route<T>),
     /// Gets the current route.
     GetCurrentRoute,
     /// Removes the entity from the Router Agent
@@ -96,7 +99,7 @@ where
     type Reach = Context;
     type Message = Msg<T>;
     type Input = RouteRequest<T>;
-    type Output = RouteInfo<T>;
+    type Output = Route<T>;
 
     fn create(link: AgentLink<RouteAgent<T>>) -> Self {
         let callback = link.send_back(Msg::BrowserNavigationRouteChanged);
@@ -114,7 +117,7 @@ where
         match msg {
             Msg::BrowserNavigationRouteChanged((_route_string, state)) => {
                 trace!("Browser navigated");
-                let mut route = RouteInfo::current_route(&self.route_service);
+                let mut route = Route::current_route(&self.route_service);
                 route.state = Some(state);
                 for sub in &self.subscribers {
                     self.link.response(*sub, route.clone());
@@ -133,7 +136,7 @@ where
                 let route_string: String = route.to_string();
                 self.route_service
                     .replace_route(&route_string, route.state.unwrap_or_default());
-                let route = RouteInfo::current_route(&self.route_service);
+                let route = Route::current_route(&self.route_service);
                 for sub in &self.subscribers {
                     self.link.response(*sub, route.clone());
                 }
@@ -149,7 +152,7 @@ where
                 self.route_service
                     .set_route(&route_string, route.state.unwrap_or_default());
                 // get the new route. This will contain a default state object
-                let route = RouteInfo::current_route(&self.route_service);
+                let route = Route::current_route(&self.route_service);
                 // broadcast it to all listening components
                 for sub in &self.subscribers {
                     self.link.response(*sub, route.clone());
@@ -161,7 +164,7 @@ where
                     .set_route(&route_string, route.state.unwrap_or_default());
             }
             RouteRequest::GetCurrentRoute => {
-                let route = RouteInfo::current_route(&self.route_service);
+                let route = Route::current_route(&self.route_service);
                 self.link.response(who, route.clone());
             }
             RouteRequest::Disconnect => {
@@ -174,74 +177,3 @@ where
     }
 }
 
-/// A sender for the Router that doesn't send messages back to the component that connects to it.
-///
-/// This may be subject to change
-#[deprecated(note = "Dispatchers should make having an indirection agent unnecessary.")]
-pub struct RouteSenderAgent<T>
-where
-    for<'de> T: AgentState<'de>,
-{
-    /// This acts as a level of indirection.
-    router_agent: RouteAgentBridge<T>,
-}
-
-impl<T: for<'de> AgentState<'de>> Debug for RouteSenderAgent<T> {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
-        f.debug_struct("RouteSenderAgent")
-            .field("router_agent", &"-")
-            .finish()
-    }
-}
-
-impl<T> Agent for RouteSenderAgent<T>
-where
-    for<'de> T: AgentState<'de>,
-{
-    type Reach = Context;
-    type Message = ();
-    type Input = RouteRequest<T>;
-    type Output = Void;
-
-    fn create(link: AgentLink<Self>) -> Self {
-        RouteSenderAgent {
-            router_agent: RouteAgentBridge::new(link.send_back(|_| ())),
-        }
-    }
-
-    fn update(&mut self, _msg: Self::Message) {}
-
-    fn handle(&mut self, msg: Self::Input, _who: HandlerId) {
-        self.router_agent.send(msg);
-    }
-}
-
-/// Alias to RouteSenderBridge<()>;
-pub type RouteSenderBridge = RouteSenderAgentBridge<()>;
-
-/// A simplified interface to the router agent
-pub struct RouteSenderAgentBridge<T>(Box<dyn Bridge<RouteSenderAgent<T>>>)
-where
-    for<'de> T: AgentState<'de>;
-
-impl<T: for<'de> AgentState<'de>> Debug for RouteSenderAgentBridge<T> {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
-        f.debug_tuple("RouteSenderBridge").finish()
-    }
-}
-
-impl<T> RouteSenderAgentBridge<T>
-where
-    for<'de> T: AgentState<'de>,
-{
-    /// Creates a new sender only bridge.
-    pub fn new(callback: Callback<Void>) -> Self {
-        let router_agent = RouteSenderAgent::bridge(callback);
-        RouteSenderAgentBridge(router_agent)
-    }
-
-    /// Sends a `RouteRequest` Message.
-    pub fn send(&mut self, request: RouteRequest<T>) {
-        self.0.send(request)
-    }
-}
