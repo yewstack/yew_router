@@ -1,24 +1,21 @@
 use crate::switch::SwitchItem;
-use syn::export::{TokenStream, TokenStream2};
 use proc_macro2::Ident;
-use syn::{Fields, Field, Type};
 use quote::quote;
+use syn::export::{TokenStream, TokenStream2};
+use syn::{Field, Fields, Type};
 
 pub fn generate_struct_impl(item: SwitchItem) -> TokenStream {
     let SwitchItem {
-        route_string, ident, fields
+        matcher,
+        ident,
+        fields,
     } = item;
     let build_from_captures = build_variant_from_captures(&ident, fields);
+    let matcher = super::build_matcher_from_tokens(matcher);
 
     let item_matcher = quote! {
-        let settings = ::yew_router::matcher::MatcherSettings {
-            strict: true, // Don't add optional sections
-            complete: false, // Allow incomplete matches. // TODO investigate if this is necessary here.
-            case_insensitive: true,
-        };
-        let matcher = ::yew_router::matcher::RouteMatcher::new(#route_string, settings)
-            .expect("Invalid Matcher");
 
+        #matcher
         let state = route.state.clone(); // TODO State gets cloned a bunch here. Some refactorings should aim to remove this.
         #build_from_captures
     };
@@ -35,10 +32,7 @@ pub fn generate_struct_impl(item: SwitchItem) -> TokenStream {
     TokenStream::from(token_stream)
 }
 
-fn build_variant_from_captures(
-    ident: &Ident,
-    fields: Fields,
-) -> TokenStream2 {
+fn build_variant_from_captures(ident: &Ident, fields: Fields) -> TokenStream2 {
     match fields {
         Fields::Named(named_fields) => {
             let fields: Vec<TokenStream2> = named_fields.named.into_iter()
@@ -62,7 +56,7 @@ fn build_variant_from_captures(
                 })
                 .collect();
 
-            return quote!{
+            return quote! {
                 if let Some(captures) = matcher.capture_route_into_map(&route.to_string()).ok().map(|x| x.1) {
                     let produce_variant = move || -> Option<#ident> {
                         Some(
@@ -75,23 +69,26 @@ fn build_variant_from_captures(
                         return Some(e);
                     }
                 }
-            }
+            };
         }
         Fields::Unnamed(unnamed_fields) => {
-            let fields = unnamed_fields.unnamed.iter()
-                .enumerate()
-                .map(|(index, f): (usize, &Field)|{
-                    let field_ty = &f.ty;
-                    quote!{
-                        captures.get(#index)
-                            .map_or_else(
-                                || <#field_ty as ::yew_router::Switch>::key_not_available(), // If the key isn't present, possibly resolve the case where the item is an option
-                                |(_key, value): &(&str, String)| {
-                                    <#field_ty as ::yew_router::Switch>::switch(::yew_router::route::Route{route: value.clone(), state}) // TODO add the actual state here.
-                                }
-                            )?
-                    }
-                });
+            let fields =
+                unnamed_fields
+                    .unnamed
+                    .iter()
+                    .enumerate()
+                    .map(|(index, f): (usize, &Field)| {
+                        let field_ty = &f.ty;
+                        quote! {
+                            captures.get(#index)
+                                .map_or_else(
+                                    || <#field_ty as ::yew_router::Switch>::key_not_available(), // If the key isn't present, possibly resolve the case where the item is an option
+                                    |(_key, value): &(&str, String)| {
+                                        <#field_ty as ::yew_router::Switch>::switch(::yew_router::route::Route{route: value.clone(), state}) // TODO add the actual state here.
+                                    }
+                                )?
+                        }
+                    });
 
             return quote! {
                 if let Some(captures) = matcher.capture_route_into_vec(&route.to_string()).ok().map(|x| x.1) {
@@ -106,14 +103,14 @@ fn build_variant_from_captures(
                         return Some(e);
                     }
                 }
-            }
+            };
         }
         Fields::Unit => {
             return quote! {
-                    if let Some(captures) = matcher.capture_route_into_map(&route.to_string()).ok().map(|x| x.1) {
-                        return Some(#ident);
-                    }
+                if let Some(captures) = matcher.capture_route_into_map(&route.to_string()).ok().map(|x| x.1) {
+                    return Some(#ident);
                 }
+            }
         }
     }
 }

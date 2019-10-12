@@ -118,8 +118,6 @@ impl RouteMatcher {
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;

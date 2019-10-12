@@ -1,6 +1,6 @@
 //! A component wrapping an `<a>` tag that changes the route.
-use crate::agent::{RouteRequest, RouteAgentDispatcher};
-use crate::route::{Route};
+use crate::agent::{RouteAgentDispatcher, RouteRequest};
+use crate::route::Route;
 use yew::prelude::*;
 
 use super::Msg;
@@ -9,12 +9,12 @@ use crate::RouterState;
 
 /// An anchor tag Component that when clicked, will navigate to the provided route.
 #[derive(Debug)]
-pub struct RouterLink<T: for <'de> RouterState<'de>> {
+pub struct RouterLink<T: for<'de> RouterState<'de>> {
     router: RouteAgentDispatcher<T>,
     props: Props<T>,
 }
 
-impl <T: for<'de>RouterState<'de>> Component for RouterLink<T> {
+impl<T: for<'de> RouterState<'de>> Component for RouterLink<T> {
     type Message = Msg;
     type Properties = Props<T>;
 
@@ -42,7 +42,7 @@ impl <T: for<'de>RouterState<'de>> Component for RouterLink<T> {
     }
 }
 
-impl <T: for<'de>RouterState<'de>> Renderable<RouterLink<T>> for RouterLink<T> {
+impl<T: for<'de> RouterState<'de>> Renderable<RouterLink<T>> for RouterLink<T> {
     fn view(&self) -> Html<Self> {
         use stdweb::web::event::IEvent;
         let target: &str = &self.props.link;

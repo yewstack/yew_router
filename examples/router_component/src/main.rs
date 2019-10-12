@@ -42,7 +42,10 @@ pub enum AppRoute {
     #[to = "/a{*:inner}"]
     A(ARoute),
     #[to = "/b/[?sub_path={sub_path}][#{number}]"]
-    B{sub_path: Option<String>, number: Option<usize>},
+    B {
+        sub_path: Option<String>,
+        number: Option<usize>,
+    },
     #[to = "/c"]
     C,
     #[to = "/e/{string}"]
@@ -58,7 +61,7 @@ pub enum ARoute {
     // Still accept the route, when matching, but consider it invalid.
     // This is effectively the same as wrapping the ARoute in Option, but doesn't run afoul of the current routing syntax.
     #[to = "{*}"]
-    None
+    None,
 }
 
 impl Renderable<Model> for Model {

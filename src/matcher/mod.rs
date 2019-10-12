@@ -8,5 +8,4 @@ pub use yew_router_route_parser::{
 pub use yew_router_route_parser::FromCaptures;
 
 mod route_matcher;
-pub use self::route_matcher::{RouteMatcher, MatcherSettings};
-
+pub use self::route_matcher::{MatcherSettings, RouteMatcher};

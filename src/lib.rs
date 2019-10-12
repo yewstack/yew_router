@@ -80,9 +80,7 @@ pub mod unit_state {
 
 /// Prelude crate that can be imported when working with the yew_router
 pub mod prelude {
-    pub use super::matcher::{
-        Captures, FromCaptures, FromCapturesError,
-    };
+    pub use super::matcher::{Captures, FromCaptures, FromCapturesError};
     #[cfg(feature = "unit_alias")]
     pub use super::unit_state::*;
     pub use crate::route;

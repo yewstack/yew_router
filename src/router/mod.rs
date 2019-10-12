@@ -1,7 +1,7 @@
 //! Router component and related types.
 mod router;
 
-pub use router::{Props, Router, Render};
+pub use router::{Props, Render, Router};
 
 use crate::agent::AgentState;
 

@@ -1,17 +1,17 @@
 use crate::c_component::CModel;
+use crate::ARoute;
 use yew::prelude::*;
 use yew::Properties;
 use yew_router::prelude::*;
-use crate::ARoute;
 
 pub struct AModel {
-    props: Props
+    props: Props,
 }
 
 #[derive(PartialEq, Properties)]
 pub struct Props {
     #[props(required)]
-    pub route: ARoute
+    pub route: ARoute,
 }
 
 pub enum Msg {}
@@ -21,7 +21,7 @@ impl Component for AModel {
     type Properties = Props;
 
     fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        AModel {props}
+        AModel { props }
     }
 
     fn update(&mut self, _msg: Self::Message) -> ShouldRender {

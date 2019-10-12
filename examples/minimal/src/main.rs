@@ -1,10 +1,9 @@
 #![recursion_limit = "256"]
 use yew::prelude::*;
 
-use yew_router::Switch;
-use yew_router::service::RouteService;
 use yew_router::route::Route;
-
+use yew_router::service::RouteService;
+use yew_router::Switch;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -23,7 +22,7 @@ pub struct Model {
 
 pub enum Msg {
     RouteChanged(Route<()>),
-    ChangeRoute(AppRoute)
+    ChangeRoute(AppRoute),
 }
 
 impl Component for Model {
@@ -37,11 +36,14 @@ impl Component for Model {
         let callback = link.send_back(|(route, state)| -> Msg {
             Msg::RouteChanged(Route {
                 route,
-                state: Some(state)
+                state: Some(state),
             })
         });
         route_service.register_callback(callback);
-        Model { route_service, route }
+        Model {
+            route_service,
+            route,
+        }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
@@ -51,11 +53,14 @@ impl Component for Model {
                 // This might be derived in the future
                 let route_string = match route {
                     AppRoute::A(s) => format!("/a/{}", s),
-                    AppRoute::B{anything, number} => format!("/b/{}/{}", anything, number),
-                    AppRoute::C => format!("/c")
+                    AppRoute::B { anything, number } => format!("/b/{}/{}", anything, number),
+                    AppRoute::C => format!("/c"),
                 };
                 self.route_service.set_route(&route_string, ());
-                self.route = Route{route: route_string, state: None};
+                self.route = Route {
+                    route: route_string,
+                    state: None,
+                };
             }
         }
         true
@@ -67,12 +72,10 @@ pub enum AppRoute {
     #[to = "/a/{anything}"]
     A(String),
     #[to = "/b/{anything}/{number}"]
-    B{anything: String, number: u32},
+    B { anything: String, number: u32 },
     #[to = "/c"]
-    C
+    C,
 }
-
-
 
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {

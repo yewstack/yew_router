@@ -1,6 +1,6 @@
 //! A component wrapping a `<button>` tag that changes the route.
-use crate::agent::{RouteRequest, RouteAgentDispatcher};
-use crate::route::{Route};
+use crate::agent::{RouteAgentDispatcher, RouteRequest};
+use crate::route::Route;
 use yew::prelude::*;
 
 use super::Msg;
@@ -9,12 +9,12 @@ use crate::RouterState;
 
 /// Changes the route when clicked.
 #[derive(Debug)]
-pub struct RouterButton<T: for<'de>RouterState<'de>> {
+pub struct RouterButton<T: for<'de> RouterState<'de>> {
     router: RouteAgentDispatcher<T>,
     props: Props<T>,
 }
 
-impl <T: for<'de>RouterState<'de>> Component for RouterButton<T> {
+impl<T: for<'de> RouterState<'de>> Component for RouterButton<T> {
     type Message = Msg;
     type Properties = Props<T>;
 
@@ -41,7 +41,7 @@ impl <T: for<'de>RouterState<'de>> Component for RouterButton<T> {
     }
 }
 
-impl <T: for<'de>RouterState<'de>> Renderable<RouterButton<T>> for RouterButton<T> {
+impl<T: for<'de> RouterState<'de>> Renderable<RouterButton<T>> for RouterButton<T> {
     fn view(&self) -> Html<RouterButton<T>> {
         html! {
             <button

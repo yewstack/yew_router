@@ -22,7 +22,6 @@ pub use bridge::RouteAgentBridge;
 mod dispatcher;
 pub use dispatcher::RouteAgentDispatcher;
 
-
 /// Any state that can be used in the router agent must meet the criteria of this trait.
 pub trait AgentState<'de>: RouteState + Serialize + Deserialize<'de> + Debug {}
 impl<'de, T> AgentState<'de> for T where T: RouteState + Serialize + Deserialize<'de> + Debug {}
@@ -176,4 +175,3 @@ where
         self.subscribers.remove(&id);
     }
 }
-

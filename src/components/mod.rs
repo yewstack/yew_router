@@ -11,7 +11,7 @@ use crate::RouterState;
 
 /// Properties for `RouterButton` and `RouterLink`.
 #[derive(Properties, Default, Clone, Debug, PartialEq)]
-pub struct Props<T: for<'de>RouterState<'de>> {
+pub struct Props<T: for<'de> RouterState<'de>> {
     /// The route that will be set when the component is clicked.
     pub link: String,
     /// The state to set when changing the route.

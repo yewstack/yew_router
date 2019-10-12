@@ -40,7 +40,6 @@ pub trait Switch: Sized {
     }
 }
 
-
 impl<U: Switch> Switch for Option<U> {
     fn switch<T: RouteState>(route: Route<T>) -> Option<Self> {
         Some(Some(Switch::switch(route)?))
@@ -53,14 +52,13 @@ impl<U: Switch> Switch for Option<U> {
 }
 
 impl<U, E> Switch for Result<U, E>
-    where
-        U: FromStr<Err = E>,
+where
+    U: FromStr<Err = E>,
 {
     fn switch<T: RouteState>(route: Route<T>) -> Option<Self> {
         Some(U::from_str(&route.route))
     }
 }
-
 
 macro_rules! impl_switch_for_from_str {
     ($($SelfT: ty),*) => {
@@ -73,7 +71,6 @@ macro_rules! impl_switch_for_from_str {
         )*
     };
 }
-
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use std::path::PathBuf;
@@ -114,4 +111,3 @@ impl_switch_for_from_str! {
     std::num::NonZeroI16,
     std::num::NonZeroI8
 }
-

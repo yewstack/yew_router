@@ -1,13 +1,13 @@
-use syn::{
-     Field, Fields, Ident, Type,
-};
+use crate::switch::SwitchItem;
+use proc_macro::TokenStream;
 use quote::quote;
 use syn::export::TokenStream2;
-use proc_macro::TokenStream;
-use crate::switch::SwitchItem;
+use syn::{Field, Fields, Ident, Type};
 
-
-pub fn generate_enum_impl(enum_ident: Ident, switch_variants: impl Iterator<Item=SwitchItem>) -> TokenStream {
+pub fn generate_enum_impl(
+    enum_ident: Ident,
+    switch_variants: impl Iterator<Item = SwitchItem>,
+) -> TokenStream {
     /// Once the 'captures' exists, attempt to populate the fields from the list of captures.
     fn build_variant_from_captures(
         enum_ident: &Ident,
@@ -53,20 +53,23 @@ pub fn generate_enum_impl(enum_ident: Ident, switch_variants: impl Iterator<Item
                 }
             }
             Fields::Unnamed(unnamed_fields) => {
-                let fields = unnamed_fields.unnamed.iter()
-                    .enumerate()
-                    .map(|(index, f): (usize, &Field)|{
-                        let field_ty = &f.ty;
-                        quote!{
-                            captures.get(#index)
-                                .map_or_else(
-                                    || <#field_ty as ::yew_router::Switch>::key_not_available(), // If the key isn't present, possibly resolve the case where the item is an option
-                                    |(_key, value): &(&str, String)| {
-                                        <#field_ty as ::yew_router::Switch>::switch(::yew_router::route::Route{route: value.clone(), state: state.clone()}) // TODO add the actual state here.
-                                    }
-                                )?
-                        }
-                    });
+                let fields =
+                    unnamed_fields
+                        .unnamed
+                        .iter()
+                        .enumerate()
+                        .map(|(index, f): (usize, &Field)| {
+                            let field_ty = &f.ty;
+                            quote! {
+                                captures.get(#index)
+                                    .map_or_else(
+                                        || <#field_ty as ::yew_router::Switch>::key_not_available(), // If the key isn't present, possibly resolve the case where the item is an option
+                                        |(_key, value): &(&str, String)| {
+                                            <#field_ty as ::yew_router::Switch>::switch(::yew_router::route::Route{route: value.clone(), state: state.clone()}) // TODO add the actual state here.
+                                        }
+                                    )?
+                            }
+                        });
 
                 quote! {
                     if let Some(captures) = matcher.capture_route_into_vec(&route.to_string()).ok().map(|x| x.1) {
@@ -93,22 +96,19 @@ pub fn generate_enum_impl(enum_ident: Ident, switch_variants: impl Iterator<Item
         }
     }
 
-    let variant_matchers: Vec<TokenStream2> = switch_variants.into_iter()
+    let variant_matchers: Vec<TokenStream2> = switch_variants
+        .into_iter()
         .map(|sv| {
             let SwitchItem {
-                route_string, ident, fields
+                matcher,
+                ident,
+                fields,
             } = sv;
             let build_from_captures = build_variant_from_captures(&enum_ident, ident, fields);
+            let matcher = super::build_matcher_from_tokens(matcher);
 
             quote! {
-                let settings = ::yew_router::matcher::MatcherSettings {
-                    strict: true, // Don't add optional sections
-                    complete: false, // Allow incomplete matches. // TODO investigate if this is necessary here.
-                    case_insensitive: true,
-                };
-                let matcher = ::yew_router::matcher::RouteMatcher::new(#route_string, settings)
-                    .expect("Invalid Matcher");
-
+                #matcher
                 let state = &route.state; // TODO State gets cloned a bunch here. Some refactorings should aim to remove this.
                 #build_from_captures
             }
@@ -126,4 +126,3 @@ pub fn generate_enum_impl(enum_ident: Ident, switch_variants: impl Iterator<Item
     };
     TokenStream::from(token_stream)
 }
-

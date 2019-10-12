@@ -91,9 +91,9 @@ impl Renderable<Guide> for Guide {
                     }
                     </div>
                 </div>
-            }
+            };
         } else {
-            return html! {}
+            return html! {};
         }
     }
 }
@@ -106,12 +106,12 @@ fn render_page_list_item(props: PageProps, route: &Route) -> Html<Guide> {
             <li style="padding-left: 4px; padding-right: 4px; padding-top: 6px; padding-bottom: 6px; background-color: lightgray;">
                 <RouterLink link=props.page_url text={props.title} />
             </li>
-        }
+        };
     } else {
-       return html! {
+        return html! {
             <li style="padding-left: 4px; padding-right: 4px; padding-top: 6px; padding-bottom: 6px; background-color: white;">
                 <RouterLink link=props.page_url text={props.title} />
             </li>
-        }
+        };
     }
 }

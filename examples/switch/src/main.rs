@@ -11,7 +11,6 @@ fn main() {
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-
     let route = Route::<()>::from("/inner/left");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
@@ -19,8 +18,6 @@ fn main() {
     let route = Route::<()>::from("/yeet");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
-
-
 
     let route = Route::<()>::from("/single/32");
     let app_route = AppRoute::switch(route);
@@ -38,32 +35,32 @@ pub enum AppRoute {
     #[to = "/some/route"]
     SomeRoute,
     #[to = "/some/{thing}/{other}"]
-    Something { thing: String, other: String},
+    Something { thing: String, other: String },
     #[to = "/another/{thing}"]
     Another(String),
-    #[to = "/inner{*:inner}"]
+    #[lit = "inner"]
+    #[rest]
     Nested(InnerRoute),
-    #[to = "{*:x}"]
+    #[rest]
     Single(Single),
-    #[to = "{*:x}"]
-    OtherSingle(OtherSingle)
+    #[rest]
+    OtherSingle(OtherSingle),
 }
 
 #[derive(Switch, Debug)]
 pub enum InnerRoute {
-    #[to = "/left"]
+    #[lit = "left"] // same as #[to = "/left"]
     Left,
     #[to = "/right"]
-    Right
+    Right,
 }
 
 #[derive(Switch, Debug)]
 #[to = "/single/{number}"]
 pub struct Single {
-    number: u32
+    number: u32,
 }
 
 #[derive(Switch, Debug)]
 #[to = "/othersingle/{number}"]
 pub struct OtherSingle(u32);
-

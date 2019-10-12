@@ -6,12 +6,12 @@ use yew::agent::{Dispatched, Dispatcher};
 
 /// A simplified interface to the router agent.
 pub struct RouteAgentDispatcher<T>(Dispatcher<RouteAgent<T>>)
-    where
-            for<'de> T: AgentState<'de>;
+where
+    for<'de> T: AgentState<'de>;
 
 impl<T> RouteAgentDispatcher<T>
-    where
-            for<'de> T: AgentState<'de>,
+where
+    for<'de> T: AgentState<'de>,
 {
     /// Creates a new bridge.
     pub fn new() -> Self {
