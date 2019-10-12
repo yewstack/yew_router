@@ -7,15 +7,40 @@ I'm currently working towards getting this library in a releasable state.
 ### Example
 ```rust
 html!{
-    <Router>
-        <Route matcher=route!("/a/{}") render=component::<AComponent>()) />
-        <Route matcher=route!("/b") >
-            <BComponent />
-        </Route>
-        <Route matcher=route!("/c/{capture}" render=Render::new(|matches: &Matches| {
-            Some(html!{{matches["capture"}})
-        }) />
-    </Router>
+
+#[derive(Switch, Debug)]
+pub enum AppRoute {
+    #[to = "/profile/{id}"]
+    Profile(u32),
+    #[to = "/forum"]
+    #[rest]
+    Forum(ForumRoute),
+    #[to = "/"]
+    Index,
+}
+
+#[derive(Switch, Debug)]
+pub enum ForumRoute {
+    #[to = "/{subforum}/{thread_slug}"]
+    SubForumAndThread{subforum: String, thread_slug: String}
+    #[to = "/{subforum}"]
+    SubForum{subforum: String}
+}
+
+html! {
+    <Router<AppRoute, ()>
+        render = Router::render(|switch: Option<&AppRoute>| {
+            match switch {
+                Some(AppRoute::Profile(id)) => html!{<ProfileComponent id = id/>},
+                Some(AppRoute::Index) => html!{<IndexComponent/>},
+                Some(AppRoute::Forum(forum_route)) => html!{<ForumComponent route = forum_route/>},
+                None => html!{"404"}
+            }
+        })
+    />
+
+}
+
 }
 ```
 
