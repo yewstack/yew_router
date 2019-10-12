@@ -6,8 +6,6 @@ I'm currently working towards getting this library in a releasable state.
 
 ### Example
 ```rust
-html!{
-
 #[derive(Switch, Debug)]
 pub enum AppRoute {
     #[to = "/profile/{id}"]
@@ -38,9 +36,6 @@ html! {
             }
         })
     />
-
-}
-
 }
 ```
 
