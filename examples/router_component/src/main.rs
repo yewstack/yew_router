@@ -79,10 +79,10 @@ impl Renderable<Model> for Model {
                 </nav>
                 <div>
                     <Router<AppRoute, ()>
-                        render = Router::render(|switch: Option<&AppRoute>| {
+                        render = Router::render(|switch: Option<AppRoute>| {
                             match switch {
                                 Some(AppRoute::A(route)) => html!{<AModel route = route />},
-                                Some(AppRoute::B{sub_path, number}) => html!{<BModel sub_path=sub_path.clone(), number=number.clone()/>},
+                                Some(AppRoute::B{sub_path, number}) => html!{<BModel sub_path=sub_path, number=number/>},
                                 Some(AppRoute::C) => html!{<CModel />},
                                 Some(AppRoute::E(string)) => html!{format!("hello {}", string)},
                                 None => html!{"404"}

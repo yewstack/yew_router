@@ -117,8 +117,8 @@ impl<T, M> From<M> for Msg<T, M> {
 
 // TODO consider removing the Option, and creating two different render functions - one for rendering the switch, and one for a 404 case.
 /// Render function definition
-pub trait RenderFn<CTX: Component, SW>: Fn(Option<&SW>) -> Html<CTX> {}
-impl<T, CTX: Component, SW> RenderFn<CTX, SW> for T where T: Fn(Option<&SW>) -> Html<CTX> {}
+pub trait RenderFn<CTX: Component, SW>: Fn(Option<SW>) -> Html<CTX> {}
+impl<T, CTX: Component, SW> RenderFn<CTX, SW> for T where T: Fn(Option<SW>) -> Html<CTX> {}
 /// Owned Render function.
 pub struct Render<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static>(
     pub(crate) Rc<dyn RenderFn<Router<T, SW, M>, SW>>,
@@ -203,6 +203,6 @@ impl<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> Renderable<
 {
     fn view(&self) -> VNode<Self> {
         let switch = SW::switch(self.route.clone());
-        (&self.props.render.0)(switch.as_ref())
+        (&self.props.render.0)(switch)
     }
 }

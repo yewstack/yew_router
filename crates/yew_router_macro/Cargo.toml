@@ -9,7 +9,6 @@ edition = "2018"
 proc-macro = true
 
 [dependencies]
-proc-macro-hack = "0.5.9"
 syn = "1.0.2"
 quote = "1.0.1"
 yew_router_route_parser = {path = "../yew_router_route_parser"}
