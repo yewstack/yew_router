@@ -1,7 +1,7 @@
 //! Module for matching route strings based on tokens generated from the yew_router_route_parser crate.
 
 pub use yew_router_route_parser::{
-    Capture, CaptureVariant, FromCaptures, FromCapturesError, MatcherToken,
+    Capture, CaptureVariant, MatcherToken,
 };
 
 mod match_paths;

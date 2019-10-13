@@ -48,8 +48,6 @@
     unstable_features,
     unused_qualifications
 )]
-// TODO remove me once dispatchers lands
-#![allow(deprecated)]
 // This will break the project at some point, but it will break yew as well.
 // It can be dealt with at the same time.
 #![allow(macro_expanded_macro_exports_accessed_by_absolute_paths)]
@@ -80,11 +78,11 @@ pub mod unit_state {
 
 /// Prelude crate that can be imported when working with the yew_router
 pub mod prelude {
-    pub use super::matcher::{Captures, FromCaptures, FromCapturesError};
+    pub use super::matcher::{Captures};
     #[cfg(feature = "unit_alias")]
     pub use super::unit_state::*;
-    pub use crate::route;
-    pub use yew_router_macro::FromCaptures;
+    pub use crate::switch::Switch;
+    pub use yew_router_macro::Switch;
     // State restrictions
     #[cfg(feature = "agent")]
     pub use crate::agent::AgentState;
@@ -97,8 +95,7 @@ pub use alias::*;
 
 pub mod matcher;
 
-pub use matcher::{Captures, FromCaptures};
-pub use yew_router_macro::FromCaptures;
+pub use matcher::{Captures};
 
 #[cfg(feature = "agent")]
 pub use crate::agent::AgentState;
