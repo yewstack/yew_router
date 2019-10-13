@@ -1,7 +1,7 @@
 # YewRouter
-A Routing library for the Yew frontend framework.
+A routing library for the [Yew](https://github.com/yewstack/yew) frontend framework.
 
-I'm currently working towards getting this library in a releasable state.
+This project has just joined efforts with [saschagrunert/yew-router](https://github.com/saschagrunert/yew-router) and is working towards a new design.
 
 
 ### Example
@@ -39,17 +39,21 @@ html! {
 }
 ```
 
-### How to use currently
-You can use it in your project by adding it to your dependencies like so:
+### How to Include
+You can use the in-development version in your project by adding it to your dependencies like so:
 ```toml
 [dependencies]
 yew_router = { git = "https://github.com/yewstack/yew_router", branch="master" }
-yew = "0.9.0"
+yew = "0.9.2"
 ```
-Currently, this crate is ready to release, but is waiting on determining a namespace it can use.
-
+Or if you want to use the prior version before the projects merged:
+```toml
+[dependencies]
+yew-router = "0.5.0"
+yew = "0.9.2"
+```
 
 -----
 ### Contributions/Requests
 
-If you have any questions, suggestions, or want to contribute, please open an Issue or PR and I will get back to you in a timely manner.
+If you have any questions, suggestions, or want to contribute, please open an Issue or PR and we will get back to you in a timely manner.
