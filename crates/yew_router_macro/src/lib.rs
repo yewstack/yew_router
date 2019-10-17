@@ -3,7 +3,6 @@ use proc_macro::TokenStream;
 
 mod switch;
 
-
 /// Implements `Switch` trait based on attributes present on the struct or enum variants.
 #[proc_macro_derive(Switch, attributes(to, lit, cap, rest, query, frag))]
 pub fn switch(tokens: TokenStream) -> TokenStream {

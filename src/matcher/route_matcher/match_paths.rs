@@ -347,7 +347,8 @@ where
 //    is_not(INVALID_CHARACTERS)(i)
 //}
 
-#[cfg(test)]
+//#[cfg(test)]
+#[cfg(feature = "disabled")]
 mod integration_test {
     use super::*;
 

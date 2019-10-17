@@ -3,7 +3,7 @@ fn main() {
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-    let route = Route::<()>::from("/some/other");
+    let route = Route::<()>::from("/some/thing/other");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
@@ -15,7 +15,7 @@ fn main() {
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-    let route = Route::<()>::from("/yeet");
+    let route = Route::<()>::from("/yeet"); // should not match
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
@@ -26,11 +26,27 @@ fn main() {
     let route = Route::<()>::from("/othersingle/472");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
+
+    let mut buf = String::new();
+    AppRoute::Another("yeet".to_string()).build_route_section::<()>(&mut buf);
+    println!("{}", buf);
+
+    let mut buf = String::new();
+    AppRoute::Something {
+        thing: "yeet".to_string(),
+        other: "yote".to_string(),
+    }
+    .build_route_section::<()>(&mut buf);
+    println!("{}", buf);
+
+    let mut buf = String::new();
+    OtherSingle(23).build_route_section::<()>(&mut buf);
+    println!("{}", buf);
 }
 use yew_router::route::Route;
 use yew_router::Switch;
 
-#[derive(Switch, Debug)]
+#[derive(Debug, Switch)]
 pub enum AppRoute {
     #[to = "/some/route"]
     SomeRoute,
@@ -38,6 +54,8 @@ pub enum AppRoute {
     Something { thing: String, other: String },
     #[to = "/another/{thing}"]
     Another(String),
+    #[to = "/doot/{one}/{two}"]
+    Yeet(String, String),
     #[lit = "inner"]
     #[rest]
     Nested(InnerRoute),

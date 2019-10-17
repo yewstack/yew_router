@@ -78,7 +78,7 @@ pub mod unit_state {
 
 /// Prelude crate that can be imported when working with the yew_router
 pub mod prelude {
-    pub use super::matcher::{Captures};
+    pub use super::matcher::Captures;
     #[cfg(feature = "unit_alias")]
     pub use super::unit_state::*;
     pub use crate::switch::Switch;
@@ -95,7 +95,7 @@ pub use alias::*;
 
 pub mod matcher;
 
-pub use matcher::{Captures};
+pub use matcher::Captures;
 
 #[cfg(feature = "agent")]
 pub use crate::agent::AgentState;
@@ -103,8 +103,8 @@ pub use crate::route::RouteState;
 #[cfg(feature = "router")]
 pub use crate::router::RouterState;
 
-mod switch;
-pub use switch::Switch;
+pub mod switch;
+pub use switch::{Switch};
 pub use yew_router_macro::Switch;
 
 /// The route macro produces a Matcher which can be used to determine if a route string should cause

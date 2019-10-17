@@ -1,5 +1,5 @@
 use crate::switch::SwitchItem;
-use proc_macro2::Ident;
+use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::export::{TokenStream, TokenStream2};
 use syn::{Field, Fields, Type};
@@ -9,107 +9,145 @@ pub fn generate_struct_impl(item: SwitchItem) -> TokenStream {
         matcher,
         ident,
         fields,
-    } = item;
-    let build_from_captures = build_variant_from_captures(&ident, fields);
-    let matcher = super::build_matcher_from_tokens(matcher);
+    } = &item;
+    let build_from_captures = build_struct_from_captures(&ident, &fields);
+    let matcher = super::build_matcher_from_tokens(&matcher);
 
-    let item_matcher = quote! {
-
-        #matcher
-        let state = route.state.clone(); // TODO State gets cloned a bunch here. Some refactorings should aim to remove this.
-        #build_from_captures
-    };
+    let match_item = Ident::new("self", Span::call_site());
+    let serializer = super::build_serializer_for_struct(&item, &match_item);
 
     let token_stream = quote! {
         impl ::yew_router::Switch for #ident {
-            fn switch<T: yew_router::route::RouteState>(route: ::yew_router::route::Route<T>) -> Option<Self> {
-                #item_matcher
+            fn from_route_part<T: ::yew_router::route::RouteState>(route: ::yew_router::route::Route<T>) -> (Option<Self>, Option<T>) {
 
-                return None
+                #matcher
+                let mut state = route.state;
+                let route_string = route.route;
+
+                #build_from_captures
+
+                return (None, state)
+            }
+
+            fn build_route_section<T>(self, mut buf: &mut String) -> Option<T> {
+                #serializer
             }
         }
     };
     TokenStream::from(token_stream)
 }
 
-fn build_variant_from_captures(ident: &Ident, fields: Fields) -> TokenStream2 {
+fn build_struct_from_captures(ident: &Ident, fields: &Fields) -> TokenStream2 {
     match fields {
         Fields::Named(named_fields) => {
-            let fields: Vec<TokenStream2> = named_fields.named.into_iter()
-                .filter_map(|field: Field| {
-                    let field_ty: Type = field.ty;
-                    field.ident.map(|i| {
+            let fields: Vec<TokenStream2> = named_fields
+                .named
+                .iter()
+                .filter_map(|field: &Field| {
+                    let field_ty: &Type = &field.ty;
+                    field.ident.as_ref().map(|i| {
                         let key = i.to_string();
                         (i, key, field_ty)
                     })
                 })
-                .map(|(field_name, key, field_ty): (Ident, String, Type)|{
-                    quote!{
-                        #field_name: captures.get(#key) // TODO try to get an Option<T> instead of an Option<&T> out of the map.
-                            .map_or_else(
-                                || <#field_ty as ::yew_router::Switch>::key_not_available(), // If the key isn't present, possibly resolve the case where the item is an option
-                                |value: &String| {
-                                    <#field_ty as ::yew_router::Switch>::switch(::yew_router::route::Route{route: value.clone(), state})
+                .map(|(field_name, key, field_ty): (&Ident, String, &Type)| {
+                    quote! {
+                        #field_name: {
+                            let (v, s) = match captures.remove(#key) {
+                                Some(value) => {
+                                    <#field_ty as ::yew_router::Switch>::from_route_part(
+                                        ::yew_router::route::Route {
+                                            route: value,
+                                            state,
+                                        }
+                                    )
                                 }
-                            )?
+                                None => {
+                                    (
+                                        <#field_ty as ::yew_router::Switch>::key_not_available(),
+                                        state,
+                                    )
+                                }
+                            };
+                            match v {
+                                Some(val) => {
+                                    state = s; // Set state for the next var.
+                                    val
+                                },
+                                None => return (None, s) // Failed
+                            }
+                        }
                     }
                 })
                 .collect();
 
             return quote! {
-                if let Some(captures) = matcher.capture_route_into_map(&route.to_string()).ok().map(|x| x.1) {
-                    let produce_variant = move || -> Option<#ident> {
+                if let Some(mut captures) = matcher.capture_route_into_map(&route_string).ok().map(|x| x.1) {
+                    return (
                         Some(
-                            #ident{
+                            #ident {
                                 #(#fields),*
                             }
-                        )
-                    };
-                    if let Some(e) = produce_variant() {
-                        return Some(e);
-                    }
-                }
+                        ),
+                        state
+                    );
+                };
             };
         }
         Fields::Unnamed(unnamed_fields) => {
-            let fields =
-                unnamed_fields
-                    .unnamed
-                    .iter()
-                    .enumerate()
-                    .map(|(index, f): (usize, &Field)| {
-                        let field_ty = &f.ty;
-                        quote! {
-                            captures.get(#index)
-                                .map_or_else(
-                                    || <#field_ty as ::yew_router::Switch>::key_not_available(), // If the key isn't present, possibly resolve the case where the item is an option
-                                    |(_key, value): &(&str, String)| {
-                                        <#field_ty as ::yew_router::Switch>::switch(::yew_router::route::Route{route: value.clone(), state}) // TODO add the actual state here.
+            let fields = unnamed_fields.unnamed.iter().map(|f: &Field| {
+                let field_ty = &f.ty;
+                quote! {
+                    {
+                        let (v, s) = match drain.next() {
+                            Some((_key, value)) => {
+                                <#field_ty as ::yew_router::Switch>::from_route_part(
+                                    ::yew_router::route::Route {
+                                        route: value,
+                                        state,
                                     }
-                                )?
+                                )
+                            },
+                            None => {
+                                (
+                                    <#field_ty as ::yew_router::Switch>::key_not_available(),
+                                    state,
+                                )
+                            }
+                        };
+                        match v {
+                            Some(val) => {
+                                state = s; // Set state for the next var.
+                                val
+                            },
+                            None => return (None, s) // Failed
                         }
-                    });
+                    }
+                }
+            });
 
-            return quote! {
-                if let Some(captures) = matcher.capture_route_into_vec(&route.to_string()).ok().map(|x| x.1) {
-                    let produce_variant = move || -> Option<#ident> {
+            quote! {
+                // TODO put an annotation here allowing unused muts.
+                if let Some(mut captures) = matcher.capture_route_into_vec(&route_string).ok().map(|x| x.1) {
+                    let mut drain = captures.drain(..);
+                    return (
                         Some(
                             #ident(
                                 #(#fields),*
                             )
-                        )
-                    };
-                    if let Some(e) = produce_variant() {
-                        return Some(e);
-                    }
-                }
-            };
+                        ),
+                        state
+                    );
+                };
+            }
         }
         Fields::Unit => {
             return quote! {
-                if let Some(captures) = matcher.capture_route_into_map(&route.to_string()).ok().map(|x| x.1) {
-                    return Some(#ident);
-                }
+                let mut state = if let Some(_captures) = matcher.capture_route_into_map(&route_string).ok().map(|x| x.1) {
+                    return (Some(#ident), state);
+                } else {
+                    state
+                };
             }
         }
     }

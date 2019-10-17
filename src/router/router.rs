@@ -49,7 +49,7 @@ use yew::{
 ///         html! {
 ///             <Router<(), S, Msg>
 ///                callback = From::from
-///                render = Router::render(|switch: Option<&S>| {
+///                render = Router::render(|switch: Option<S>| {
 ///                    match switch {
 ///                        Some(S::Variant) => html!{"variant route was matched"},
 ///                        _ => unimplemented!()
@@ -87,7 +87,7 @@ where
     ///# pub enum Msg {}
     ///
     ///# fn dont_execute() {
-    /// let render = Router::render(|switch: Option<&S>| -> Html<Router<(), S, Msg>> {
+    /// let render = Router::render(|switch: Option<S>| -> Html<Router<(), S, Msg>> {
     ///    match switch {
     ///        Some(S::Variant) => html!{"Variant"},
     ///        None => html!{"404"}
@@ -202,7 +202,7 @@ impl<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> Renderable<
     for Router<T, SW, M>
 {
     fn view(&self) -> VNode<Self> {
-        let switch = SW::switch(self.route.clone());
+        let switch: Option<SW> = SW::switch(self.route.clone());
         (&self.props.render.0)(switch)
     }
 }
