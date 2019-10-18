@@ -150,7 +150,7 @@ mod test {
         let e = all_consuming(path_parser)("/path{}{match}").expect_err("Should not validate");
         assert_eq!(
             e,
-            Err::Error(VerboseError::from_error_kind("{match}", ErrorKind::Eof))
+            Err::Error(VerboseError::from_error_kind("{}{match}", ErrorKind::Eof))
         )
     }
 
@@ -169,7 +169,7 @@ mod test {
         let e = all_consuming(path_parser)("/path{}{}").expect_err("Should not validate");
         assert_eq!(
             e,
-            Err::Error(VerboseError::from_error_kind("{}", ErrorKind::Eof))
+            Err::Error(VerboseError::from_error_kind("{}{}", ErrorKind::Eof))
         )
     }
 
@@ -237,37 +237,7 @@ mod test {
         assert_eq!(tokens, expected);
     }
 
-    #[test]
-    fn option_section_between_capture_then_exact() {
-        let (_, tokens) = path_parser("/first[/{}]/third").expect("Should validate");
-        let expected = vec![
-            RouteParserToken::Separator,
-            RouteParserToken::Exact("first".to_string()),
-            RouteParserToken::Optional(vec![
-                RouteParserToken::Separator,
-                RouteParserToken::Capture(Capture::from(CaptureVariant::Unnamed)),
-            ]),
-            RouteParserToken::Separator,
-            RouteParserToken::Exact("third".to_string()),
-        ];
-        assert_eq!(tokens, expected);
-    }
 
-    #[test]
-    fn option_section_between_exact_then_capture() {
-        let (_, tokens) = path_parser("/first[/second]/{}").expect("Should validate");
-        let expected = vec![
-            RouteParserToken::Separator,
-            RouteParserToken::Exact("first".to_string()),
-            RouteParserToken::Optional(vec![
-                RouteParserToken::Separator,
-                RouteParserToken::Exact("second".to_string()),
-            ]),
-            RouteParserToken::Separator,
-            RouteParserToken::Capture(Capture::from(CaptureVariant::Unnamed)),
-        ];
-        assert_eq!(tokens, expected);
-    }
 
     #[test]
     fn option_section_between_captures_fails() {

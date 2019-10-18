@@ -27,8 +27,6 @@ pub struct RouteMatcher {
 /// Settings used for the matcher (and optimization of the parsed tokens that make up the matcher).
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct MatcherSettings {
-    /// Disallow insertion of Optional `/` at the end of paths.
-    pub strict: bool,
     /// A matcher must consume all of the input to succeed.
     pub complete: bool,
     /// All literal matches do not care about case.
@@ -38,7 +36,6 @@ pub struct MatcherSettings {
 impl Default for MatcherSettings {
     fn default() -> Self {
         MatcherSettings {
-            strict: false,
             complete: true,
             case_insensitive: false,
         }
@@ -56,7 +53,7 @@ impl RouteMatcher {
     pub fn new(i: &str, settings: MatcherSettings) -> Result<Self, YewRouterParseError> {
         let tokens = parser::parse(i)?;
         Ok(RouteMatcher {
-            tokens: optimize_tokens(tokens, !settings.strict),
+            tokens: optimize_tokens(tokens),
             settings,
         })
     }
@@ -93,20 +90,13 @@ impl RouteMatcher {
                 .iter()
                 .fold(HashSet::new(), |mut acc: HashSet<&str>, token| {
                     match token {
-                        MatcherToken::Optional(t) => {
-                            let captures = capture_names_impl(&t);
-                            acc.extend(captures)
-                        }
                         MatcherToken::Exact(_) => {}
-                        MatcherToken::Capture(capture) => match &capture.capture_variant {
+                        MatcherToken::Capture(capture) => match &capture {
                             CaptureVariant::ManyNamed(name)
                             | CaptureVariant::Named(name)
                             | CaptureVariant::NumberedNamed { name, .. } => {
                                 acc.insert(&name);
                             }
-                            CaptureVariant::ManyUnnamed
-                            | CaptureVariant::Unnamed
-                            | CaptureVariant::NumberedUnnamed { .. } => {}
                         },
                     }
                     acc
@@ -122,19 +112,11 @@ mod tests {
     use yew_router_route_parser::parser::RouteParserToken;
     use yew_router_route_parser::Capture;
 
-    //    use std::sync::{Once, ONCE_INIT};
-    //    static INIT: Once = ONCE_INIT;
-    //    fn setup_logs() {
-    //        INIT.call_once(|| {
-    //            env_logger::init();
-    //        });
-    //    }
-
     impl From<Vec<RouteParserToken>> for RouteMatcher {
         fn from(tokens: Vec<RouteParserToken>) -> Self {
             let settings = MatcherSettings::default();
             RouteMatcher {
-                tokens: optimize_tokens(tokens, !settings.strict),
+                tokens: optimize_tokens(tokens),
                 settings,
             }
         }
@@ -191,12 +173,12 @@ mod tests {
     }
 
     #[test]
-    fn match_with_trailing_match_any() {
+    fn match_with_trailing_match_many() {
         let tokens = vec![
             RouteParserToken::Separator,
             RouteParserToken::Exact("a".to_string()),
             RouteParserToken::Separator,
-            RouteParserToken::Capture(Capture::from(CaptureVariant::Unnamed)),
+            RouteParserToken::Capture(Capture::from(CaptureVariant::ManyNamed("lorem".to_string()))),
         ];
         let path_matcher = RouteMatcher::from(tokens);
         let (_, _matches) = path_matcher
@@ -205,11 +187,28 @@ mod tests {
     }
 
     #[test]
+    fn fail_match_with_trailing_match_single() {
+        let tokens = vec![
+            RouteParserToken::Separator,
+            RouteParserToken::Exact("a".to_string()),
+            RouteParserToken::Separator,
+            RouteParserToken::Capture(Capture::from(CaptureVariant::Named("lorem".to_string()))),
+        ];
+        let path_matcher = RouteMatcher::from(tokens);
+        path_matcher
+            .capture_route_into_map("/a/")
+            .expect_err("should not parse");
+    }
+
+
+    // TODO fix this test
+    #[test]
     fn match_n() {
         let tokens = vec![
             RouteParserToken::Separator,
-            RouteParserToken::Capture(Capture::from(CaptureVariant::NumberedUnnamed {
+            RouteParserToken::Capture(Capture::from(CaptureVariant::NumberedNamed {
                 sections: 3,
+                name: "lorem".to_string(),
             })),
             RouteParserToken::Separator,
             RouteParserToken::Exact("a".to_string()),
@@ -224,8 +223,9 @@ mod tests {
     fn match_n_no_overrun() {
         let tokens = vec![
             RouteParserToken::Separator,
-            RouteParserToken::Capture(Capture::from(CaptureVariant::NumberedUnnamed {
+            RouteParserToken::Capture(Capture::from(CaptureVariant::NumberedNamed {
                 sections: 3,
+                name: "lorem".to_string(),
             })),
         ];
         let path_matcher = RouteMatcher::from(tokens);
@@ -260,7 +260,7 @@ mod tests {
     fn match_many() {
         let tokens = vec![
             RouteParserToken::Separator,
-            RouteParserToken::Capture(Capture::from(CaptureVariant::ManyUnnamed)),
+            RouteParserToken::Capture(Capture::from(CaptureVariant::ManyNamed("lorem".to_string()))),
             RouteParserToken::Separator,
             RouteParserToken::Exact("a".to_string()),
         ];

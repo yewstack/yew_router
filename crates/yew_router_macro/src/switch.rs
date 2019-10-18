@@ -91,7 +91,6 @@ impl<T> Flatten<T> for Option<Option<T>> {
 fn build_matcher_from_tokens(tokens: &[ShadowMatcherToken]) -> TokenStream2 {
     quote! {
         let settings = ::yew_router::matcher::MatcherSettings {
-            strict: true, // Don't add optional sections
             complete: false, // Allow incomplete matches. // TODO investigate if this is necessary here.
             case_insensitive: true,
         };
@@ -119,16 +118,7 @@ fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> Toke
         }
         ShadowMatcherToken::Capture(capture) => {
             match naming_scheme {
-                FieldType::Named | FieldType::Unit => match &capture.capture_variant {
-                    ShadowCaptureVariant::Unnamed => {
-                        panic!("Unnamed sections not supported for writing")
-                    }
-                    ShadowCaptureVariant::ManyUnnamed => {
-                        panic!("ManyUnnamed sections not supported for writing")
-                    }
-                    ShadowCaptureVariant::NumberedUnnamed { .. } => {
-                        panic!("NumberedUnnamed sections not supported for writing")
-                    }
+                FieldType::Named | FieldType::Unit => match &capture {
                     ShadowCaptureVariant::Named(name)
                     | ShadowCaptureVariant::ManyNamed(name)
                     | ShadowCaptureVariant::NumberedNamed { name, .. } => {
@@ -139,16 +129,7 @@ fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> Toke
                     }
                 },
                 FieldType::Unnamed { index } => {
-                    match &capture.capture_variant {
-                        ShadowCaptureVariant::Unnamed => {
-                            panic!("Unnamed sections not supported for writing")
-                        }
-                        ShadowCaptureVariant::ManyUnnamed => {
-                            panic!("ManyUnnamed sections not supported for writing")
-                        }
-                        ShadowCaptureVariant::NumberedUnnamed { .. } => {
-                            panic!("NumberedUnnamed sections not supported for writing")
-                        }
+                    match &capture {
                         ShadowCaptureVariant::Named(_)
                         | ShadowCaptureVariant::ManyNamed(_)
                         | ShadowCaptureVariant::NumberedNamed { .. } => {
@@ -162,7 +143,6 @@ fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> Toke
                 }
             }
         }
-        ShadowMatcherToken::Optional(_) => panic!("Writing optional sections is not supported."),
     }
 }
 
@@ -237,7 +217,6 @@ pub fn build_serializer_for_enum(
         return state;
     }
 }
-
 
 pub fn build_serializer_for_struct(switch_item: &SwitchItem, item: &Ident) -> TokenStream2 {
     let SwitchItem {

@@ -15,7 +15,7 @@ pub mod parser;
 mod token_optimizer;
 
 pub use parser::{Capture, CaptureVariant};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 pub use token_optimizer::{
     next_delimiters, optimize_tokens, parse_str_and_optimize_tokens, MatcherToken,
 };

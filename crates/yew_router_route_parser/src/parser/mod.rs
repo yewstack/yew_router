@@ -53,15 +53,6 @@ pub enum RouteParserToken {
 /// It can capture and discard for unnamed variants, or capture and store in the `Matches` for the named variants.
 #[derive(Debug, Clone, PartialEq)]
 pub enum CaptureVariant {
-    /// {} - matches anything.
-    Unnamed,
-    /// {*} - matches over multiple sections.
-    ManyUnnamed,
-    /// {4} - matches 4 sections.
-    NumberedUnnamed {
-        /// Number of sections to match.
-        sections: usize,
-    },
     /// {name} - captures a section and adds it to the map with a given name.
     Named(String),
     /// {*:name} - captures over many sections and adds it to the map with a given name.
@@ -197,7 +188,7 @@ mod tests {
 
     #[test]
     fn parse_can_handle_multiple_matches_per_section() {
-        let parsed = parse("/lorem/{ipsum}dolor{}").expect("should parse");
+        let parsed = parse("/lorem/{ipsum}dolor{sit}").expect("should parse");
         assert_eq!(
             parsed,
             vec![
@@ -208,7 +199,7 @@ mod tests {
                     "ipsum".to_string()
                 ))),
                 RouteParserToken::Exact("dolor".to_string()),
-                RouteParserToken::Capture(Capture::from(CaptureVariant::Unnamed))
+                RouteParserToken::Capture(Capture::from(CaptureVariant::Named("sit".to_string())))
             ]
         )
     }
@@ -238,7 +229,7 @@ mod tests {
 
     #[test]
     fn can_match_in_first_section_1() {
-        parse("{*}").expect("Should validate");
+        parse("{*:lorem}").expect("Should validate");
     }
 
     #[test]

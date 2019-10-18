@@ -1,4 +1,4 @@
-use crate::switch::shadow::{ShadowCapture, ShadowCaptureVariant, ShadowMatcherToken};
+use crate::switch::shadow::{ShadowCaptureVariant, ShadowMatcherToken};
 use syn::{Attribute, Lit, Meta, MetaNameValue};
 
 pub enum AttrToken {
@@ -83,7 +83,7 @@ impl AttrToken {
         match self {
             AttrToken::To(matcher_string) => {
                 yew_router_route_parser::parser::parse(&matcher_string)
-                    .map(|tokens| yew_router_route_parser::optimize_tokens(tokens, false))
+                    .map(|tokens| yew_router_route_parser::optimize_tokens(tokens))
                     .expect("Invalid Matcher") // This is the point where users should see an error message if their matcher string has some syntax error.
                     .into_iter()
                     .map(crate::switch::shadow::ShadowMatcherToken::from)
@@ -92,64 +92,42 @@ impl AttrToken {
             AttrToken::Lit(lit) => vec![ShadowMatcherToken::Exact(format!("/{}", lit))],
             AttrToken::Capture(Some(capture_name)) => vec![
                 ShadowMatcherToken::Exact("/".to_string()),
-                ShadowMatcherToken::Capture(ShadowCapture {
-                    capture_variant: ShadowCaptureVariant::Named(capture_name),
-                    allowed_captures: None,
-                }),
+                ShadowMatcherToken::Capture(ShadowCaptureVariant::Named(capture_name)),
             ],
             AttrToken::Capture(None) => vec![
                 ShadowMatcherToken::Exact("/".to_string()),
-                ShadowMatcherToken::Capture(ShadowCapture {
-                    capture_variant: ShadowCaptureVariant::Named(id.to_string()),
-                    allowed_captures: None,
-                }),
+                ShadowMatcherToken::Capture(ShadowCaptureVariant::Named(id.to_string())),
             ],
             AttrToken::End => unimplemented!(
                 "No matcher token currently exists for expressing the termination of a route"
             ),
-            AttrToken::Rest(Some(capture_name)) => {
-                vec![ShadowMatcherToken::Capture(ShadowCapture {
-                    capture_variant: ShadowCaptureVariant::ManyNamed(capture_name),
-                    allowed_captures: None,
-                })]
-            }
-            AttrToken::Rest(None) => vec![ShadowMatcherToken::Capture(ShadowCapture {
-                capture_variant: ShadowCaptureVariant::ManyNamed(id.to_string()),
-                allowed_captures: None,
-            })],
+            AttrToken::Rest(Some(capture_name)) => vec![ShadowMatcherToken::Capture(
+                ShadowCaptureVariant::ManyNamed(capture_name),
+            )],
+            AttrToken::Rest(None) => vec![ShadowMatcherToken::Capture(
+                ShadowCaptureVariant::ManyNamed(id.to_string()),
+            )],
             AttrToken::Query(capture_name) => {
                 if *encountered_query {
                     vec![
                         ShadowMatcherToken::Exact(format!("&{}=", capture_name)),
-                        ShadowMatcherToken::Capture(ShadowCapture {
-                            capture_variant: ShadowCaptureVariant::Named(capture_name),
-                            allowed_captures: None,
-                        }),
+                        ShadowMatcherToken::Capture(ShadowCaptureVariant::Named(capture_name)),
                     ]
                 } else {
                     *encountered_query = true;
                     vec![
                         ShadowMatcherToken::Exact(format!("?{}=", capture_name)),
-                        ShadowMatcherToken::Capture(ShadowCapture {
-                            capture_variant: ShadowCaptureVariant::Named(capture_name),
-                            allowed_captures: None,
-                        }),
+                        ShadowMatcherToken::Capture(ShadowCaptureVariant::Named(capture_name)),
                     ]
                 }
             }
             AttrToken::Frag(Some(capture_name)) => vec![
                 ShadowMatcherToken::Exact("#".to_string()),
-                ShadowMatcherToken::Capture(ShadowCapture {
-                    capture_variant: ShadowCaptureVariant::Named(capture_name),
-                    allowed_captures: None,
-                }),
+                ShadowMatcherToken::Capture(ShadowCaptureVariant::Named(capture_name)),
             ],
             AttrToken::Frag(None) => vec![
                 ShadowMatcherToken::Exact("#".to_string()),
-                ShadowMatcherToken::Capture(ShadowCapture {
-                    capture_variant: ShadowCaptureVariant::Named(id.to_string()),
-                    allowed_captures: None,
-                }),
+                ShadowMatcherToken::Capture(ShadowCaptureVariant::Named(id.to_string())),
             ],
         }
     }

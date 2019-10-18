@@ -61,7 +61,6 @@ pub fn build_route_from_switch<T: Switch, U>(switch: T) -> Route<U> {
     Route { route: buf, state }
 }
 
-
 /// Wrapper that requires that an implementor of Switch must start with a `/`.
 ///
 /// This is needed for any non-derived type provided by yew-router to be used by itself.
@@ -70,12 +69,12 @@ pub fn build_route_from_switch<T: Switch, U>(switch: T) -> Route<U> {
 /// with the `rest` attribute, without a specified leading `/`, this wrapper is needed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct LeadingSlash<T>(pub T);
-impl <U: Switch> Switch for LeadingSlash<U> {
+impl<U: Switch> Switch for LeadingSlash<U> {
     fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>) {
         if part.route.starts_with('/') {
             let route = Route {
                 route: part.route[1..].to_string(),
-                state: part.state
+                state: part.state,
             };
             let (inner, state) = U::from_route_part(route);
             (inner.map(LeadingSlash), state)
