@@ -12,6 +12,9 @@ impl ToTokens for ShadowMatcherToken {
             SOT::Capture(variant) => quote! {
                 ::yew_router::matcher::MatcherToken::Capture(#variant)
             },
+            SOT::End => quote! {
+                ::yew_router::matcher::MatcherToken::End
+            }
         };
         ts.extend(t)
     }
@@ -22,6 +25,7 @@ impl ToTokens for ShadowMatcherToken {
 pub enum ShadowMatcherToken {
     Exact(String),
     Capture(ShadowCaptureVariant),
+    End
 }
 
 pub enum ShadowCaptureVariant {
@@ -51,12 +55,13 @@ impl ToTokens for ShadowCaptureVariant {
 }
 
 impl From<MatcherToken> for ShadowMatcherToken {
-    fn from(ot: MatcherToken) -> Self {
+    fn from(mt: MatcherToken) -> Self {
         use MatcherToken as MT;
         use ShadowMatcherToken as SOT;
-        match ot {
+        match mt {
             MT::Exact(s) => SOT::Exact(s),
             MT::Capture(capture) => SOT::Capture(capture.into()),
+            MT::End => SOT::End
         }
     }
 }

@@ -32,6 +32,8 @@ pub enum MatcherToken {
     Exact(String),
     /// Capture section.
     Capture(CaptureVariant),
+    /// End token - if the string hasn't been consumed entirely, then the next token will cause an error
+    End
 }
 
 /// Variants that indicate how part of a string should be captured.

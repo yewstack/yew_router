@@ -144,12 +144,12 @@ mod tests {
         assert_eq!(parsed, ("abc", "first_stuff_".to_string()))
     }
 
-    #[test]
-    fn simple_skip_until() {
-        let parsed =
-            skip_until::<_, _, (), _>(tag("done"))("useless_stuff_done").expect("should parse");
-        assert_eq!(parsed, ("", "done"))
-    }
+//    #[test]
+//    fn simple_skip_until() {
+//        let parsed =
+//            skip_until::<_, _, (), _>(tag("done"))("useless_stuff_done").expect("should parse");
+//        assert_eq!(parsed, ("", "done"))
+//    }
 
     #[test]
     fn case_sensitive() {

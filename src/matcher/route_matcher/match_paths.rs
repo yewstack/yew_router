@@ -99,6 +99,13 @@ fn match_path_impl<'a, 'b: 'a, CAP: CaptureCollection<'b>>(
                     &None,
                 )?,
             },
+            MatcherToken::End => {
+                if !i.is_empty() {
+                    return Err(nom::Err::Failure((i, ErrorKind::Eof))) // TODO, this is approximately correct
+                } else {
+                   i
+                }
+            }
         };
     }
     debug!("Path Matched");
@@ -410,5 +417,13 @@ mod integration_test {
             ..Default::default()
         };
         match_path_impl::<Captures>(&x, settings, "/HeLLo").expect("should match");
+    }
+
+    #[test]
+    fn end_token() {
+        let x =
+            yew_router_route_parser::parse_str_and_optimize_tokens("/lorem!").expect("Should parse");
+
+        match_path_impl::<Captures>(&x, Default::default(), "/lorem/ipsum").expect_err("should not match");
     }
 }
