@@ -1,11 +1,16 @@
 //! Bridge to RouteAgent.
-use crate::agent::{AgentState, RouteAgent};
-use crate::route::Route;
-use std::fmt::{Debug, Error as FmtError, Formatter};
-use std::ops::{Deref, DerefMut};
-use yew::agent::Bridged;
-use yew::agent::Context;
-use yew::{Bridge, Callback};
+use crate::{
+    agent::{AgentState, RouteAgent},
+    route::Route,
+};
+use std::{
+    fmt::{Debug, Error as FmtError, Formatter},
+    ops::{Deref, DerefMut},
+};
+use yew::{
+    agent::{Bridged, Context},
+    Bridge, Callback,
+};
 
 /// A simplified interface to the router agent.
 pub struct RouteAgentBridge<T>(Box<dyn Bridge<RouteAgent<T>>>)
@@ -33,7 +38,8 @@ where
 }
 
 /// A wrapper around the bridge
-//pub (crate) struct RouteAgentBridge<T: for<'de> YewRouterState<'de>>(pub Box<dyn Bridge<RouteAgent<T>>>);
+// pub (crate) struct RouteAgentBridge<T: for<'de> YewRouterState<'de>>(pub Box<dyn
+// Bridge<RouteAgent<T>>>);
 
 impl<T: for<'de> AgentState<'de>> Debug for RouteAgentBridge<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {

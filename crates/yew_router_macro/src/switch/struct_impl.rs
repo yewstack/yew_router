@@ -1,8 +1,10 @@
 use crate::switch::SwitchItem;
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use syn::export::{TokenStream, TokenStream2};
-use syn::{Field, Fields, Type};
+use syn::{
+    export::{TokenStream, TokenStream2},
+    Field, Fields, Type,
+};
 
 pub fn generate_struct_impl(item: SwitchItem) -> TokenStream {
     let SwitchItem {

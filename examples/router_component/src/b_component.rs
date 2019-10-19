@@ -1,9 +1,6 @@
-use std::str::FromStr;
-use std::usize;
-use yew::prelude::*;
-use yew::Properties;
-use yew_router::agent::RouteRequest;
-use yew_router::prelude::*;
+use std::{str::FromStr, usize};
+use yew::{prelude::*, Properties};
+use yew_router::{agent::RouteRequest, prelude::*};
 
 pub struct BModel {
     props: Props,
@@ -16,6 +13,41 @@ pub struct Props {
     pub number: Option<usize>,
     #[props(required)]
     pub sub_path: Option<String>,
+}
+
+#[derive(Debug, Switch)]
+pub enum BRoute {
+    #[to = "/{num}?sup_path={sub_path}"]
+    Both(usize, String),
+    #[to = "/{num}"]
+    NumOnly(usize),
+    #[to = "?sub_path={sub_path}"]
+    SubPathOnly(String),
+    #[to = "/"]
+    None,
+}
+
+impl Into<Props> for BRoute {
+    fn into(self) -> Props {
+        match self {
+            BRoute::None => Props {
+                number: None,
+                sub_path: None,
+            },
+            BRoute::NumOnly(number) => Props {
+                number: Some(number),
+                sub_path: None,
+            },
+            BRoute::Both(number, sub_path) => Props {
+                number: Some(number),
+                sub_path: Some(sub_path),
+            },
+            BRoute::SubPathOnly(sub_path) => Props {
+                number: None,
+                sub_path: Some(sub_path),
+            },
+        }
+    }
 }
 
 pub enum Msg {
@@ -118,25 +150,6 @@ impl Renderable<BModel> for BModel {
     }
 }
 
-impl FromCaptures for Props {
-    fn from_captures(captures: &Captures) -> Result<Self, FromCapturesError> {
-        let number = captures
-            .get("number")
-            .map(|n: &String| {
-                usize::from_str(&n).map_err(|_| FromCapturesError::FailedParse {
-                    field_name: "number".to_string(),
-                    source_string: n.to_string(),
-                })
-            })
-            .transpose()?;
-
-        let props = Props {
-            number,
-            sub_path: captures.get("sub_path").cloned(),
-        };
-        Ok(props)
-    }
-}
 
 impl BModel {
     fn display_number(&self) -> String {
@@ -146,6 +159,7 @@ impl BModel {
             "Number: None".to_string()
         }
     }
+
     fn display_subpath_input(&self) -> Html<BModel> {
         let sub_path = self.props.sub_path.clone();
         html! {

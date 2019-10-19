@@ -1,9 +1,13 @@
 use crate::markdown::render_markdown;
-use yew::format::{Nothing, Text};
-use yew::prelude::*;
-use yew::services::fetch::{FetchTask, Request, Response};
-use yew::services::FetchService;
-use yew::virtual_dom::VNode;
+use yew::{
+    format::{Nothing, Text},
+    prelude::*,
+    services::{
+        fetch::{FetchTask, Request, Response},
+        FetchService,
+    },
+    virtual_dom::VNode,
+};
 
 pub struct MarkdownWindow {
     fetch_service: FetchService,

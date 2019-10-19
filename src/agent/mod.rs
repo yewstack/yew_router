@@ -8,12 +8,10 @@ use yew::prelude::worker::*;
 
 use std::collections::HashSet;
 
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Error as FmtError, Formatter};
 
-use crate::route::Route;
-use crate::route::RouteState;
+use crate::route::{Route, RouteState};
 use log::trace;
 
 mod bridge;
@@ -41,18 +39,22 @@ pub enum Msg<T> {
 /// Input message type for interacting with the `RouteAgent'.
 #[derive(Serialize, Deserialize, Debug)]
 pub enum RouteRequest<T> {
-    /// Replaces the most recent Route with a new one and alerts connected components to the route change.
+    /// Replaces the most recent Route with a new one and alerts connected components to the route
+    /// change.
     ReplaceRoute(Route<T>),
-    /// Replaces the most recent Route with a new one, but does not alert connected components to the route change.
+    /// Replaces the most recent Route with a new one, but does not alert connected components to
+    /// the route change.
     ReplaceRouteNoBroadcast(Route<T>),
     /// Changes the route using a Route struct and alerts connected components to the route change.
     ChangeRoute(Route<T>),
-    /// Changes the route using a Route struct, but does not alert connected components to the route change.
+    /// Changes the route using a Route struct, but does not alert connected components to the
+    /// route change.
     ChangeRouteNoBroadcast(Route<T>),
     /// Gets the current route.
     GetCurrentRoute,
     /// Removes the entity from the Router Agent
-    // TODO this is a temporary message because yew currently doesn't call the destructor, so it must be manually engaged
+    // TODO this is a temporary message because yew currently doesn't call the destructor, so it
+    // must be manually engaged
     Disconnect,
 }
 
@@ -60,19 +62,20 @@ impl<T> Transferable for RouteRequest<T> where for<'de> T: Serialize + Deseriali
 
 /// The RouteAgent holds on to the RouteService singleton and mediates access to it.
 ///
-/// It serves as a means to propagate messages to components interested in the state of the current route.
+/// It serves as a means to propagate messages to components interested in the state of the current
+/// route.
 ///
 /// # Warning
 /// All routing-related components should use the same type parameter across your application.
 ///
 /// If you don't, then multiple RouteAgents will be spawned, and will not communicate messages to
 /// routing components of different types.
-///
 pub struct RouteAgent<T>
 where
     for<'de> T: AgentState<'de>,
 {
-    // In order to have the AgentLink<Self> below, apparently T must be constrained like this. Unfortunately, this means that everything related to an agent requires this constraint.
+    // In order to have the AgentLink<Self> below, apparently T must be constrained like this.
+    // Unfortunately, this means that everything related to an agent requires this constraint.
     link: AgentLink<RouteAgent<T>>,
     route_service: RouteService<T>,
     /// A list of all entities connected to the router.
@@ -95,10 +98,10 @@ impl<T> Agent for RouteAgent<T>
 where
     for<'de> T: AgentState<'de>,
 {
-    type Reach = Context;
-    type Message = Msg<T>;
     type Input = RouteRequest<T>;
+    type Message = Msg<T>;
     type Output = Route<T>;
+    type Reach = Context;
 
     fn create(link: AgentLink<RouteAgent<T>>) -> Self {
         let callback = link.send_back(Msg::BrowserNavigationRouteChanged);
@@ -171,6 +174,7 @@ where
             }
         }
     }
+
     fn disconnected(&mut self, id: HandlerId) {
         self.subscribers.remove(&id);
     }

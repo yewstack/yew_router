@@ -1,12 +1,9 @@
 //! Wrapper around route url string, and associated history state.
 use crate::service::RouteService;
-use serde::Deserialize;
-use serde::Serialize;
-use stdweb::unstable::TryFrom;
-use stdweb::JsSerialize;
-use stdweb::Value;
+use serde::{Deserialize, Serialize};
+use stdweb::{unstable::TryFrom, JsSerialize, Value};
 
-//use std::ops::Deref;
+// use std::ops::Deref;
 use std::ops::Deref;
 use yew::agent::Transferable;
 
@@ -42,10 +39,12 @@ impl<T> Route<T> {
     /// # Note
     /// It does not get the current state.
     /// That is only provided via events.
-    /// See [RouteService.register_callback](struct.RouteService.html#method.register_callback) to acquire state.
+    /// See [RouteService.register_callback](struct.RouteService.html#method.register_callback) to
+    /// acquire state.
     pub fn current_route(route_service: &RouteService<T>) -> Self {
         let route = route_service.get_route();
-        // TODO, should try to get the state using the history api once that is exposed through stdweb.
+        // TODO, should try to get the state using the history api once that is exposed through
+        // stdweb.
         Route { route, state: None }
     }
 

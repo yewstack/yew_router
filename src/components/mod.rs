@@ -5,8 +5,7 @@ mod router_link;
 
 use yew::Properties;
 
-pub use self::router_button::RouterButton;
-pub use self::router_link::RouterLink;
+pub use self::{router_button::RouterButton, router_link::RouterLink};
 use crate::RouterState;
 
 /// Properties for `RouterButton` and `RouterLink`.

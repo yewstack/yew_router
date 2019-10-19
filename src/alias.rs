@@ -1,5 +1,5 @@
-/// Generates a module named `router_state` containing aliases to common structures within yew_router
-/// that deal with operating with Route and its state values as well as functions for
+/// Generates a module named `router_state` containing aliases to common structures within
+/// yew_router that deal with operating with Route and its state values as well as functions for
 /// rendering routes.
 ///
 /// Because they should be the same across a given application,
@@ -10,10 +10,10 @@
 ///
 /// # Example
 /// ```
-///# #[macro_use] extern crate yew_router;
+/// # #[macro_use] extern crate yew_router;
 /// define_router_state!(Option<String>);
 /// use router_state::Route; // alias to Route<Option<String>>
-///# fn main() {}
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! define_router_state {

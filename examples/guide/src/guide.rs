@@ -1,11 +1,9 @@
-use crate::markdown_window::MarkdownWindow;
-use crate::page::{Page, PageProps};
-use yew::html::ChildrenWithProps;
-use yew::prelude::*;
-use yew::Properties;
-use yew_router::agent::RouteRequest::GetCurrentRoute;
-use yew_router::matcher::RouteMatcher;
-use yew_router::prelude::*;
+use crate::{
+    markdown_window::MarkdownWindow,
+    page::{Page, PageProps},
+};
+use yew::{html::ChildrenWithProps, prelude::*, Properties};
+use yew_router::{agent::RouteRequest::GetCurrentRoute, matcher::RouteMatcher, prelude::*};
 
 pub struct Guide {
     router_agent: Box<dyn Bridge<RouteAgent>>,

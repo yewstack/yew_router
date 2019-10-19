@@ -227,7 +227,7 @@ fn find_bad_capture_character_offset(offset: usize, substring: &str) -> usize {
 
 /// Returns true if the query starts twice (denoted by a ?)
 fn multiple_query_beginnings(input: &str, substring: &str) -> bool {
-    use crate::parser::query::begin_query_parser;
+    use crate::parser_old::query::begin_query_parser;
 
     // Count the number of occurrences of the begin_query_parser appear.
     // If it is greater than 1, then the matcher string is misconstrued.
@@ -386,7 +386,7 @@ mod test_conditions {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::parser::parse;
+    use crate::parser_old::parse;
 
     #[test]
     fn double_slash_error() {

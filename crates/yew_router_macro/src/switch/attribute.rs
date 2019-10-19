@@ -74,7 +74,8 @@ impl AttrToken {
             .collect()
     }
 
-    /// The id is an unique identifier that allows otherwise unnamed captures to still be captured with unique names.
+    /// The id is an unique identifier that allows otherwise unnamed captures to still be captured
+    /// with unique names.
     pub fn into_shadow_matcher_tokens(
         self,
         id: usize,
@@ -82,8 +83,7 @@ impl AttrToken {
     ) -> Vec<ShadowMatcherToken> {
         match self {
             AttrToken::To(matcher_string) => {
-                yew_router_route_parser::parser::parse(&matcher_string)
-                    .map(|tokens| yew_router_route_parser::optimize_tokens(tokens))
+                yew_router_route_parser::parse_str_and_optimize_tokens(&matcher_string)
                     .expect("Invalid Matcher") // This is the point where users should see an error message if their matcher string has some syntax error.
                     .into_iter()
                     .map(crate::switch::shadow::ShadowMatcherToken::from)

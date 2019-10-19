@@ -27,7 +27,7 @@ pub enum ForumRoute {
 
 html! {
     <Router<AppRoute, ()>
-        render = Router::render(|switch: Option<&AppRoute>| {
+        render = Router::render(|switch: Option<AppRoute>| {
             match switch {
                 Some(AppRoute::Profile(id)) => html!{<ProfileComponent id = id/>},
                 Some(AppRoute::Index) => html!{<IndexComponent/>},

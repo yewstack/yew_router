@@ -1,12 +1,9 @@
 //! Service to handle routing.
 
-use stdweb::web::event::PopStateEvent;
-use stdweb::web::window;
-use stdweb::web::EventListenerHandle;
-use stdweb::web::History;
-use stdweb::web::IEventTarget;
-use stdweb::web::Location;
-use stdweb::Value;
+use stdweb::{
+    web::{event::PopStateEvent, window, EventListenerHandle, History, IEventTarget, Location},
+    Value,
+};
 use yew::callback::Callback;
 
 use crate::route::RouteState;
@@ -20,7 +17,9 @@ use std::marker::PhantomData;
 pub struct RouteService<T> {
     history: History,
     location: Location,
-    event_listener: Option<EventListenerHandle>, // maybe this should not be stored in the service itself, and instead returned by register_callback()
+    event_listener: Option<EventListenerHandle>, /* maybe this should not be stored in the
+                                                  * service itself, and instead returned by
+                                                  * register_callback() */
     phantom_data: PhantomData<T>,
 }
 
@@ -88,7 +87,8 @@ where
             let state_value: Value = event.state();
             let state: T = T::try_from(state_value).unwrap_or_default();
 
-            // Can't use the existing location, because this is a callback, and can't move it in here.
+            // Can't use the existing location, because this is a callback, and can't move it in
+            // here.
             let location: Location = window().location().unwrap();
             let route: String = Self::get_route_from_location(&location);
 

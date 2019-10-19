@@ -1,7 +1,5 @@
-use crate::c_component::CModel;
-use crate::ARoute;
-use yew::prelude::*;
-use yew::Properties;
+use crate::{c_component::CModel, ARoute};
+use yew::{prelude::*, Properties};
 use yew_router::prelude::*;
 
 pub struct AModel {
@@ -53,7 +51,7 @@ impl Renderable<AModel> for AModel {
                 {
                     match self.props.route {
                         ARoute::C => html!{<CModel/>},
-                        ARoute::None => html!{}
+                        ARoute::None(_) => html!{}
                     }
                 }
                 </div>

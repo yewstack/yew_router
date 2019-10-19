@@ -2,8 +2,7 @@ use crate::switch::{build_serializer_for_enum, SwitchItem};
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use syn::export::TokenStream2;
-use syn::{Field, Fields, Ident, Type};
+use syn::{export::TokenStream2, Field, Fields, Ident, Type};
 
 pub fn generate_enum_impl(enum_ident: Ident, switch_variants: Vec<SwitchItem>) -> TokenStream {
     let variant_matchers = switch_variants.iter().map(|sv| {

@@ -43,8 +43,7 @@ fn main() {
     OtherSingle(23).build_route_section::<()>(&mut buf);
     println!("{}", buf);
 }
-use yew_router::route::Route;
-use yew_router::Switch;
+use yew_router::{route::Route, Switch};
 
 #[derive(Debug, Switch)]
 pub enum AppRoute {

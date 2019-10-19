@@ -1,15 +1,16 @@
 use proc_macro::TokenStream;
-//use proc_macro2::TokenStream as TokenStream2;
-//use quote::quote;
+// use proc_macro2::TokenStream as TokenStream2;
+// use quote::quote;
 use syn::{parse_macro_input, Fields};
-//use syn::punctuated::IntoIter;
-use crate::switch::enum_impl::generate_enum_impl;
-use crate::switch::shadow::{ShadowCaptureVariant, ShadowMatcherToken};
-use crate::switch::struct_impl::generate_struct_impl;
+// use syn::punctuated::IntoIter;
+use crate::switch::{
+    enum_impl::generate_enum_impl,
+    shadow::{ShadowCaptureVariant, ShadowMatcherToken},
+    struct_impl::generate_struct_impl,
+};
 use proc_macro2::Span;
 use quote::quote;
-use syn::export::TokenStream2;
-use syn::{Data, DeriveInput, Ident, Variant};
+use syn::{export::TokenStream2, Data, DeriveInput, Ident, Variant};
 
 mod attribute;
 mod enum_impl;
@@ -74,8 +75,9 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
 }
 
 trait Flatten<T> {
-    /// Because flatten is a nightly feature. I'm making a new variant of the function here for stable use.
-    /// The naming is changed to avoid this getting clobbered when object_flattening 60258 is stabilized.
+    /// Because flatten is a nightly feature. I'm making a new variant of the function here for
+    /// stable use. The naming is changed to avoid this getting clobbered when object_flattening
+    /// 60258 is stabilized.
     fn flatten_stable(self) -> Option<T>;
 }
 
@@ -134,7 +136,8 @@ fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> Toke
                         | ShadowCaptureVariant::ManyNamed(_)
                         | ShadowCaptureVariant::NumberedNamed { .. } => {
                             let name = unnamed_field_index_item(index);
-                            // TODO this either needs to find type info from a ty passed in, or RouteInfo needs to be nixed.
+                            // TODO this either needs to find type info from a ty passed in, or
+                            // RouteInfo needs to be nixed.
                             quote! {
                                 state = state.or(#name.build_route_section(&mut buf)); // TODO, this needs type information in order not to clobber the namespace. I don't want to have to import RouteInfo.
                             }

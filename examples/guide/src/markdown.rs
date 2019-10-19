@@ -1,8 +1,11 @@
 /// Original author of this code is [Nathan Ringo](https://github.com/remexre)
 /// Source: https://github.com/acmumn/mentoring/blob/master/web-client/src/view/markdown.rs
 use pulldown_cmark::{Alignment, Event, Options, Parser, Tag};
-use yew::virtual_dom::{VNode, VTag, VText};
-use yew::{html, Component, Html};
+use yew::{
+    html,
+    virtual_dom::{VNode, VTag, VText},
+    Component, Html,
+};
 
 /// Renders a string of Markdown to HTML with the default options (footnotes
 /// disabled, tables enabled).
@@ -108,9 +111,9 @@ where
         Tag::CodeBlock(lang) => {
             let mut el = VTag::new("code");
             // Different color schemes may be used for different code blocks,
-            // but a different library (likely js based at the moment) would be necessary to actually provide the
-            // highlighting support by locating the language classes and applying dom transforms
-            // on their contents.
+            // but a different library (likely js based at the moment) would be necessary to
+            // actually provide the highlighting support by locating the language
+            // classes and applying dom transforms on their contents.
             match lang.as_ref() {
                 "html" => el.add_class("html-language"),
                 "rust" => el.add_class("rust-language"),
@@ -162,8 +165,10 @@ where
             }
             el
         }
-        Tag::FootnoteDefinition(ref _footnote_id) => VTag::new("span"), // Footnotes are not rendered as anything special
-        Tag::HtmlBlock => VTag::new("yeet"),                            // TODO, what happens here??
+        Tag::FootnoteDefinition(ref _footnote_id) => VTag::new("span"), // Footnotes are not
+        // rendered as anything
+        // special
+        Tag::HtmlBlock => VTag::new("yeet"), // TODO, what happens here??
         Tag::Strikethrough => VTag::new("strike"),
     }
 }

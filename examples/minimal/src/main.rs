@@ -1,9 +1,7 @@
 #![recursion_limit = "256"]
 use yew::prelude::*;
 
-use yew_router::route::Route;
-use yew_router::service::RouteService;
-use yew_router::Switch;
+use yew_router::{route::Route, service::RouteService, Switch};
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
