@@ -98,9 +98,7 @@ impl AttrToken {
                 ShadowMatcherToken::Exact("/".to_string()),
                 ShadowMatcherToken::Capture(ShadowCaptureVariant::Named(id.to_string())),
             ],
-            AttrToken::End => unimplemented!(
-                "No matcher token currently exists for expressing the termination of a route"
-            ),
+            AttrToken::End => vec![ShadowMatcherToken::End],
             AttrToken::Rest(Some(capture_name)) => vec![ShadowMatcherToken::Capture(
                 ShadowCaptureVariant::ManyNamed(capture_name),
             )],

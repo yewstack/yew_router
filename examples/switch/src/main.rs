@@ -81,3 +81,9 @@ pub struct Single {
 #[derive(Switch, Debug)]
 #[to = "/othersingle/{number}"]
 pub struct OtherSingle(u32);
+
+//#[derive(Switch, Debug)]
+// pub enum Bad {
+//    #[to = "/bad_route/??"]
+//    X
+//}

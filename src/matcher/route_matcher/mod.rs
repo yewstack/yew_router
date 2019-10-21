@@ -11,7 +11,7 @@ use super::Captures;
 // use crate::matcher::YewRouterParseError; // TODO, implement proper error reporting again.
 use nom::{combinator::all_consuming, IResult};
 use std::collections::HashSet;
-use yew_router_route_parser::{parse_str_and_optimize_tokens, ParserError};
+use yew_router_route_parser::{parse_str_and_optimize_tokens, PrettyParseError};
 
 /// Attempts to match routes, transform the route to Component props and render that Component.
 ///
@@ -44,14 +44,13 @@ impl Default for MatcherSettings {
 
 impl RouteMatcher {
     /// Attempt to create a RouteMatcher from a "matcher string".
-    pub fn try_from(i: &str) -> Result<Self, (&str, ParserError)> {
+    pub fn try_from(i: &str) -> Result<Self, PrettyParseError> {
         let settings = MatcherSettings::default();
         Self::new(i, settings)
     }
 
     /// Creates a new Matcher with settings.
-    pub fn new(i: &str, settings: MatcherSettings) -> Result<Self, (&str, ParserError)> {
-        //        let tokens = parser::parse(i)?;
+    pub fn new(i: &str, settings: MatcherSettings) -> Result<Self, PrettyParseError> {
         Ok(RouteMatcher {
             tokens: parse_str_and_optimize_tokens(i)?,
             settings,
@@ -91,9 +90,7 @@ impl RouteMatcher {
                 .iter()
                 .fold(HashSet::new(), |mut acc: HashSet<&str>, token| {
                     match token {
-                        MatcherToken::Exact(_)
-                        | MatcherToken::End
-                        => {}
+                        MatcherToken::Exact(_) | MatcherToken::End => {}
                         MatcherToken::Capture(capture) => match &capture {
                             CaptureVariant::ManyNamed(name)
                             | CaptureVariant::Named(name)

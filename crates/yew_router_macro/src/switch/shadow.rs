@@ -14,7 +14,7 @@ impl ToTokens for ShadowMatcherToken {
             },
             SOT::End => quote! {
                 ::yew_router::matcher::MatcherToken::End
-            }
+            },
         };
         ts.extend(t)
     }
@@ -25,7 +25,7 @@ impl ToTokens for ShadowMatcherToken {
 pub enum ShadowMatcherToken {
     Exact(String),
     Capture(ShadowCaptureVariant),
-    End
+    End,
 }
 
 pub enum ShadowCaptureVariant {
@@ -61,7 +61,7 @@ impl From<MatcherToken> for ShadowMatcherToken {
         match mt {
             MT::Exact(s) => SOT::Exact(s),
             MT::Capture(capture) => SOT::Capture(capture.into()),
-            MT::End => SOT::End
+            MT::End => SOT::End,
         }
     }
 }

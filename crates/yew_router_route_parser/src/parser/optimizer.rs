@@ -1,4 +1,4 @@
-use crate::parser::{parse, CaptureOrExact, ParserError, RefCaptureVariant, RouteParserToken};
+use crate::parser::{parse, CaptureOrExact, PrettyParseError, RefCaptureVariant, RouteParserToken};
 
 use crate::{CaptureVariant, MatcherToken};
 
@@ -40,7 +40,7 @@ impl<'a> RouteParserToken<'a> {
 }
 
 /// Parse the provided "matcher string" and then optimize the tokens.
-pub fn parse_str_and_optimize_tokens(i: &str) -> Result<Vec<MatcherToken>, (&str, ParserError)> {
+pub fn parse_str_and_optimize_tokens(i: &str) -> Result<Vec<MatcherToken>, PrettyParseError> {
     let tokens = parse(i)?;
     Ok(convert_tokens(&tokens))
 }
@@ -90,7 +90,12 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
                     new_tokens.push(MatcherToken::Capture(CaptureVariant::from(*cap)))
                 }
             },
-            RouteParserToken::End => unimplemented!(),
+            RouteParserToken::End => {
+                let sequence = run.iter().map(RouteParserToken::as_str).collect();
+                new_tokens.push(MatcherToken::Exact(sequence));
+                run = vec![];
+                new_tokens.push(MatcherToken::End);
+            }
         }
     }
 

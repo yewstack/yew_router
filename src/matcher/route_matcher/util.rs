@@ -71,7 +71,6 @@ where
 pub fn next_delimiters<'a>(
     iter: Peekable<Iter<MatcherToken>>,
 ) -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
-
     let mut sequences = vec![];
     for next in iter {
         match next {
@@ -83,10 +82,7 @@ pub fn next_delimiters<'a>(
         }
     }
 
-    let delimiters: Vec<String> = sequences
-        .into_iter()
-        .map(String::from)
-        .collect();
+    let delimiters: Vec<String> = sequences.into_iter().map(String::from).collect();
 
     log::trace!(
         "delimiters in read_until_next_known_delimiter: {:?}",

@@ -1,4 +1,4 @@
-use std::{usize};
+use std::usize;
 use yew::{prelude::*, Properties};
 use yew_router::{agent::RouteRequest, prelude::*};
 

@@ -146,7 +146,7 @@ fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> Toke
                 }
             }
         }
-        ShadowMatcherToken::End => quote!{}
+        ShadowMatcherToken::End => quote! {},
     }
 }
 

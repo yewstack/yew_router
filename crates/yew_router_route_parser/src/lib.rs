@@ -16,7 +16,7 @@
 pub mod parser;
 
 // pub use parser_old::{Capture, CaptureVariant};
-pub use parser::{parse_str_and_optimize_tokens, ParserError};
+pub use parser::{parse_str_and_optimize_tokens, ParseError2, PrettyParseError};
 use std::collections::HashMap;
 // pub use token_optimizer::{parse_str_and_optimize_tokens, CaptureVariant, MatcherToken};
 
@@ -33,7 +33,7 @@ pub enum MatcherToken {
     /// Capture section.
     Capture(CaptureVariant),
     /// End token - if the string hasn't been consumed entirely, then the next token will cause an error
-    End
+    End,
 }
 
 /// Variants that indicate how part of a string should be captured.

@@ -101,9 +101,9 @@ fn match_path_impl<'a, 'b: 'a, CAP: CaptureCollection<'b>>(
             },
             MatcherToken::End => {
                 if !i.is_empty() {
-                    return Err(nom::Err::Failure((i, ErrorKind::Eof))) // TODO, this is approximately correct
+                    return Err(nom::Err::Failure((i, ErrorKind::Eof))); // TODO, this is approximately correct
                 } else {
-                   i
+                    i
                 }
             }
         };
@@ -421,9 +421,10 @@ mod integration_test {
 
     #[test]
     fn end_token() {
-        let x =
-            yew_router_route_parser::parse_str_and_optimize_tokens("/lorem!").expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/lorem!")
+            .expect("Should parse");
 
-        match_path_impl::<Captures>(&x, Default::default(), "/lorem/ipsum").expect_err("should not match");
+        match_path_impl::<Captures>(&x, Default::default(), "/lorem/ipsum")
+            .expect_err("should not match");
     }
 }
