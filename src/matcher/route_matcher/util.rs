@@ -57,6 +57,7 @@ where
     }
 }
 
+// TODO see if this function can be removed, as it doesn't offer much now that optional sections are gone.
 /// Produces a parser combinator that searches for the next possible set of strings of
 /// characters used to terminate a forward search.
 ///
@@ -70,15 +71,12 @@ where
 pub fn next_delimiters<'a>(
     iter: Peekable<Iter<MatcherToken>>,
 ) -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
-    enum MatchOrOptSequence<'a> {
-        Match(&'a str),
-    }
 
     let mut sequences = vec![];
     for next in iter {
         match next {
             MatcherToken::Exact(sequence) => {
-                sequences.push(MatchOrOptSequence::Match(&sequence));
+                sequences.push(sequence);
                 break;
             }
             _ => panic!("underlying parser should not allow token order not of match or optional"),
@@ -87,9 +85,6 @@ pub fn next_delimiters<'a>(
 
     let delimiters: Vec<String> = sequences
         .into_iter()
-        .map(|s| match s {
-            MatchOrOptSequence::Match(s) => s,
-        })
         .map(String::from)
         .collect();
 
@@ -143,13 +138,6 @@ mod tests {
         let parsed = parser("first_stuff_abc").expect("should parse");
         assert_eq!(parsed, ("abc", "first_stuff_".to_string()))
     }
-
-//    #[test]
-//    fn simple_skip_until() {
-//        let parsed =
-//            skip_until::<_, _, (), _>(tag("done"))("useless_stuff_done").expect("should parse");
-//        assert_eq!(parsed, ("", "done"))
-//    }
 
     #[test]
     fn case_sensitive() {

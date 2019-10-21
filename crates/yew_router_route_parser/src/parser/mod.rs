@@ -243,6 +243,7 @@ fn parse_impl<'a>(
                 RouteParserToken::Separator,
                 RouteParserToken::QueryBegin,
                 RouteParserToken::FragmentBegin,
+                RouteParserToken::Capture(RefCaptureVariant::ManyNamed("")),
             ]))
         }),
         ParserState::Path { prev_token } => match prev_token {
@@ -379,7 +380,7 @@ fn get_hash(i: &str) -> IResult<&str, RouteParserToken> {
 }
 
 fn get_end(i: &str) -> IResult<&str, RouteParserToken> {
-    map(char('!'), |_: char| RouteParserToken::FragmentBegin)(i)
+    map(char('!'), |_: char| RouteParserToken::End)(i)
 }
 
 fn rust_ident(i: &str) -> IResult<&str, &str> {
@@ -462,73 +463,245 @@ fn query_capture(i: &str) -> IResult<&str, RouteParserToken> {
 mod test {
     use super::*;
 
-    #[test]
-    fn query_section() {
-        query_capture("lorem=ipsum").expect("should parse");
+    mod does_parse {
+        use super::*;
+        #[test]
+        fn query_section() {
+            query_capture("lorem=ipsum").expect("should parse");
+        }
+
+        #[test]
+        fn slash() {
+            parse("/").expect("should parse");
+        }
+
+        #[test]
+        fn slash_exact() {
+            parse("/hello").expect("should parse");
+        }
+
+        #[test]
+        fn multiple_exact() {
+            parse("/lorem/ipsum").expect("should parse");
+        }
+
+        #[test]
+        fn capture_in_path() {
+            parse("/lorem/{ipsum}").expect("should parse");
+        }
+
+        #[test]
+        fn capture_rest_in_path() {
+            parse("/lorem/{*:ipsum}").expect("should parse");
+        }
+
+        #[test]
+        fn capture_numbered_in_path() {
+            parse("/lorem/{5:ipsum}").expect("should parse");
+        }
+
+        #[test]
+        fn exact_query_after_path() {
+            parse("/lorem?ipsum=dolor").expect("should parse");
+        }
+
+        #[test]
+        fn exact_query() {
+            parse("?lorem=ipsum").expect("should parse");
+        }
+
+        #[test]
+        fn capture_query() {
+            parse("?lorem={ipsum}").expect("should parse");
+        }
+
+        #[test]
+        fn multiple_queries() {
+            parse("?lorem=ipsum&dolor=sit").expect("should parse");
+        }
+
+        #[test]
+        fn query_and_exact_fragment() {
+            parse("?lorem=ipsum#dolor").expect("should parse");
+        }
+
+        #[test]
+        fn query_with_exact_and_capture_fragment() {
+            parse("?lorem=ipsum#dolor{sit}").expect("should parse");
+        }
+
+        #[test]
+        fn query_with_capture_fragment() {
+            parse("?lorem=ipsum#{dolor}").expect("should parse");
+        }
     }
 
-    #[test]
-    fn slash() {
-        parse("/").expect("should parse");
+    mod does_not_parse {
+        use super::*;
+
+        #[test]
+        fn empty() {
+            parse("").expect_err("Should not parse");
+        }
+
+        #[test]
+        fn double_slash() {
+            parse("//").expect_err("Should not parse");
+        }
+
+        #[test]
+        fn leading_ampersand_query() {
+            parse("&query=thing").expect_err("Should not parse");
+        }
+
+        #[test]
+        fn after_end() {
+            parse("/lorem/ipsum!/dolor").expect_err("Should not parse");
+        }
+
+        #[test]
+        fn double_end() {
+            parse("/hello!!").expect_err("Should not parse");
+        }
+
+        #[test]
+        fn just_end() {
+            parse("!").expect_err("Should not parse");
+        }
     }
 
-    #[test]
-    fn slash_exact() {
-        parse("/hello").expect("should parse");
-    }
+    mod correct_parse {
+        use super::*;
 
-    #[test]
-    fn multiple_exact() {
-        parse("/lorem/ipsum").expect("should parse");
-    }
+        #[test]
+        fn minimal_path() {
+            let parsed = parse("/lorem").unwrap();
+            let expected = vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Exact("lorem")
+            ];
+            assert_eq!(parsed, expected);
+        }
 
-    #[test]
-    fn capture_in_path() {
-        parse("/lorem/{ipsum}").expect("should parse");
-    }
+        #[test]
+        fn multiple_path() {
+            let parsed = parse("/lorem/ipsum/dolor/sit").unwrap();
+            let expected = vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Exact("lorem"),
+                RouteParserToken::Separator,
+                RouteParserToken::Exact("ipsum"),
+                RouteParserToken::Separator,
+                RouteParserToken::Exact("dolor"),
+                RouteParserToken::Separator,
+                RouteParserToken::Exact("sit"),
+            ];
+            assert_eq!(parsed, expected);
+        }
 
-    #[test]
-    fn capture_rest_in_path() {
-        parse("/lorem/{*:ipsum}").expect("should parse");
-    }
+        #[test]
+        fn capture_path() {
+            let parsed = parse("/{lorem}/{ipsum}").unwrap();
+            let expected = vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Capture(RefCaptureVariant::Named("lorem")),
+                RouteParserToken::Separator,
+                RouteParserToken::Capture(RefCaptureVariant::Named("ipsum")),
+            ];
+            assert_eq!(parsed, expected);
+        }
 
-    #[test]
-    fn capture_numbered_in_path() {
-        parse("/lorem/{5:ipsum}").expect("should parse");
-    }
+        #[test]
+        fn query() {
+            let parsed = parse("?query=this").unwrap();
+            let expected = vec![
+                RouteParserToken::QueryBegin,
+                RouteParserToken::QueryCapture { ident: "query", capture_or_match: CaptureOrExact::Exact("this") }
+            ];
+            assert_eq!(parsed, expected);
+        }
 
-    #[test]
-    fn exact_query_after_path() {
-        parse("/lorem?ipsum=dolor").expect("should parse");
-    }
+        #[test]
+        fn query_2_part() {
+            let parsed = parse("?lorem=ipsum&dolor=sit").unwrap();
+            let expected = vec![
+                RouteParserToken::QueryBegin,
+                RouteParserToken::QueryCapture { ident: "lorem", capture_or_match: CaptureOrExact::Exact("ipsum") },
+                RouteParserToken::QuerySeparator,
+                RouteParserToken::QueryCapture { ident: "dolor", capture_or_match: CaptureOrExact::Exact("sit") }
+            ];
+            assert_eq!(parsed, expected);
+        }
 
-    #[test]
-    fn exact_query() {
-        parse("?lorem=ipsum").expect("should parse");
-    }
+        #[test]
+        fn query_3_part() {
+            let parsed = parse("?lorem=ipsum&dolor=sit&amet=consectetur").unwrap();
+            let expected = vec![
+                RouteParserToken::QueryBegin,
+                RouteParserToken::QueryCapture { ident: "lorem", capture_or_match: CaptureOrExact::Exact("ipsum") },
+                RouteParserToken::QuerySeparator,
+                RouteParserToken::QueryCapture { ident: "dolor", capture_or_match: CaptureOrExact::Exact("sit") },
+                RouteParserToken::QuerySeparator,
+                RouteParserToken::QueryCapture { ident: "amet", capture_or_match: CaptureOrExact::Exact("consectetur") },
+            ];
+            assert_eq!(parsed, expected);
+        }
 
-    #[test]
-    fn capture_query() {
-        parse("?lorem={ipsum}").expect("should parse");
-    }
+        #[test]
+        fn exact_fragment() {
+            let parsed = parse("#lorem").unwrap();
+            let expected = vec![
+                RouteParserToken::FragmentBegin,
+                RouteParserToken::Exact("lorem"),
+            ];
+            assert_eq!(parsed, expected);
+        }
 
-    #[test]
-    fn multiple_queries() {
-        parse("?lorem=ipsum&dolor=sit").expect("should parse");
-    }
+        #[test]
+        fn capture_fragment() {
+            let parsed = parse("#{lorem}").unwrap();
+            let expected = vec![
+                RouteParserToken::FragmentBegin,
+                RouteParserToken::Capture(RefCaptureVariant::Named("lorem")),
+            ];
+            assert_eq!(parsed, expected);
+        }
 
-    #[test]
-    fn query_and_exact_fragment() {
-        parse("?lorem=ipsum#dolor").expect("should parse");
-    }
+        #[test]
+        fn mixed_fragment() {
+            let parsed = parse("#{lorem}ipsum{dolor}").unwrap();
+            let expected = vec![
+                RouteParserToken::FragmentBegin,
+                RouteParserToken::Capture(RefCaptureVariant::Named("lorem")),
+                RouteParserToken::Exact("ipsum"),
+                RouteParserToken::Capture(RefCaptureVariant::Named("dolor")),
+            ];
+            assert_eq!(parsed, expected);
+        }
 
-    #[test]
-    fn query_with_exact_and_capture_fragment() {
-        parse("?lorem=ipsum#dolor{sit}").expect("should parse");
-    }
+        #[test]
+        fn end_after_path() {
+            let parsed = parse("/lorem!").unwrap();
+            let expected = vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Exact("lorem"),
+                RouteParserToken::End
+            ];
+            assert_eq!(parsed, expected);
+        }
 
-    #[test]
-    fn query_with_capture_fragment() {
-        parse("?lorem=ipsum#{dolor}").expect("should parse");
+        #[test]
+        fn end_after_path_separator() {
+            let parsed = parse("/lorem/!").unwrap();
+            let expected = vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Exact("lorem"),
+                RouteParserToken::Separator,
+                RouteParserToken::End
+            ];
+            assert_eq!(parsed, expected);
+        }
+
+
     }
 }
