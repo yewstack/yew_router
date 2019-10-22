@@ -1,9 +1,13 @@
 [package]
 name = "yew_router"
-version = "0.1.0"
+version = "0.6.0"
 authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 edition = "2018"
-license = "MIT"
+license = "MIT/Apache-2.0"
+readme = "README.md"
+keywords = ["web", "yew", "router"]
+categories = ["gui", "web-programming"]
+description = "A router implementation for the Yew framework"
 
 
 [features]
