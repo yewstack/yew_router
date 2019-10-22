@@ -52,6 +52,11 @@ yew-router = "0.5.0"
 yew = "0.9.2"
 ```
 
+#### Minimum rustc
+Currently, this library targets rustc 1.37.0, but development is done on the latest stable release.
+Regressions related to minimum rustc versions may continue before automated testing is implemented.
+No guarantees are made about minimum supported versions prior to a 1.0.0 release, although we will attempt to be conservative in how often we remove support for old rustc versions.
+
 -----
 ### Contributions/Requests
 

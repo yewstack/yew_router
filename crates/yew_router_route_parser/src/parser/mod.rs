@@ -242,7 +242,7 @@ fn parse_impl<'a>(
     match state {
         ParserState::None => alt((get_slash, get_question, get_hash, capture, exact, get_end))(i)
             .map_err(|_| {
-                get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion)
+                get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion) // TODO, technically, a sub-switch may want to start with a &query=something, so enabling this might make sense.
                     .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
                     .ok()
             })
