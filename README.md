@@ -10,8 +10,7 @@ This project has just joined efforts with [saschagrunert/yew-router](https://git
 pub enum AppRoute {
     #[to = "/profile/{id}"]
     Profile(u32),
-    #[to = "/forum"]
-    #[rest]
+    #[to = "/forum{rest}"]
     Forum(ForumRoute),
     #[to = "/"]
     Index,

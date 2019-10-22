@@ -7,8 +7,6 @@ mod match_paths;
 mod util;
 
 use super::Captures;
-// use super::Matcher;
-// use crate::matcher::YewRouterParseError; // TODO, implement proper error reporting again.
 use nom::{combinator::all_consuming, IResult};
 use std::collections::HashSet;
 use yew_router_route_parser::{parse_str_and_optimize_tokens, PrettyParseError};

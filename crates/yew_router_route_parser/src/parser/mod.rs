@@ -13,6 +13,9 @@ mod optimizer;
 use crate::parser::error::{ExpectedToken, ParserErrorReason};
 pub use error::{ParseError2, PrettyParseError};
 pub use optimizer::{convert_tokens, parse_str_and_optimize_tokens};
+use nom::sequence::pair;
+use nom::bytes::complete::{tag, take_until};
+use nom::combinator::{map_opt};
 
 /// Tokens generated from parsing a route matcher string.
 /// They will be optimized to another token type that is used to match URLs.
@@ -29,7 +32,7 @@ pub enum RouteParserToken<'a> {
     /// Match &
     QuerySeparator,
     /// Match x=y
-    QueryCapture {
+    Query {
         /// Identifier
         ident: &'a str,
         /// Capture or match
@@ -90,18 +93,14 @@ impl<'a> ParserState<'a> {
     fn transition(self, token: RouteParserToken<'a>) -> Result<Self, ParserErrorReason> {
         match self {
             ParserState::None => match token {
-                RouteParserToken::Separator => Ok(ParserState::Path { prev_token: token }),
-                RouteParserToken::Exact(_) => Err(ParserErrorReason::NotAllowedStateTransition),
-                RouteParserToken::Capture(_) => Ok(ParserState::Path { prev_token: token }), /* TODO revise decision to allow this state transform for _all_ capture variants. */
+                RouteParserToken::Separator
+                | RouteParserToken::Exact(_)
+                | RouteParserToken::Capture(_) => Ok(ParserState::Path { prev_token: token }),
                 RouteParserToken::QueryBegin => Ok(ParserState::FirstQuery { prev_token: token }),
-                RouteParserToken::QuerySeparator => {
-                    Err(ParserErrorReason::NotAllowedStateTransition)
-                }
-                RouteParserToken::QueryCapture { .. } => {
-                    Err(ParserErrorReason::NotAllowedStateTransition)
-                }
+                RouteParserToken::QuerySeparator
+                | RouteParserToken::Query { .. } => Err(ParserErrorReason::NotAllowedStateTransition),
                 RouteParserToken::FragmentBegin => Ok(ParserState::Fragment { prev_token: token }),
-                RouteParserToken::End => Err(ParserErrorReason::NotAllowedStateTransition),
+                RouteParserToken::End => Ok(ParserState::End)
             },
             ParserState::Path { prev_token } => {
                 match prev_token {
@@ -150,12 +149,12 @@ impl<'a> ParserState<'a> {
             }
             ParserState::FirstQuery { prev_token } => match prev_token {
                 RouteParserToken::QueryBegin => match token {
-                    RouteParserToken::QueryCapture { .. } => {
+                    RouteParserToken::Query { .. } => {
                         Ok(ParserState::FirstQuery { prev_token: token })
                     }
                     _ => Err(ParserErrorReason::NotAllowedStateTransition),
                 },
-                RouteParserToken::QueryCapture { .. } => match token {
+                RouteParserToken::Query { .. } => match token {
                     RouteParserToken::QuerySeparator => {
                         Ok(ParserState::NthQuery { prev_token: token })
                     }
@@ -169,12 +168,12 @@ impl<'a> ParserState<'a> {
             },
             ParserState::NthQuery { prev_token } => match prev_token {
                 RouteParserToken::QuerySeparator => match token {
-                    RouteParserToken::QueryCapture { .. } => {
+                    RouteParserToken::Query { .. } => {
                         Ok(ParserState::NthQuery { prev_token: token })
                     }
                     _ => Err(ParserErrorReason::NotAllowedStateTransition),
                 },
-                RouteParserToken::QueryCapture { .. } => match token {
+                RouteParserToken::Query { .. } => match token {
                     RouteParserToken::QuerySeparator => {
                         Ok(ParserState::NthQuery { prev_token: token })
                     }
@@ -241,22 +240,35 @@ fn parse_impl<'a>(
     state: &ParserState,
 ) -> IResult<&'a str, RouteParserToken<'a>, ParseError2> {
     match state {
-        ParserState::None => alt((get_slash, get_question, get_hash, capture))(i)
-            .map_err(|_| ParseError2 {
-                reason: None,
+        ParserState::None => alt((get_slash, get_question, get_hash, capture, exact, get_end))(i)
+            .map_err(|_| {
+                get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion)
+                    .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
+                    .ok()
+            })
+            .map_err(|reason| ParseError2 {
+                reason,
                 expected: vec![
                     ExpectedToken::Separator,
                     ExpectedToken::QueryBegin,
                     ExpectedToken::FragmentBegin,
-                    ExpectedToken::CaptureNamed,
+                    ExpectedToken::CaptureManyNamed,
                 ],
             })
             .map_err(nom::Err::Error),
         ParserState::Path { prev_token } => match prev_token {
             RouteParserToken::Separator => {
                 alt((exact, capture, get_question, get_hash, get_end))(i)
-                    .map_err(|_| ParseError2 {
-                        reason: None,
+                    .map_err(|_| {
+                        // Detect likely failures if the above failed to match.
+                        get_slash(i)
+                            .map(|_| ParserErrorReason::DoubleSlash)
+                            .or_else(|_| get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion))
+                            .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
+                            .ok()
+                    })
+                    .map_err(|reason| ParseError2 {
+                        reason,
                         expected: vec![
                             ExpectedToken::Literal,
                             ExpectedToken::CaptureNamed,
@@ -271,29 +283,39 @@ fn parse_impl<'a>(
             }
             RouteParserToken::Exact(_) => {
                 alt((get_slash, capture, get_question, get_hash, get_end))(i)
-                    .map_err(|_| ParseError2 {
-                        reason: None,
+                    .map_err(|_| {
+                        get_and(i)
+                            .map(|_| ParserErrorReason::AndBeforeQuestion)
+                            .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
+                            .ok()
+                    })
+                    .map_err(|reason| ParseError2 {
+                        reason,
                         expected: vec![
                             ExpectedToken::Separator,
-                            ExpectedToken::CaptureNamed,
-                            ExpectedToken::CaptureManyNamed,
-                            ExpectedToken::CaptureNumberedNamed,
                             ExpectedToken::QueryBegin,
                             ExpectedToken::FragmentBegin,
                             ExpectedToken::End,
+                            ExpectedToken::CaptureNamed,
+                            ExpectedToken::CaptureManyNamed,
+                            ExpectedToken::CaptureNumberedNamed,
                         ],
                     })
                     .map_err(nom::Err::Error)
             }
             RouteParserToken::Capture(_) => {
                 alt((get_slash, exact, get_question, get_hash, get_end))(i)
-                    .map_err(|_| ParseError2 {
-                        reason: None,
+                    .map_err(|_| {
+                        capture(i)
+                            .map(|_| ParserErrorReason::AdjacentCaptures)
+                            .or_else(|_| get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion))
+                            .ok()
+                    })
+                    .map_err(|reason| ParseError2 {
+                        reason,
                         expected: vec![
+                            ExpectedToken::Literal,
                             ExpectedToken::Separator,
-                            ExpectedToken::CaptureNamed,
-                            ExpectedToken::CaptureManyNamed,
-                            ExpectedToken::CaptureNumberedNamed,
                             ExpectedToken::QueryBegin,
                             ExpectedToken::FragmentBegin,
                             ExpectedToken::End,
@@ -307,15 +329,25 @@ fn parse_impl<'a>(
             })),
         },
         ParserState::FirstQuery { prev_token } => match prev_token {
-            RouteParserToken::QueryBegin => query_capture(i)
-                .map_err(|_| ParseError2 {
-                    reason: None,
+            RouteParserToken::QueryBegin => query(i)
+                .map_err(|_| {
+                    get_question(i)
+                        .map(|_| ParserErrorReason::MultipleQuestions)
+                        .ok()
+                })
+                .map_err(|reason| ParseError2 {
+                    reason,
                     expected: vec![ExpectedToken::QueryCapture, ExpectedToken::QueryLiteral],
                 })
                 .map_err(nom::Err::Error),
-            RouteParserToken::QueryCapture { .. } => alt((get_and, get_hash, get_end))(i)
-                .map_err(|_| ParseError2 {
-                    reason: None,
+            RouteParserToken::Query { .. } => alt((get_and, get_hash, get_end))(i)
+                .map_err(|_| {
+                    get_question(i)
+                        .map(|_| ParserErrorReason::MultipleQuestions)
+                        .ok()
+                })
+                .map_err(|reason| ParseError2 {
+                    reason,
                     expected: vec![
                         ExpectedToken::QuerySeparator,
                         ExpectedToken::FragmentBegin,
@@ -329,15 +361,25 @@ fn parse_impl<'a>(
             })),
         },
         ParserState::NthQuery { prev_token } => match prev_token {
-            RouteParserToken::QuerySeparator => query_capture(i)
-                .map_err(|_| ParseError2 {
-                    reason: None,
+            RouteParserToken::QuerySeparator => query(i)
+                .map_err(|_| {
+                    get_question(i)
+                        .map(|_| ParserErrorReason::MultipleQuestions)
+                        .ok()
+                })
+                .map_err(|reason| ParseError2 {
+                    reason,
                     expected: vec![ExpectedToken::QueryCapture, ExpectedToken::QueryLiteral],
                 })
                 .map_err(nom::Err::Error),
-            RouteParserToken::QueryCapture { .. } => alt((get_and, get_hash, get_end))(i)
-                .map_err(|_| ParseError2 {
-                    reason: None,
+            RouteParserToken::Query { .. } => alt((get_and, get_hash, get_end))(i)
+                .map_err(|_| {
+                    get_question(i)
+                        .map(|_| ParserErrorReason::MultipleQuestions)
+                        .ok()
+                })
+                .map_err(|reason| ParseError2 {
+                    reason,
                     expected: vec![
                         ExpectedToken::QuerySeparator,
                         ExpectedToken::FragmentBegin,
@@ -368,8 +410,9 @@ fn parse_impl<'a>(
                 })
                 .map_err(nom::Err::Error),
             RouteParserToken::Capture(_) => exact(i)
-                .map_err(|_| ParseError2 {
-                    reason: None,
+                .map_err(|_| bad_capture(i).map(|(_, reason)| reason).ok())
+                .map_err(|reason| ParseError2 {
+                    reason,
                     expected: vec![ExpectedToken::CaptureNamed],
                 })
                 .map_err(nom::Err::Error),
@@ -397,10 +440,12 @@ fn get_and(i: &str) -> IResult<&str, RouteParserToken> {
     map(char('&'), |_: char| RouteParserToken::QuerySeparator)(i)
 }
 
+/// Returns a FragmentBegin variant if the next character is '\#'.
 fn get_hash(i: &str) -> IResult<&str, RouteParserToken> {
     map(char('#'), |_: char| RouteParserToken::FragmentBegin)(i)
 }
 
+/// Returns an End variant if the next character is a '!`.
 fn get_end(i: &str) -> IResult<&str, RouteParserToken> {
     map(char('!'), |_: char| RouteParserToken::End)(i)
 }
@@ -420,7 +465,7 @@ fn exact(i: &str) -> IResult<&str, RouteParserToken> {
 }
 
 fn capture(i: &str) -> IResult<&str, RouteParserToken> {
-    map(capture_impl, |cv: RefCaptureVariant| {
+    map(named_capture_impl, |cv: RefCaptureVariant| {
         RouteParserToken::Capture(cv)
     })(i)
 }
@@ -432,7 +477,8 @@ fn capture_single(i: &str) -> IResult<&str, RouteParserToken> {
     )(i)
 }
 
-fn capture_impl(i: &str) -> IResult<&str, RefCaptureVariant> {
+/// Captures {ident}, {*:ident}, {<number>:ident}
+fn named_capture_impl(i: &str) -> IResult<&str, RefCaptureVariant> {
     let inner = alt((
         single_capture_impl,
         many_capture_impl,
@@ -462,35 +508,98 @@ fn numbered_capture_impl(i: &str) -> IResult<&str, RefCaptureVariant> {
     )(i)
 }
 
-fn query_capture(i: &str) -> IResult<&str, RouteParserToken> {
-    fn cap_or_exact(i: &str) -> IResult<&str, CaptureOrExact> {
-        alt((
-            map(
-                delimited(char('{'), single_capture_impl, char('}')),
-                |cap| CaptureOrExact::Capture(cap),
-            ),
-            map(exact_impl, |exact| CaptureOrExact::Exact(exact)),
-        ))(i)
-    };
+/// Gets a capture or exact, mapping it to the CaptureOrExact enum - to provide a limited subset.
+fn cap_or_exact(i: &str) -> IResult<&str, CaptureOrExact> {
+    alt((
+        map(
+            delimited(char('{'), single_capture_impl, char('}')),
+            |cap| CaptureOrExact::Capture(cap),
+        ),
+        map(exact_impl, |exact| CaptureOrExact::Exact(exact)),
+    ))(i)
+}
+
+/// Matches a query
+fn query(i: &str) -> IResult<&str, RouteParserToken> {
     map(
         separated_pair(exact_impl, char('='), cap_or_exact),
-        |(ident, capture_or_match)| RouteParserToken::QueryCapture {
+        |(ident, capture_or_exact)| RouteParserToken::Query {
             ident,
-            capture_or_match,
+            capture_or_match: capture_or_exact,
         },
     )(i)
 }
+
+/// Succeeds if an invalid character is used as an ident.
+fn bad_capture(i: &str)  -> IResult<&str, ParserErrorReason> {
+    let invalid_ident_chars = r##" \|/{[]()?+=-1234567890!@#$%^&*~`'";:"##;
+
+    let number_capture = map(separated_pair(digit1, char(':'), take_until("}")), |(_, ident)| ident);
+    let many_capture = map(pair(tag("*:"), take_until("}")), |(_, ident)| ident);
+    let simple_capture = take_until("}");
+    map_opt(
+        delimited(
+            char('{'),
+                alt((
+                      number_capture,
+                      many_capture,
+                      simple_capture,
+                  )),
+            char('}')
+        ),
+        move |s: &str| {
+            s.chars()
+                .map(|ch| {
+                    if invalid_ident_chars.contains(ch) {
+                        Some(ParserErrorReason::BadRustIdent(ch))
+                    } else {
+                        None
+                    }
+                })
+                .flatten()
+                .next()
+        }
+    )(i)
+}
+
 
 #[cfg(test)]
 mod test {
     use super::*;
 
-    mod does_parse {
+    mod sub_parsers {
         use super::*;
+
+        #[test]
+        fn cap_or_exact_match_lit() {
+            cap_or_exact("lorem").expect("Should parse");
+        }
+        #[test]
+        fn cap_or_exact_match_cap() {
+            cap_or_exact("{lorem}").expect("Should parse");
+        }
         #[test]
         fn query_section() {
-            query_capture("lorem=ipsum").expect("should parse");
+            query("lorem=ipsum").expect("should parse");
         }
+
+        #[test]
+        fn bad_capture_with_ampersand() {
+            bad_capture("{ident&}").expect("should parse");
+        }
+
+        #[test]
+        fn bad_capture_approves_valid_idents() {
+            bad_capture("{ident}").expect_err("should not parse");
+            bad_capture("{*:ident}").expect_err("should not parse");
+            bad_capture("{2:ident}").expect_err("should not parse");
+        }
+
+
+    }
+
+    mod does_parse {
+        use super::*;
 
         #[test]
         fn slash() {
@@ -561,6 +670,7 @@ mod test {
     mod does_not_parse {
         use super::*;
 
+        // TODO, should empty be ok?
         #[test]
         fn empty() {
             parse("").expect_err("Should not parse");
@@ -568,32 +678,54 @@ mod test {
 
         #[test]
         fn double_slash() {
-            parse("//").expect_err("Should not parse");
+            let x = parse("//").expect_err("Should not parse");
+            assert_eq!(x.error.reason, Some(ParserErrorReason::DoubleSlash))
+        }
+
+        #[test]
+        fn slash_ampersand() {
+            let x = parse("/&lorem=ipsum").expect_err("Should not parse");
+            assert_eq!(x.error.reason, Some(ParserErrorReason::AndBeforeQuestion))
+        }
+
+        #[test]
+        fn non_ident_capture() {
+            let x = parse("/{lor#m}").expect_err("Should not parse");
+            assert_eq!(x.error.reason, Some(ParserErrorReason::BadRustIdent('#')))
         }
 
         #[test]
         fn leading_ampersand_query() {
-            parse("&query=thing").expect_err("Should not parse");
+           let x = parse("&query=thing").expect_err("Should not parse");
+            assert_eq!(x.error.reason, Some(ParserErrorReason::AndBeforeQuestion));
         }
 
         #[test]
         fn after_end() {
-            parse("/lorem/ipsum!/dolor").expect_err("Should not parse");
+            let x = parse("/lorem/ipsum!/dolor").expect_err("Should not parse");
+            assert_eq!(x.error.reason, Some(ParserErrorReason::TokensAfterEndToken));
         }
 
         #[test]
         fn double_end() {
-            parse("/hello!!").expect_err("Should not parse");
+            let x = parse("/hello!!").expect_err("Should not parse");
+            assert_eq!(x.error.reason, Some(ParserErrorReason::TokensAfterEndToken));
         }
 
-        #[test]
-        fn just_end() {
-            parse("!").expect_err("Should not parse");
-        }
+
     }
 
     mod correct_parse {
         use super::*;
+
+        #[test]
+        fn starting_literal() {
+            let parsed = parse("lorem").unwrap();
+            let expected = vec![
+                RouteParserToken::Exact("lorem"),
+            ];
+            assert_eq!(parsed, expected);
+        }
 
         #[test]
         fn minimal_path() {
@@ -638,7 +770,7 @@ mod test {
             let parsed = parse("?query=this").unwrap();
             let expected = vec![
                 RouteParserToken::QueryBegin,
-                RouteParserToken::QueryCapture {
+                RouteParserToken::Query {
                     ident: "query",
                     capture_or_match: CaptureOrExact::Exact("this"),
                 },
@@ -651,12 +783,12 @@ mod test {
             let parsed = parse("?lorem=ipsum&dolor=sit").unwrap();
             let expected = vec![
                 RouteParserToken::QueryBegin,
-                RouteParserToken::QueryCapture {
+                RouteParserToken::Query {
                     ident: "lorem",
                     capture_or_match: CaptureOrExact::Exact("ipsum"),
                 },
                 RouteParserToken::QuerySeparator,
-                RouteParserToken::QueryCapture {
+                RouteParserToken::Query {
                     ident: "dolor",
                     capture_or_match: CaptureOrExact::Exact("sit"),
                 },
@@ -669,17 +801,17 @@ mod test {
             let parsed = parse("?lorem=ipsum&dolor=sit&amet=consectetur").unwrap();
             let expected = vec![
                 RouteParserToken::QueryBegin,
-                RouteParserToken::QueryCapture {
+                RouteParserToken::Query {
                     ident: "lorem",
                     capture_or_match: CaptureOrExact::Exact("ipsum"),
                 },
                 RouteParserToken::QuerySeparator,
-                RouteParserToken::QueryCapture {
+                RouteParserToken::Query {
                     ident: "dolor",
                     capture_or_match: CaptureOrExact::Exact("sit"),
                 },
                 RouteParserToken::QuerySeparator,
-                RouteParserToken::QueryCapture {
+                RouteParserToken::Query {
                     ident: "amet",
                     capture_or_match: CaptureOrExact::Exact("consectetur"),
                 },
@@ -740,6 +872,12 @@ mod test {
                 RouteParserToken::End,
             ];
             assert_eq!(parsed, expected);
+        }
+
+        #[test]
+        fn just_end() {
+            let parsed = parse("!").unwrap();
+            assert_eq!(parsed, vec![RouteParserToken::End]);
         }
     }
 }

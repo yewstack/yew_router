@@ -33,7 +33,7 @@ impl<'a> RouteParserToken<'a> {
             RouteParserToken::QuerySeparator => "&",
             RouteParserToken::FragmentBegin => "#",
             RouteParserToken::Capture { .. }
-            | RouteParserToken::QueryCapture { .. }
+            | RouteParserToken::Query { .. }
             | RouteParserToken::End => unreachable!(),
         }
     }
@@ -69,7 +69,7 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
                 run = vec![];
                 new_tokens.push(MatcherToken::Capture(CaptureVariant::from(*cap)))
             }
-            RouteParserToken::QueryCapture {
+            RouteParserToken::Query {
                 ident,
                 capture_or_match,
             } => match capture_or_match {

@@ -1,4 +1,3 @@
-use crate::parser::RouteParserToken;
 use std::fmt;
 
 /// Parser error that can print itself in a human-readable format.
@@ -84,8 +83,9 @@ pub enum ExpectedToken {
     QueryBegin,
     ///  &
     QuerySeparator,
-    ///  x=y
+    ///  x={y}
     QueryCapture,
+    // x=y
     QueryLiteral,
     /// \#
     FragmentBegin,
@@ -121,6 +121,12 @@ pub enum ParserErrorReason {
     DoubleSlash,
     /// A & appears before a ?
     AndBeforeQuestion,
+    /// Captures can't be next to each other
+    AdjacentCaptures,
+    /// There can only be one question mark in the query section
+    MultipleQuestions,
+    /// The provided ident within a capture group could never match with a valid rust identifier.
+    BadRustIdent(char),
     /// Invalid state
     InvalidState,
     /// Internal check on valid state transitions
@@ -135,16 +141,25 @@ impl fmt::Display for ParserErrorReason {
                 f.write_str("Characters appeared after the end token (!).")?;
             }
             ParserErrorReason::DoubleSlash => {
-                f.write_str("Two Slashes are not allowed to be next to each other (//).")?;
+                f.write_str("Two slashes are not allowed to be next to each other (//).")?;
             }
             ParserErrorReason::AndBeforeQuestion => {
-                f.write_str("The first query must be indicated with a ?, not a &.")?;
+                f.write_str("The first query must be indicated with a '?', not a '&'.")?;
+            }
+            ParserErrorReason::AdjacentCaptures => {
+                f.write_str("Capture groups can't be next to each other. There must be some character in between the '}' and '{' characters.")?;
             }
             ParserErrorReason::InvalidState => {
                 f.write_str("Library Error: The parser was able to enter into an invalid state.")?;
             }
             ParserErrorReason::NotAllowedStateTransition => {
                 f.write_str("Library Error: A state transition was attempted that would put the parser in an invalid state")?;
+            }
+            ParserErrorReason::MultipleQuestions => {
+                f.write_str("There can only be one question mark in the query section. `&` should be used to separate other queries.")?;
+            }
+            ParserErrorReason::BadRustIdent(c) => {
+                f.write_str(&format!("The character: '{}' could not be used as a Rust identifier.", c))?;
             }
         }
         Ok(())
