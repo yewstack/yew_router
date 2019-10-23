@@ -53,10 +53,7 @@ impl AttrToken {
 
     /// The id is an unique identifier that allows otherwise unnamed captures to still be captured
     /// with unique names.
-    pub fn into_shadow_matcher_tokens(
-        self,
-        id: usize,
-    ) -> Vec<ShadowMatcherToken> {
+    pub fn into_shadow_matcher_tokens(self, id: usize) -> Vec<ShadowMatcherToken> {
         match self {
             AttrToken::To(matcher_string) => {
                 yew_router_route_parser::parse_str_and_optimize_tokens(&matcher_string)

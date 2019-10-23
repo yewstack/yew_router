@@ -22,7 +22,7 @@ where
     }
 }
 
-impl <T> Default for RouteAgentDispatcher<T>
+impl<T> Default for RouteAgentDispatcher<T>
 where
     for<'de> T: AgentState<'de>,
 {

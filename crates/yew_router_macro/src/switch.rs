@@ -1,13 +1,12 @@
-use proc_macro::TokenStream;
-use syn::{parse_macro_input, Fields};
 use crate::switch::{
     enum_impl::generate_enum_impl,
     shadow::{ShadowCaptureVariant, ShadowMatcherToken},
     struct_impl::generate_struct_impl,
 };
+use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use syn::{export::TokenStream2, Data, DeriveInput, Ident, Variant};
+use syn::{export::TokenStream2, parse_macro_input, Data, DeriveInput, Fields, Ident, Variant};
 
 mod attribute;
 mod enum_impl;
@@ -51,9 +50,7 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                     let matcher = AttrToken::convert_attributes_to_tokens(variant.attrs)
                         .into_iter()
                         .enumerate()
-                        .map(|(index, at)| {
-                            at.into_shadow_matcher_tokens(index)
-                        })
+                        .map(|(index, at)| at.into_shadow_matcher_tokens(index))
                         .flatten()
                         .collect::<Vec<_>>();
                     SwitchItem {
@@ -113,32 +110,28 @@ fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> Toke
                 write!(buf, #lit).unwrap();
             }
         }
-        ShadowMatcherToken::Capture(capture) => {
-            match naming_scheme {
-                FieldType::Named | FieldType::Unit => match &capture {
-                    ShadowCaptureVariant::Named(name)
-                    | ShadowCaptureVariant::ManyNamed(name)
-                    | ShadowCaptureVariant::NumberedNamed { name, .. } => {
-                        let name = Ident::new(&name, Span::call_site());
-                        quote! {
-                            state = state.or(#name.build_route_section(buf));
-                        }
-                    }
-                },
-                FieldType::Unnamed { index } => {
-                    match &capture {
-                        ShadowCaptureVariant::Named(_)
-                        | ShadowCaptureVariant::ManyNamed(_)
-                        | ShadowCaptureVariant::NumberedNamed { .. } => {
-                            let name = unnamed_field_index_item(index);
-                            quote! {
-                                state = state.or(#name.build_route_section(&mut buf));
-                            }
-                        }
+        ShadowMatcherToken::Capture(capture) => match naming_scheme {
+            FieldType::Named | FieldType::Unit => match &capture {
+                ShadowCaptureVariant::Named(name)
+                | ShadowCaptureVariant::ManyNamed(name)
+                | ShadowCaptureVariant::NumberedNamed { name, .. } => {
+                    let name = Ident::new(&name, Span::call_site());
+                    quote! {
+                        state = state.or(#name.build_route_section(buf));
                     }
                 }
-            }
-        }
+            },
+            FieldType::Unnamed { index } => match &capture {
+                ShadowCaptureVariant::Named(_)
+                | ShadowCaptureVariant::ManyNamed(_)
+                | ShadowCaptureVariant::NumberedNamed { .. } => {
+                    let name = unnamed_field_index_item(index);
+                    quote! {
+                        state = state.or(#name.build_route_section(&mut buf));
+                    }
+                }
+            },
+        },
         ShadowMatcherToken::End => quote! {},
     }
 }

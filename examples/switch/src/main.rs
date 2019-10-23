@@ -27,6 +27,10 @@ fn main() {
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
+    let route = Route::<()>::from("/option/test");
+    let app_route = AppRoute::switch(route);
+    dbg!(app_route);
+
     let mut buf = String::new();
     AppRoute::Another("yeet".to_string()).build_route_section::<()>(&mut buf);
     println!("{}", buf);
@@ -58,10 +62,16 @@ pub enum AppRoute {
     #[to = "/inner"]
     #[rest]
     Nested(InnerRoute),
-    #[rest]
+    #[rest] // Rest delegates the remaining input to the next attribute
     Single(Single),
     #[rest]
     OtherSingle(OtherSingle),
+    /// Because this is an option, the inner item doesn't have to match.
+    #[to = "/option/{thing}"]
+    Optional(Option<String>),
+    /// Because this is an option, a corresponding capture group doesn't need to exist
+    #[to = "/missing/capture"]
+    MissingCapture(Option<String>),
 }
 
 #[derive(Switch, Debug)]
@@ -83,7 +93,7 @@ pub struct Single {
 pub struct OtherSingle(u32);
 
 //#[derive(Switch, Debug)]
-//pub enum Bad {
+// pub enum Bad {
 //    #[to = "/bad_route?query=&query=no"]
 //    X,
 //}

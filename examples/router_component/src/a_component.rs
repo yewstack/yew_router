@@ -9,7 +9,7 @@ pub struct AModel {
 #[derive(PartialEq, Properties)]
 pub struct Props {
     #[props(required)]
-    pub route: ARoute,
+    pub route: Option<ARoute>,
 }
 
 pub enum Msg {}
@@ -43,15 +43,15 @@ impl Renderable<AModel> for AModel {
                         link="/a/c",
                     />
                     <RouterButton:
-                        text=String::from("Go to a/d (Component does not exist)"),
+                        text=String::from("Go to a/d (route does not exist)"),
                         link="/a/d",
                     />
                 </div>
                 <div>
                 {
                     match self.props.route {
-                        ARoute::C => html!{<CModel/>},
-                        ARoute::None(_) => html!{}
+                        Some(_) => html!{<CModel/>},
+                        None => html!{}
                     }
                 }
                 </div>

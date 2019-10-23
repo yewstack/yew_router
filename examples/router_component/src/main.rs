@@ -12,6 +12,7 @@ use crate::{
     b_component::{BModel, BRoute},
     c_component::CModel,
 };
+use yew_router::switch::AllowMissing;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -40,8 +41,8 @@ impl Component for Model {
 
 #[derive(Debug, Switch)]
 pub enum AppRoute {
-    #[to = "/a/{*:inner}"]
-    A(ARoute),
+    #[to = "/a{*:inner}"]
+    A(AllowMissing<ARoute>),
     #[to = "/b{*:inner}"]
     B(BRoute),
     #[to = "/c"]
@@ -49,21 +50,12 @@ pub enum AppRoute {
     #[to = "/e/{string}"]
     E(String),
     #[to = "/page-not-found"]
-    PageNotFound // TODO, it would be nice to have an option here.
+    PageNotFound(Option<String>),
 }
 
 #[derive(Debug, Switch, PartialEq, Clone)]
-pub enum ARoute {
-    /// Match "/c" after "/a" ("/a/c")
-    #[to = "c"]
-    C,
-    // Because it is impossible to specify an Optional nested route:
-    // Still accept the route, when matching, but consider it invalid.
-    // This is effectively the same as wrapping the ARoute in Option, but doesn't run afoul of the
-    // current routing syntax.
-    #[to = "{*:rest}"]
-    None(String), // TODO, make this work on empty variants
-}
+#[to = "/c"]
+pub struct ARoute;
 
 impl Renderable<Model> for Model {
     fn view(&self) -> Html<Self> {
@@ -82,18 +74,19 @@ impl Renderable<Model> for Model {
                     <Router<AppRoute, ()>
                         render = Router::render(|switch: AppRoute| {
                             match switch {
-                                AppRoute::A(route) => html!{<AModel route = route />},
+                                AppRoute::A(AllowMissing(route)) => html!{<AModel route = route />},
                                 AppRoute::B(route) => {
                                     let route: b_component::Props = route.into();
                                     html!{<BModel with route/>}
                                 },
                                 AppRoute::C => html!{<CModel />},
                                 AppRoute::E(string) => html!{format!("hello {}", string)},
-                                AppRoute::PageNotFound => html!{"Page not found"}
+                                AppRoute::PageNotFound(None) => html!{"Page not found"},
+                                AppRoute::PageNotFound(Some(missed_route)) => html!{format!("Page '{}' not found", missed_route)}
                             }
                         })
                         redirect = Router::redirect(|route: Route| {
-                            AppRoute::PageNotFound
+                            AppRoute::PageNotFound(Some(route.route))
                         })
                     />
                 </div>

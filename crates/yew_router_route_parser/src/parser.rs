@@ -1,16 +1,13 @@
 //! Parser that consumes a string and produces the first representation of the matcher.
+use crate::error::{ExpectedToken, ParseError, ParserErrorReason, PrettyParseError};
 use nom::{
     branch::alt,
-    bytes::complete::take_till1,
+    bytes::complete::{tag, take_till1, take_until},
     character::complete::{char, digit1},
-    combinator::map,
-    sequence::{delimited, separated_pair},
+    combinator::{map, map_opt},
+    sequence::{delimited, pair, separated_pair},
     IResult,
 };
-use crate::error::{ExpectedToken, ParserErrorReason, ParseError, PrettyParseError};
-use nom::sequence::pair;
-use nom::bytes::complete::{tag, take_until};
-use nom::combinator::{map_opt};
 
 /// Tokens generated from parsing a route matcher string.
 /// They will be optimized to another token type that is used to match URLs.
@@ -478,7 +475,7 @@ fn capture(i: &str) -> IResult<&str, RouteParserToken> {
 fn capture_single(i: &str) -> IResult<&str, RouteParserToken> {
     map(
         delimited(char('{'), single_capture_impl, char('}')),
-         RouteParserToken::Capture,
+        RouteParserToken::Capture,
     )(i)
 }
 
@@ -518,7 +515,7 @@ fn cap_or_exact(i: &str) -> IResult<&str, CaptureOrExact> {
     alt((
         map(
             delimited(char('{'), single_capture_impl, char('}')),
-             CaptureOrExact::Capture,
+            CaptureOrExact::Capture,
         ),
         map(exact_impl, |exact| CaptureOrExact::Exact(exact)),
     ))(i)
@@ -536,21 +533,20 @@ fn query(i: &str) -> IResult<&str, RouteParserToken> {
 }
 
 /// Succeeds if an invalid character is used as an ident.
-fn bad_capture(i: &str)  -> IResult<&str, ParserErrorReason> {
+fn bad_capture(i: &str) -> IResult<&str, ParserErrorReason> {
     let invalid_ident_chars = r##" \|/{[]()?+=-1234567890!@#$%^&*~`'";:"##;
 
-    let number_capture = map(separated_pair(digit1, char(':'), take_until("}")), |(_, ident)| ident);
+    let number_capture = map(
+        separated_pair(digit1, char(':'), take_until("}")),
+        |(_, ident)| ident,
+    );
     let many_capture = map(pair(tag("*:"), take_until("}")), |(_, ident)| ident);
     let simple_capture = take_until("}");
     map_opt(
         delimited(
             char('{'),
-            alt((
-                number_capture,
-                many_capture,
-                simple_capture,
-            )),
-            char('}')
+            alt((number_capture, many_capture, simple_capture)),
+            char('}'),
         ),
         move |s: &str| {
             s.chars()
@@ -563,7 +559,7 @@ fn bad_capture(i: &str)  -> IResult<&str, ParserErrorReason> {
                 })
                 .flatten()
                 .next()
-        }
+        },
     )(i)
 }
 
@@ -599,8 +595,6 @@ mod test {
             bad_capture("{*:ident}").expect_err("should not parse");
             bad_capture("{2:ident}").expect_err("should not parse");
         }
-
-
     }
 
     mod does_parse {
@@ -716,8 +710,6 @@ mod test {
             let x = parse("/hello!!").expect_err("Should not parse");
             assert_eq!(x.error.reason, Some(ParserErrorReason::TokensAfterEndToken));
         }
-
-
     }
 
     mod correct_parse {
@@ -726,9 +718,7 @@ mod test {
         #[test]
         fn starting_literal() {
             let parsed = parse("lorem").unwrap();
-            let expected = vec![
-                RouteParserToken::Exact("lorem"),
-            ];
+            let expected = vec![RouteParserToken::Exact("lorem")];
             assert_eq!(parsed, expected);
         }
 

@@ -13,11 +13,11 @@
     unused_qualifications
 )]
 
-pub mod parser;
 mod error;
-pub use error::{PrettyParseError, ParseError};
+pub mod parser;
+pub use error::{ParseError, PrettyParseError};
 mod optimizer;
-pub use optimizer::{parse_str_and_optimize_tokens, convert_tokens};
+pub use optimizer::{convert_tokens, parse_str_and_optimize_tokens};
 use std::collections::HashMap;
 
 /// Captures contain keys corresponding to named match sections,

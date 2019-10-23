@@ -7,13 +7,13 @@ use crate::{
 };
 use std::{
     fmt::{self, Debug, Error as FmtError, Formatter},
+    marker::PhantomData,
     rc::Rc,
 };
 use yew::{
-    virtual_dom::VNode, Callback, Component, ComponentLink, Html, Properties, Renderable,
-    ShouldRender, html
+    html, virtual_dom::VNode, Callback, Component, ComponentLink, Html, Properties, Renderable,
+    ShouldRender,
 };
-use std::marker::PhantomData;
 
 
 use crate::agent::AgentState;
@@ -103,7 +103,6 @@ where
         Render::new(f)
     }
 
-
     /// Wrap a redirect function so that it can be used by the Router.
     pub fn redirect<F: RedirectFn<SW, T> + 'static>(f: F) -> Option<Redirect<SW, T, M>> {
         Some(Redirect::new(f))
@@ -147,13 +146,13 @@ impl<T: for<'de> RouterState<'de>, SW: Switch, M> Debug for Render<T, SW, M> {
 
 /// Redirection function that takes a route that didn't match any of the Switch variants,
 /// and converts it to a switch variant.
-pub trait RedirectFn<SW, STATE>: Fn(Route<STATE>)-> SW {}
-impl<T, SW, STATE,> RedirectFn<SW, STATE> for T where T: Fn(Route<STATE>)-> SW {}
+pub trait RedirectFn<SW, STATE>: Fn(Route<STATE>) -> SW {}
+impl<T, SW, STATE> RedirectFn<SW, STATE> for T where T: Fn(Route<STATE>) -> SW {}
 /// Clonable Redirect function
 pub struct Redirect<SW: Switch + 'static, STATE: for<'de> RouterState<'de>, M>(
     pub(crate) Rc<dyn RedirectFn<SW, STATE>>,
     /// This phantom data is here to allow type inference when using it inside a Router component.
-    PhantomData<M>
+    PhantomData<M>,
 );
 impl<STATE: for<'de> RouterState<'de>, SW: Switch + 'static, M> Redirect<SW, STATE, M> {
     fn new<F: RedirectFn<SW, STATE> + 'static>(f: F) -> Self {
@@ -246,7 +245,7 @@ impl<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> Renderable<
                     let switch: SW = (redirect_fn.0)(self.route.clone()); // TODO This should be used to set the route
                     (&self.props.render.0)(switch)
                 } else {
-                    html!{format!{"No route for {}", self.route.route}}
+                    html! {format!{"No route for {}", self.route.route}}
                 }
             }
         }

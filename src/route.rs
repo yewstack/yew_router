@@ -1,10 +1,9 @@
 //! Wrapper around route url string, and associated history state.
 use crate::service::RouteService;
 use serde::{Deserialize, Serialize};
+use std::{fmt, ops::Deref};
 use stdweb::{unstable::TryFrom, JsSerialize, Value};
-use std::ops::Deref;
 use yew::agent::Transferable;
-use std::fmt;
 
 /// Any state that can be stored by the History API must meet the criteria of this trait.
 pub trait RouteState: Clone + Default + JsSerialize + TryFrom<Value> + 'static {}
@@ -46,10 +45,9 @@ impl<T> Route<T> {
         // stdweb.
         Route { route, state: None }
     }
-
 }
 
-impl <T> fmt::Display for Route<T> {
+impl<T> fmt::Display for Route<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.route.fmt(f)
     }

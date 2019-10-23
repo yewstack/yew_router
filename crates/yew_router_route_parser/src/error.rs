@@ -160,7 +160,10 @@ impl fmt::Display for ParserErrorReason {
                 f.write_str("There can only be one question mark in the query section. `&` should be used to separate other queries.")?;
             }
             ParserErrorReason::BadRustIdent(c) => {
-                f.write_str(&format!("The character: '{}' could not be used as a Rust identifier.", c))?;
+                f.write_str(&format!(
+                    "The character: '{}' could not be used as a Rust identifier.",
+                    c
+                ))?;
             }
         }
         Ok(())

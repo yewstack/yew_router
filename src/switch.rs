@@ -70,7 +70,7 @@ pub trait Switch: Sized {
 pub fn build_route_from_switch<T: Switch, U>(switch: T) -> Route<U> {
     let mut buf = String::with_capacity(50); // TODO, play with this to maximize perf/size.
 
-    let state =  switch.build_route_section(&mut buf);
+    let state = switch.build_route_section(&mut buf);
     Route { route: buf, state }
 }
 
@@ -102,6 +102,60 @@ impl<U: Switch> Switch for LeadingSlash<U> {
     }
 }
 
+impl<U: Switch> Switch for Option<U> {
+    /// Option is very permissive in what is allowed.
+    fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>) {
+        let (inner, inner_state) = U::from_route_part(part);
+        if inner.is_some() {
+            (Some(inner), inner_state)
+        } else {
+            // The Some(None) here indicates that this will produce a None, if the wrapped value can't be parsed
+            (Some(None), None)
+        }
+    }
+
+    fn build_route_section<T>(self, route: &mut String) -> Option<T> {
+        if let Some(inner) = self {
+            inner.build_route_section(route)
+        } else {
+            None
+        }
+    }
+
+    fn key_not_available() -> Option<Self> {
+        Some(None)
+    }
+}
+
+/// Allows a section to match if its contents are entirely missing, or starts with a '/'.
+#[derive(Debug)]
+pub struct AllowMissing<T>(pub Option<T>);
+impl<U: Switch> Switch for AllowMissing<U> {
+    fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>) {
+        let route = part.route.clone();
+        let (inner, inner_state) = U::from_route_part(part);
+        if inner.is_some() {
+            (Some(AllowMissing(inner)), inner_state)
+        } else {
+            // TODO it might make sense to enforce that nothing comes after this. (eg. len() == 1).
+            // TODO it might make sense to look for ?, &, # as well
+            if &route == "" || (&route).starts_with("/") {
+                (Some(AllowMissing(None)), inner_state)
+            } else {
+                (None, None)
+            }
+        }
+    }
+
+    fn build_route_section<T>(self, route: &mut String) -> Option<T> {
+        if let AllowMissing(Some(inner)) = self {
+            inner.build_route_section(route)
+        } else {
+            None
+        }
+    }
+}
+
 macro_rules! impl_switch_for_from_to_str {
     ($($SelfT: ty),*) => {
         $(
@@ -121,6 +175,7 @@ macro_rules! impl_switch_for_from_to_str {
         )*
     };
 }
+
 
 impl_switch_for_from_to_str! {
     String,
@@ -151,12 +206,34 @@ impl_switch_for_from_to_str! {
     std::num::NonZeroI8
 }
 
-#[test]
-fn isize_build_route() {
-    let mut route = "/".to_string();
-    let mut _state: Option<String> = None;
-    _state = _state.or((-432isize).build_route_section(&mut route));
-    assert_eq!(route, "/-432".to_string());
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn isize_build_route() {
+        let mut route = "/".to_string();
+        let mut _state: Option<String> = None;
+        _state = _state.or((-432isize).build_route_section(&mut route));
+        assert_eq!(route, "/-432".to_string());
+    }
+
+    #[test]
+    fn can_get_string_from_empty_str() {
+        let (s, _state) = String::from_route_part::<()>(Route {
+            route: "".to_string(),
+            state: None,
+        });
+        assert_eq!(s, Some("".to_string()))
+    }
+
+    #[test]
+    fn can_get_option_string_from_empty_str() {
+        let (s, _state): (Option<Option<String>>, Option<()>) = Option::from_route_part(Route {
+            route: "".to_string(),
+            state: None,
+        });
+        assert_eq!(s, Some(Some("".to_string())))
+    }
 }
 
 // TODO add implementations for Dates - with various formats, UUIDs

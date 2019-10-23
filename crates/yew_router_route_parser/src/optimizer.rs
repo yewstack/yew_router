@@ -1,5 +1,7 @@
-use crate::parser::{parse, CaptureOrExact, RefCaptureVariant, RouteParserToken};
-use crate::error::PrettyParseError;
+use crate::{
+    error::PrettyParseError,
+    parser::{parse, CaptureOrExact, RefCaptureVariant, RouteParserToken},
+};
 
 use crate::{CaptureVariant, MatcherToken};
 
