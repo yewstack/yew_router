@@ -20,7 +20,7 @@ pub enum RouteParserToken<'a> {
     Separator,
     /// Match a specific string.
     Exact(&'a str),
-    /// Match {_}. See `CaptureVariant` for more.
+    /// Match {_}. See `RefCaptureVariant` for more.
     Capture(RefCaptureVariant<'a>),
     /// Match ?
     QueryBegin,
@@ -31,7 +31,7 @@ pub enum RouteParserToken<'a> {
         /// Identifier
         ident: &'a str,
         /// Capture or match
-        capture_or_match: CaptureOrExact<'a>,
+        capture_or_exact: CaptureOrExact<'a>,
     },
     /// Match \#
     FragmentBegin,
@@ -43,6 +43,9 @@ pub enum RouteParserToken<'a> {
 ///
 /// It can capture and discard for unnamed variants, or capture and store in the `Matches` for the
 /// named variants.
+///
+/// Its name stems from the fact that it does not have ownership over all its values.
+/// It gets converted to CaptureVariant, a nearly identical enum that has owned Strings instead.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum RefCaptureVariant<'a> {
     /// {name} - captures a section and adds it to the map with a given name.
@@ -92,7 +95,7 @@ impl<'a> ParserState<'a> {
                 | RouteParserToken::Exact(_)
                 | RouteParserToken::Capture(_) => Ok(ParserState::Path { prev_token: token }),
                 RouteParserToken::QueryBegin => Ok(ParserState::FirstQuery { prev_token: token }),
-                RouteParserToken::QuerySeparator
+                RouteParserToken::QuerySeparator // TODO this may be possible in the future.
                 | RouteParserToken::Query { .. } => Err(ParserErrorReason::NotAllowedStateTransition),
                 RouteParserToken::FragmentBegin => Ok(ParserState::Fragment { prev_token: token }),
                 RouteParserToken::End => Ok(ParserState::End)
@@ -194,6 +197,13 @@ impl<'a> ParserState<'a> {
 
 
 /// Parse a matching string into a vector of RouteParserTokens.
+///
+/// The parsing logic involves using a state machine.
+/// After a token is read, this token is fed into the state machine, causing it to transition to a new state or throw an error.
+/// Because the tokens that can be parsed in each state are limited, errors are not actually thrown in the state transition,
+/// due to the fact that erroneous tokens can't be fed into the transition function.
+///
+/// This continues until the string is exhausted, or none of the parsers for the current state can parse the current input.
 pub fn parse(mut i: &str) -> Result<Vec<RouteParserToken>, PrettyParseError> {
     let input = i;
     let mut tokens: Vec<RouteParserToken> = vec![];
@@ -520,7 +530,7 @@ fn query(i: &str) -> IResult<&str, RouteParserToken> {
         separated_pair(exact_impl, char('='), cap_or_exact),
         |(ident, capture_or_exact)| RouteParserToken::Query {
             ident,
-            capture_or_match: capture_or_exact,
+            capture_or_exact: capture_or_exact,
         },
     )(i)
 }
@@ -767,7 +777,7 @@ mod test {
                 RouteParserToken::QueryBegin,
                 RouteParserToken::Query {
                     ident: "query",
-                    capture_or_match: CaptureOrExact::Exact("this"),
+                    capture_or_exact: CaptureOrExact::Exact("this"),
                 },
             ];
             assert_eq!(parsed, expected);
@@ -780,12 +790,12 @@ mod test {
                 RouteParserToken::QueryBegin,
                 RouteParserToken::Query {
                     ident: "lorem",
-                    capture_or_match: CaptureOrExact::Exact("ipsum"),
+                    capture_or_exact: CaptureOrExact::Exact("ipsum"),
                 },
                 RouteParserToken::QuerySeparator,
                 RouteParserToken::Query {
                     ident: "dolor",
-                    capture_or_match: CaptureOrExact::Exact("sit"),
+                    capture_or_exact: CaptureOrExact::Exact("sit"),
                 },
             ];
             assert_eq!(parsed, expected);
@@ -798,17 +808,17 @@ mod test {
                 RouteParserToken::QueryBegin,
                 RouteParserToken::Query {
                     ident: "lorem",
-                    capture_or_match: CaptureOrExact::Exact("ipsum"),
+                    capture_or_exact: CaptureOrExact::Exact("ipsum"),
                 },
                 RouteParserToken::QuerySeparator,
                 RouteParserToken::Query {
                     ident: "dolor",
-                    capture_or_match: CaptureOrExact::Exact("sit"),
+                    capture_or_exact: CaptureOrExact::Exact("sit"),
                 },
                 RouteParserToken::QuerySeparator,
                 RouteParserToken::Query {
                     ident: "amet",
-                    capture_or_match: CaptureOrExact::Exact("consectetur"),
+                    capture_or_exact: CaptureOrExact::Exact("consectetur"),
                 },
             ];
             assert_eq!(parsed, expected);

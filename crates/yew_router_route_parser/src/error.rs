@@ -15,6 +15,7 @@ pub struct PrettyParseError<'a> {
 fn offset(input: &str, substring: &str) -> usize {
     input.len() - substring.len()
 }
+
 impl<'a> fmt::Debug for PrettyParseError<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("Could not parse route.")?;
@@ -117,7 +118,7 @@ impl fmt::Display for ExpectedToken {
 pub enum ParserErrorReason {
     /// Some token encountered after the end token.
     TokensAfterEndToken,
-    /// Two slashes are able to ocurr next to eachother.
+    /// Two slashes are able to occur next to each other.
     DoubleSlash,
     /// A & appears before a ?
     AndBeforeQuestion,

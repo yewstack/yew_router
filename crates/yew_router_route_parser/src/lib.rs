@@ -1,5 +1,6 @@
-//! Parser for a "matcher string". The tokens produced by this parser are used to construct a
-//! matcher.
+//! Parser for yew-router's matcher syntax.
+//! This syntax allows specifying if a route should produce an enum variant or struct,
+//! and allows capturing sections from the route to be incorporated into its associated variant or struct.
 
 #![deny(
     missing_docs,
@@ -12,7 +13,6 @@
     unused_qualifications
 )]
 
-// pub mod parser_old;
 pub mod parser;
 mod error;
 pub use error::{PrettyParseError, ParseError};
@@ -32,7 +32,9 @@ pub enum MatcherToken {
     Exact(String),
     /// Capture section.
     Capture(CaptureVariant),
-    /// End token - if the string hasn't been consumed entirely, then the next token will cause an error
+    /// End token - if the string hasn't been consumed entirely, then the parse will fail.
+    /// This is useful for being able to specify more general matchers for variants that would
+    /// otherwise match above more specific variants.
     End,
 }
 
