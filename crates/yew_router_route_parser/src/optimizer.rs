@@ -54,9 +54,7 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
     let mut new_tokens = vec![];
     let mut run: Vec<RouteParserToken> = vec![];
 
-    let mut token_iter = tokens.iter();
-
-    while let Some(token) = token_iter.next() {
+    for token in tokens.iter() {
         match token {
             RouteParserToken::QueryBegin
             | RouteParserToken::FragmentBegin
@@ -100,6 +98,7 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
         }
     }
 
+    // Empty the run at the end.
     if !run.is_empty() {
         new_tokens.push(MatcherToken::Exact(
             run.iter().map(RouteParserToken::as_str).collect(),

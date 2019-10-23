@@ -22,6 +22,14 @@ where
     }
 }
 
+impl <T> Default for RouteAgentDispatcher<T>
+where
+    for<'de> T: AgentState<'de>,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
 /// A wrapper around the bridge
 // pub (crate) struct RouteAgentBridge<T: for<'de> YewRouterState<'de>>(pub Box<dyn
 // Bridge<RouteAgent<T>>>);

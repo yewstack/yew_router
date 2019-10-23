@@ -3,7 +3,6 @@
 use crate::{
     agent::{RouteAgentBridge, RouteRequest},
     route::Route,
-    router::RouterState,
     Switch,
 };
 use std::{
@@ -15,6 +14,13 @@ use yew::{
     ShouldRender, html
 };
 use std::marker::PhantomData;
+
+
+use crate::agent::AgentState;
+
+/// Any state that can be managed by the `Router` must meet the criteria of this trait.
+pub trait RouterState<'de>: AgentState<'de> + PartialEq {}
+impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 
 /// Rendering control flow component.
 ///

@@ -2,10 +2,9 @@
 use crate::service::RouteService;
 use serde::{Deserialize, Serialize};
 use stdweb::{unstable::TryFrom, JsSerialize, Value};
-
-// use std::ops::Deref;
 use std::ops::Deref;
 use yew::agent::Transferable;
+use std::fmt;
 
 /// Any state that can be stored by the History API must meet the criteria of this trait.
 pub trait RouteState: Clone + Default + JsSerialize + TryFrom<Value> + 'static {}
@@ -48,9 +47,11 @@ impl<T> Route<T> {
         Route { route, state: None }
     }
 
-    /// Returns a string representation of the route.
-    pub fn to_string(&self) -> String {
-        self.route.to_string()
+}
+
+impl <T> fmt::Display for Route<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.route.fmt(f)
     }
 }
 

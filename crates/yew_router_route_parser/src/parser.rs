@@ -478,7 +478,7 @@ fn capture(i: &str) -> IResult<&str, RouteParserToken> {
 fn capture_single(i: &str) -> IResult<&str, RouteParserToken> {
     map(
         delimited(char('{'), single_capture_impl, char('}')),
-        |cv: RefCaptureVariant| RouteParserToken::Capture(cv),
+         RouteParserToken::Capture,
     )(i)
 }
 
@@ -518,7 +518,7 @@ fn cap_or_exact(i: &str) -> IResult<&str, CaptureOrExact> {
     alt((
         map(
             delimited(char('{'), single_capture_impl, char('}')),
-            |cap| CaptureOrExact::Capture(cap),
+             CaptureOrExact::Capture,
         ),
         map(exact_impl, |exact| CaptureOrExact::Exact(exact)),
     ))(i)
@@ -530,7 +530,7 @@ fn query(i: &str) -> IResult<&str, RouteParserToken> {
         separated_pair(exact_impl, char('='), cap_or_exact),
         |(ident, capture_or_exact)| RouteParserToken::Query {
             ident,
-            capture_or_exact: capture_or_exact,
+            capture_or_exact,
         },
     )(i)
 }

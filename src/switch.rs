@@ -70,8 +70,7 @@ pub trait Switch: Sized {
 pub fn build_route_from_switch<T: Switch, U>(switch: T) -> Route<U> {
     let mut buf = String::with_capacity(50); // TODO, play with this to maximize perf/size.
 
-    let state: Option<U> = None;
-    let state = state.or(switch.build_route_section(&mut buf));
+    let state =  switch.build_route_section(&mut buf);
     Route { route: buf, state }
 }
 
