@@ -17,7 +17,7 @@ pub mod parser;
 mod error;
 pub use error::{PrettyParseError, ParseError};
 mod optimizer;
-pub use optimizer::{parse_str_and_optimize_tokens};
+pub use optimizer::{parse_str_and_optimize_tokens, convert_tokens};
 use std::collections::HashMap;
 
 /// Captures contain keys corresponding to named match sections,

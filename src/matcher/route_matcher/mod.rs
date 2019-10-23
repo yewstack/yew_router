@@ -107,7 +107,8 @@ impl RouteMatcher {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use yew_router_route_parser::parser::{convert_tokens, RefCaptureVariant, RouteParserToken};
+    use yew_router_route_parser::parser::{RefCaptureVariant, RouteParserToken};
+    use yew_router_route_parser::convert_tokens;
 
     impl<'a> From<Vec<RouteParserToken<'a>>> for RouteMatcher {
         fn from(tokens: Vec<RouteParserToken<'a>>) -> Self {
