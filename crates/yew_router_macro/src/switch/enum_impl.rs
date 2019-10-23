@@ -25,15 +25,15 @@ pub fn generate_enum_impl(enum_ident: Ident, switch_variants: Vec<SwitchItem>) -
 
     let token_stream = quote! {
         impl ::yew_router::Switch for #enum_ident {
-            fn from_route_part<T: ::yew_router::route::RouteState>(route: ::yew_router::route::Route<T>) -> (Option<Self>, Option<T>) {
+            fn from_route_part<T: ::yew_router::route::RouteState>(route: ::yew_router::route::Route<T>) -> (::std::option::Option<Self>, ::std::option::Option<T>) {
                 let mut state = route.state;
                 let route_string = route.route;
                 #(#variant_matchers)*
 
-                return (None, state)
+                return (::std::option::Option::None, state)
             }
 
-            fn build_route_section<T>(self, mut buf: &mut String) -> Option<T> {
+            fn build_route_section<T>(self, mut buf: &mut ::std::string::String) -> ::std::option::Option<T> {
                 #serializer
             }
         }
@@ -63,7 +63,7 @@ fn build_variant_from_captures(
                     quote! {
                         #field_name: {
                             let (v, s) = match captures.remove(#key) {
-                                Some(value) => {
+                                ::std::option::Option::Some(value) => {
                                     <#field_ty as ::yew_router::Switch>::from_route_part(
                                         ::yew_router::route::Route {
                                             route: value,
@@ -71,7 +71,7 @@ fn build_variant_from_captures(
                                         }
                                     )
                                 }
-                                None => {
+                                ::std::option::Option::None => {
                                     (
                                         <#field_ty as ::yew_router::Switch>::key_not_available(),
                                         state,
@@ -79,11 +79,11 @@ fn build_variant_from_captures(
                                 }
                             };
                             match v {
-                                Some(val) => {
+                                ::std::option::Option::Some(val) => {
                                     state = s; // Set state for the next var.
                                     val
                                 },
-                                None => return (None, s) // Failed
+                                ::std::option::Option::None => return (None, s) // Failed
                             }
                         }
                     }
@@ -91,10 +91,10 @@ fn build_variant_from_captures(
                 .collect();
 
             quote! {
-                let mut state = if let Some(mut captures) = matcher.capture_route_into_map(&route_string).ok().map(|x| x.1) {
+                let mut state = if let ::std::option::Option::Some(mut captures) = matcher.capture_route_into_map(&route_string).ok().map(|x| x.1) {
                     let create_item = || {
                          (
-                            Some(
+                            ::std::option::Option::Some(
                                 #enum_ident::#variant_ident {
                                     #(#fields),*
                                 }
@@ -119,7 +119,7 @@ fn build_variant_from_captures(
                 quote! {
                     {
                         let (v, s) = match drain.next() {
-                            Some((_key, value)) => {
+                            ::std::option::Option::Some((_key, value)) => {
                                 <#field_ty as ::yew_router::Switch>::from_route_part(
                                     ::yew_router::route::Route {
                                         route: value,
@@ -127,7 +127,7 @@ fn build_variant_from_captures(
                                     }
                                 )
                             },
-                            None => {
+                            ::std::option::Option::None => {
                                 (
                                     <#field_ty as ::yew_router::Switch>::key_not_available(),
                                     state,
@@ -135,22 +135,22 @@ fn build_variant_from_captures(
                             }
                         };
                         match v {
-                            Some(val) => {
+                            ::std::option::Option::Some(val) => {
                                 state = s; // Set state for the next var.
                                 val
                             },
-                            None => return (None, s) // Failed
+                            ::std::option::Option::None => return (None, s) // Failed
                         }
                     }
                 }
             });
 
             quote! {
-                let mut state = if let Some(mut captures) = matcher.capture_route_into_vec(&route_string).ok().map(|x| x.1) {
+                let mut state = if let ::std::option::Option::Some(mut captures) = matcher.capture_route_into_vec(&route_string).ok().map(|x| x.1) {
                     let mut drain = captures.drain(..);
                     let create_item = || {
                          (
-                            Some(
+                            ::std::option::Option::Some(
                                 #enum_ident::#variant_ident(
                                     #(#fields),*
                                 )
@@ -170,8 +170,8 @@ fn build_variant_from_captures(
         }
         Fields::Unit => {
             quote! {
-                let mut state = if let Some(_captures) = matcher.capture_route_into_map(&route_string).ok().map(|x| x.1) {
-                    return (Some(#enum_ident::#variant_ident), state);
+                let mut state = if let ::std::option::Option::Some(_captures) = matcher.capture_route_into_map(&route_string).ok().map(|x| x.1) {
+                    return (::std::option::Option::Some(#enum_ident::#variant_ident), state);
                 } else {
                     state
                 };

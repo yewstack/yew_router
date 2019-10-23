@@ -92,7 +92,7 @@ fn build_matcher_from_tokens(tokens: &[ShadowMatcherToken]) -> TokenStream2 {
             case_insensitive: true,
         };
         let matcher = ::yew_router::matcher::RouteMatcher {
-            tokens : vec![#(#tokens),*],
+            tokens: ::std::vec![#(#tokens),*],
             settings
         };
     }
