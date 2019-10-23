@@ -4,7 +4,7 @@ use std::fmt;
 #[derive(Clone, PartialEq)]
 pub struct PrettyParseError<'a> {
     /// Inner error
-    pub error: ParseError2,
+    pub error: ParseError,
     /// Input to the parser
     pub input: &'a str,
     /// Remaining input after partially tokenizing
@@ -60,7 +60,7 @@ impl<'a> fmt::Debug for PrettyParseError<'a> {
 
 /// Error for parsing the route
 #[derive(Debug, Clone, PartialEq)]
-pub struct ParseError2 {
+pub struct ParseError {
     /// A concrete reason why the parse failed.
     pub reason: Option<ParserErrorReason>,
     /// Expected token sequences

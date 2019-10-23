@@ -7,12 +7,7 @@ use nom::{
     sequence::{delimited, separated_pair},
     IResult,
 };
-
-mod error;
-mod optimizer;
-use crate::parser::error::{ExpectedToken, ParserErrorReason};
-pub use error::{ParseError2, PrettyParseError};
-pub use optimizer::{convert_tokens, parse_str_and_optimize_tokens};
+use crate::error::{ExpectedToken, ParserErrorReason, ParseError, PrettyParseError};
 use nom::sequence::pair;
 use nom::bytes::complete::{tag, take_until};
 use nom::combinator::{map_opt};
@@ -215,7 +210,7 @@ pub fn parse(mut i: &str) -> Result<Vec<RouteParserToken>, PrettyParseError> {
         })?;
         i = ii;
         state = state.transition(token.clone()).map_err(|reason| {
-            let error = ParseError2 {
+            let error = ParseError {
                 reason: Some(reason),
                 expected: vec![],
             };
@@ -238,7 +233,7 @@ pub fn parse(mut i: &str) -> Result<Vec<RouteParserToken>, PrettyParseError> {
 fn parse_impl<'a>(
     i: &'a str,
     state: &ParserState,
-) -> IResult<&'a str, RouteParserToken<'a>, ParseError2> {
+) -> IResult<&'a str, RouteParserToken<'a>, ParseError> {
     match state {
         ParserState::None => alt((get_slash, get_question, get_hash, capture, exact, get_end))(i)
             .map_err(|_| {
@@ -246,7 +241,7 @@ fn parse_impl<'a>(
                     .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
                     .ok()
             })
-            .map_err(|reason| ParseError2 {
+            .map_err(|reason| ParseError {
                 reason,
                 expected: vec![
                     ExpectedToken::Separator,
@@ -267,7 +262,7 @@ fn parse_impl<'a>(
                             .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
                             .ok()
                     })
-                    .map_err(|reason| ParseError2 {
+                    .map_err(|reason| ParseError {
                         reason,
                         expected: vec![
                             ExpectedToken::Literal,
@@ -289,7 +284,7 @@ fn parse_impl<'a>(
                             .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
                             .ok()
                     })
-                    .map_err(|reason| ParseError2 {
+                    .map_err(|reason| ParseError {
                         reason,
                         expected: vec![
                             ExpectedToken::Separator,
@@ -311,7 +306,7 @@ fn parse_impl<'a>(
                             .or_else(|_| get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion))
                             .ok()
                     })
-                    .map_err(|reason| ParseError2 {
+                    .map_err(|reason| ParseError {
                         reason,
                         expected: vec![
                             ExpectedToken::Literal,
@@ -323,7 +318,7 @@ fn parse_impl<'a>(
                     })
                     .map_err(nom::Err::Error)
             }
-            _ => Err(nom::Err::Failure(ParseError2 {
+            _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
                 expected: vec![],
             })),
@@ -335,7 +330,7 @@ fn parse_impl<'a>(
                         .map(|_| ParserErrorReason::MultipleQuestions)
                         .ok()
                 })
-                .map_err(|reason| ParseError2 {
+                .map_err(|reason| ParseError {
                     reason,
                     expected: vec![ExpectedToken::QueryCapture, ExpectedToken::QueryLiteral],
                 })
@@ -346,7 +341,7 @@ fn parse_impl<'a>(
                         .map(|_| ParserErrorReason::MultipleQuestions)
                         .ok()
                 })
-                .map_err(|reason| ParseError2 {
+                .map_err(|reason| ParseError {
                     reason,
                     expected: vec![
                         ExpectedToken::QuerySeparator,
@@ -355,7 +350,7 @@ fn parse_impl<'a>(
                     ],
                 })
                 .map_err(nom::Err::Error),
-            _ => Err(nom::Err::Failure(ParseError2 {
+            _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
                 expected: vec![],
             })),
@@ -367,7 +362,7 @@ fn parse_impl<'a>(
                         .map(|_| ParserErrorReason::MultipleQuestions)
                         .ok()
                 })
-                .map_err(|reason| ParseError2 {
+                .map_err(|reason| ParseError {
                     reason,
                     expected: vec![ExpectedToken::QueryCapture, ExpectedToken::QueryLiteral],
                 })
@@ -378,7 +373,7 @@ fn parse_impl<'a>(
                         .map(|_| ParserErrorReason::MultipleQuestions)
                         .ok()
                 })
-                .map_err(|reason| ParseError2 {
+                .map_err(|reason| ParseError {
                     reason,
                     expected: vec![
                         ExpectedToken::QuerySeparator,
@@ -387,14 +382,14 @@ fn parse_impl<'a>(
                     ],
                 })
                 .map_err(nom::Err::Error),
-            _ => Err(nom::Err::Failure(ParseError2 {
+            _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
                 expected: vec![],
             })),
         },
         ParserState::Fragment { prev_token } => match prev_token {
             RouteParserToken::FragmentBegin => alt((exact, capture_single, get_end))(i)
-                .map_err(|_| ParseError2 {
+                .map_err(|_| ParseError {
                     reason: None,
                     expected: vec![
                         ExpectedToken::Literal,
@@ -404,24 +399,24 @@ fn parse_impl<'a>(
                 })
                 .map_err(nom::Err::Error),
             RouteParserToken::Exact(_) => capture_single(i)
-                .map_err(|_| ParseError2 {
+                .map_err(|_| ParseError {
                     reason: None,
                     expected: vec![ExpectedToken::CaptureNamed],
                 })
                 .map_err(nom::Err::Error),
             RouteParserToken::Capture(_) => exact(i)
                 .map_err(|_| bad_capture(i).map(|(_, reason)| reason).ok())
-                .map_err(|reason| ParseError2 {
+                .map_err(|reason| ParseError {
                     reason,
                     expected: vec![ExpectedToken::CaptureNamed],
                 })
                 .map_err(nom::Err::Error),
-            _ => Err(nom::Err::Failure(ParseError2 {
+            _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
                 expected: vec![],
             })),
         },
-        ParserState::End => Err(nom::Err::Failure(ParseError2 {
+        ParserState::End => Err(nom::Err::Failure(ParseError {
             reason: Some(ParserErrorReason::TokensAfterEndToken),
             expected: vec![],
         })),
@@ -540,11 +535,11 @@ fn bad_capture(i: &str)  -> IResult<&str, ParserErrorReason> {
     map_opt(
         delimited(
             char('{'),
-                alt((
-                      number_capture,
-                      many_capture,
-                      simple_capture,
-                  )),
+            alt((
+                number_capture,
+                many_capture,
+                simple_capture,
+            )),
             char('}')
         ),
         move |s: &str| {
@@ -696,7 +691,7 @@ mod test {
 
         #[test]
         fn leading_ampersand_query() {
-           let x = parse("&query=thing").expect_err("Should not parse");
+            let x = parse("&query=thing").expect_err("Should not parse");
             assert_eq!(x.error.reason, Some(ParserErrorReason::AndBeforeQuestion));
         }
 

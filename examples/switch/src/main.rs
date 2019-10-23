@@ -82,8 +82,8 @@ pub struct Single {
 #[to = "/othersingle/{number}"]
 pub struct OtherSingle(u32);
 
-#[derive(Switch, Debug)]
-pub enum Bad {
-    #[to = "/bad_route?query=&query=no"]
-    X,
-}
+//#[derive(Switch, Debug)]
+//pub enum Bad {
+//    #[to = "/bad_route?query=&query=no"]
+//    X,
+//}
