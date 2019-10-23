@@ -3,12 +3,8 @@ use syn::{Attribute, Lit, Meta, MetaNameValue};
 
 pub enum AttrToken {
     To(String),
-    Lit(String),
-    Capture(Option<String>),
     End,
     Rest(Option<String>),
-    Query(String),
-    Frag(Option<String>),
 }
 
 impl AttrToken {
@@ -34,26 +30,9 @@ impl AttrToken {
                             get_meta_name_value_str(&mnv)
                                 .expect("Value provided after `to` must be a String"),
                         )),
-                        "lit" => Some(AttrToken::Lit(
-                            get_meta_name_value_str(&mnv)
-                                .expect("Value provided after `lit` must be a String`"),
-                        )),
-                        "capture" | "cap" => Some(AttrToken::Capture(Some(
-                            get_meta_name_value_str(&mnv).expect(
-                                "Value provided after `capture` or `cap` must be a String`",
-                            ),
-                        ))),
                         "rest" => Some(AttrToken::Rest(Some(
                             get_meta_name_value_str(&mnv)
                                 .expect("Value provided after `rest` must be a String"),
-                        ))),
-                        "query" => Some(AttrToken::Query(
-                            get_meta_name_value_str(&mnv)
-                                .expect("Value provided after `rest` must be a String"),
-                        )),
-                        "frag" => Some(AttrToken::Frag(Some(
-                            get_meta_name_value_str(&mnv)
-                                .expect("Value provided after `frag` must be a String"),
                         ))),
                         _ => None,
                     })
@@ -62,10 +41,8 @@ impl AttrToken {
                     .get_ident()
                     .into_iter()
                     .filter_map(|ident| match ident.to_string().as_str() {
-                        "capture" | "cap" => Some(AttrToken::Capture(None)),
                         "end" => Some(AttrToken::End),
                         "rest" => Some(AttrToken::Rest(None)),
-                        "frag" => Some(AttrToken::Frag(None)),
                         _ => None,
                     })
                     .next(),
@@ -79,7 +56,6 @@ impl AttrToken {
     pub fn into_shadow_matcher_tokens(
         self,
         id: usize,
-        encountered_query: &mut bool,
     ) -> Vec<ShadowMatcherToken> {
         match self {
             AttrToken::To(matcher_string) => {
@@ -89,15 +65,6 @@ impl AttrToken {
                     .map(crate::switch::shadow::ShadowMatcherToken::from)
                     .collect()
             }
-            AttrToken::Lit(lit) => vec![ShadowMatcherToken::Exact(format!("/{}", lit))],
-            AttrToken::Capture(Some(capture_name)) => vec![
-                ShadowMatcherToken::Exact("/".to_string()),
-                ShadowMatcherToken::Capture(ShadowCaptureVariant::Named(capture_name)),
-            ],
-            AttrToken::Capture(None) => vec![
-                ShadowMatcherToken::Exact("/".to_string()),
-                ShadowMatcherToken::Capture(ShadowCaptureVariant::Named(id.to_string())),
-            ],
             AttrToken::End => vec![ShadowMatcherToken::End],
             AttrToken::Rest(Some(capture_name)) => vec![ShadowMatcherToken::Capture(
                 ShadowCaptureVariant::ManyNamed(capture_name),
@@ -105,28 +72,6 @@ impl AttrToken {
             AttrToken::Rest(None) => vec![ShadowMatcherToken::Capture(
                 ShadowCaptureVariant::ManyNamed(id.to_string()),
             )],
-            AttrToken::Query(capture_name) => {
-                if *encountered_query {
-                    vec![
-                        ShadowMatcherToken::Exact(format!("&{}=", capture_name)),
-                        ShadowMatcherToken::Capture(ShadowCaptureVariant::Named(capture_name)),
-                    ]
-                } else {
-                    *encountered_query = true;
-                    vec![
-                        ShadowMatcherToken::Exact(format!("?{}=", capture_name)),
-                        ShadowMatcherToken::Capture(ShadowCaptureVariant::Named(capture_name)),
-                    ]
-                }
-            }
-            AttrToken::Frag(Some(capture_name)) => vec![
-                ShadowMatcherToken::Exact("#".to_string()),
-                ShadowMatcherToken::Capture(ShadowCaptureVariant::Named(capture_name)),
-            ],
-            AttrToken::Frag(None) => vec![
-                ShadowMatcherToken::Exact("#".to_string()),
-                ShadowMatcherToken::Capture(ShadowCaptureVariant::Named(id.to_string())),
-            ],
         }
     }
 }

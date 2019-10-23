@@ -55,7 +55,7 @@ pub enum AppRoute {
     Another(String),
     #[to = "/doot/{one}/{two}"]
     Yeet(String, String),
-    #[lit = "inner"]
+    #[to = "/inner"]
     #[rest]
     Nested(InnerRoute),
     #[rest]
@@ -66,7 +66,7 @@ pub enum AppRoute {
 
 #[derive(Switch, Debug)]
 pub enum InnerRoute {
-    #[lit = "left"] // same as #[to = "/left"]
+    #[to = "/left"]
     Left,
     #[to = "/right"]
     Right,

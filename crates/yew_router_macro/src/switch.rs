@@ -1,8 +1,5 @@
 use proc_macro::TokenStream;
-// use proc_macro2::TokenStream as TokenStream2;
-// use quote::quote;
 use syn::{parse_macro_input, Fields};
-// use syn::punctuated::IntoIter;
 use crate::switch::{
     enum_impl::generate_enum_impl,
     shadow::{ShadowCaptureVariant, ShadowMatcherToken},
@@ -33,11 +30,10 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
 
     match input.data {
         Data::Struct(ds) => {
-            let mut encountered_query = false;
             let matcher = AttrToken::convert_attributes_to_tokens(input.attrs)
                 .into_iter()
                 .enumerate()
-                .map(|(index, at)| at.into_shadow_matcher_tokens(index, &mut encountered_query))
+                .map(|(index, at)| at.into_shadow_matcher_tokens(index))
                 .flatten()
                 .collect::<Vec<_>>();
             let switch_item = SwitchItem {
@@ -52,12 +48,11 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                 .variants
                 .into_iter()
                 .map(|variant: Variant| {
-                    let mut encountered_query = false;
                     let matcher = AttrToken::convert_attributes_to_tokens(variant.attrs)
                         .into_iter()
                         .enumerate()
                         .map(|(index, at)| {
-                            at.into_shadow_matcher_tokens(index, &mut encountered_query)
+                            at.into_shadow_matcher_tokens(index)
                         })
                         .flatten()
                         .collect::<Vec<_>>();
@@ -136,10 +131,8 @@ fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> Toke
                         | ShadowCaptureVariant::ManyNamed(_)
                         | ShadowCaptureVariant::NumberedNamed { .. } => {
                             let name = unnamed_field_index_item(index);
-                            // TODO this either needs to find type info from a ty passed in, or
-                            // RouteInfo needs to be nixed.
                             quote! {
-                                state = state.or(#name.build_route_section(&mut buf)); // TODO, this needs type information in order not to clobber the namespace. I don't want to have to import RouteInfo.
+                                state = state.or(#name.build_route_section(&mut buf));
                             }
                         }
                     }
@@ -274,7 +267,7 @@ pub fn build_serializer_for_struct(switch_item: &SwitchItem, item: &Ident) -> To
         }
     };
     quote! {
-        use ::std::fmt::Write as __Write; // TODO: is importing this here hygienic?
+        use ::std::fmt::Write as _;
         let mut state: Option<T> = None;
         #destructor_and_writers
         return state;

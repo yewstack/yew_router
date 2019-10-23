@@ -19,7 +19,6 @@ pub fn generate_enum_impl(enum_ident: Ident, switch_variants: Vec<SwitchItem>) -
             #build_from_captures
         }
     });
-    //        .collect::<Vec<_>>();
 
     let match_item = Ident::new("self", Span::call_site());
     let serializer = build_serializer_for_enum(&switch_variants, &enum_ident, &match_item);
@@ -35,10 +34,6 @@ pub fn generate_enum_impl(enum_ident: Ident, switch_variants: Vec<SwitchItem>) -
             }
 
             fn build_route_section<T>(self, mut buf: &mut String) -> Option<T> {
-                //pseudo-code:
-                // For every field:
-                //    write!(route, "{}", self.#field)
-                // Return None for now, because marking routes isn't supported yet.
                 #serializer
             }
         }
@@ -151,7 +146,6 @@ fn build_variant_from_captures(
             });
 
             quote! {
-                // TODO put an annotation here allowing unused muts.
                 let mut state = if let Some(mut captures) = matcher.capture_route_into_vec(&route_string).ok().map(|x| x.1) {
                     let mut drain = captures.drain(..);
                     let create_item = || {

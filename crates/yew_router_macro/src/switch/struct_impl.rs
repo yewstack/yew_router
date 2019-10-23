@@ -129,7 +129,6 @@ fn build_struct_from_captures(ident: &Ident, fields: &Fields) -> TokenStream2 {
             });
 
             quote! {
-                // TODO put an annotation here allowing unused muts.
                 if let Some(mut captures) = matcher.capture_route_into_vec(&route_string).ok().map(|x| x.1) {
                     let mut drain = captures.drain(..);
                     return (
