@@ -40,7 +40,7 @@ impl Component for Model {
 
 #[derive(Debug, Switch)]
 pub enum AppRoute {
-    #[to = "/a{*:inner}"]
+    #[to = "/a/{*:inner}"]
     A(ARoute),
     #[to = "/b{*:inner}"]
     B(BRoute),
@@ -48,12 +48,14 @@ pub enum AppRoute {
     C,
     #[to = "/e/{string}"]
     E(String),
+    #[to = "/page-not-found"]
+    PageNotFound // TODO, it would be nice to have an option here.
 }
 
 #[derive(Debug, Switch, PartialEq, Clone)]
 pub enum ARoute {
     /// Match "/c" after "/a" ("/a/c")
-    #[to = "/c"]
+    #[to = "c"]
     C,
     // Because it is impossible to specify an Optional nested route:
     // Still accept the route, when matching, but consider it invalid.
@@ -68,7 +70,7 @@ impl Renderable<Model> for Model {
         html! {
             <div>
                 <nav class="menu",>
-                    <RouterButton: text=String::from("Go to A"), link="/a", />
+                    <RouterButton: text=String::from("Go to A"), link="/a/", />
                     <RouterLink: text=String::from("Go to B"), link="/b/#", />
                     <RouterButton: text=String::from("Go to C"), link="/c", />
                     <RouterButton: text=String::from("Go to A/C"), link="/a/c", />
@@ -78,17 +80,20 @@ impl Renderable<Model> for Model {
                 </nav>
                 <div>
                     <Router<AppRoute, ()>
-                        render = Router::render(|switch: Option<AppRoute>| {
+                        render = Router::render(|switch: AppRoute| {
                             match switch {
-                                Some(AppRoute::A(route)) => html!{<AModel route = route />},
-                                Some(AppRoute::B(route)) => {
+                                AppRoute::A(route) => html!{<AModel route = route />},
+                                AppRoute::B(route) => {
                                     let route: b_component::Props = route.into();
                                     html!{<BModel with route/>}
                                 },
-                                Some(AppRoute::C) => html!{<CModel />},
-                                Some(AppRoute::E(string)) => html!{format!("hello {}", string)},
-                                None => html!{"404"}
+                                AppRoute::C => html!{<CModel />},
+                                AppRoute::E(string) => html!{format!("hello {}", string)},
+                                AppRoute::PageNotFound => html!{"Page not found"}
                             }
+                        })
+                        redirect = Router::redirect(|route: Route| {
+                            AppRoute::PageNotFound
                         })
                     />
                 </div>

@@ -12,14 +12,11 @@ use std::{
 };
 use yew::{
     virtual_dom::VNode, Callback, Component, ComponentLink, Html, Properties, Renderable,
-    ShouldRender,
+    ShouldRender, html
 };
+use std::marker::PhantomData;
 
 /// Rendering control flow component.
-///
-/// Based on the current url and its child [Routes](struct.Route.html), it will choose one route and
-/// render its associated component.
-///
 ///
 /// # Example
 /// ```
@@ -101,7 +98,14 @@ where
     pub fn render<F: RenderFn<Router<T, SW, M>, SW> + 'static>(f: F) -> Render<T, SW, M> {
         Render::new(f)
     }
+
+
+    /// Wrap a redirect function so that it can be used by the Router.
+    pub fn redirect<F: RedirectFn<SW, T> + 'static>(f: F) -> Option<Redirect<SW, T, M>> {
+        Some(Redirect::new(f))
+    }
 }
+
 
 /// Message for Router.
 #[derive(Debug, Clone)]
@@ -118,11 +122,9 @@ impl<T, M> From<M> for Msg<T, M> {
     }
 }
 
-// TODO consider removing the Option, and creating two different render functions - one for
-// rendering the switch, and one for a 404 case.
-/// Render function definition
-pub trait RenderFn<CTX: Component, SW>: Fn(Option<SW>) -> Html<CTX> {}
-impl<T, CTX: Component, SW> RenderFn<CTX, SW> for T where T: Fn(Option<SW>) -> Html<CTX> {}
+/// Render function that takes a switched route and converts it to HTML
+pub trait RenderFn<CTX: Component, SW>: Fn(SW) -> Html<CTX> {}
+impl<T, CTX: Component, SW> RenderFn<CTX, SW> for T where T: Fn(SW) -> Html<CTX> {}
 /// Owned Render function.
 pub struct Render<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static>(
     pub(crate) Rc<dyn RenderFn<Router<T, SW, M>, SW>>,
@@ -135,16 +137,41 @@ impl<T: for<'de> RouterState<'de>, SW: Switch, M> Render<T, SW, M> {
 }
 impl<T: for<'de> RouterState<'de>, SW: Switch, M> Debug for Render<T, SW, M> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Render2").finish()
+        f.debug_struct("Render").finish()
+    }
+}
+
+/// Redirection function that takes a route that didn't match any of the Switch variants,
+/// and converts it to a switch variant.
+pub trait RedirectFn<SW, STATE>: Fn(Route<STATE>)-> SW {}
+impl<T, SW, STATE,> RedirectFn<SW, STATE> for T where T: Fn(Route<STATE>)-> SW {}
+/// Clonable Redirect function
+pub struct Redirect<SW: Switch + 'static, STATE: for<'de> RouterState<'de>, M>(
+    pub(crate) Rc<dyn RedirectFn<SW, STATE>>,
+    /// This phantom data is here to allow type inference when using it inside a Router component.
+    PhantomData<M>
+);
+impl<STATE: for<'de> RouterState<'de>, SW: Switch + 'static, M> Redirect<SW, STATE, M> {
+    fn new<F: RedirectFn<SW, STATE> + 'static>(f: F) -> Self {
+        Redirect(Rc::new(f), PhantomData)
+    }
+}
+impl<STATE: for<'de> RouterState<'de>, SW: Switch, M> Debug for Redirect<SW, STATE, M> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Redirect").finish()
     }
 }
 
 /// Properties for Router.
 #[derive(Properties)]
 pub struct Props<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> {
-    /// Render fn
+    /// Render function that
     #[props(required)]
     pub render: Render<T, SW, M>,
+    /// Optional redirect function that will convert the route to a known switch variant if explicit matching fails.
+    /// This should mostly be used to handle 404s and redirection.
+    /// It is not strictly necessary as your Switch is capable of handling unknown routes using `#[to="/{*:any}"]`.
+    pub redirect: Option<Redirect<SW, T, M>>,
     /// Optional Callback for propagating messages to parent components.
     pub callback: Option<Callback<M>>,
 }
@@ -199,7 +226,7 @@ where
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         self.props = props;
-        true // TODO, this can probably be better now.
+        true
     }
 }
 
@@ -208,6 +235,16 @@ impl<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> Renderable<
 {
     fn view(&self) -> VNode<Self> {
         let switch: Option<SW> = SW::switch(self.route.clone());
-        (&self.props.render.0)(switch)
+        match switch {
+            Some(switch) => (&self.props.render.0)(switch),
+            None => {
+                if let Some(redirect_fn) = &self.props.redirect {
+                    let switch: SW = (redirect_fn.0)(self.route.clone()); // TODO This should be used to set the route
+                    (&self.props.render.0)(switch)
+                } else {
+                    html!{format!{"No route for {}", self.route.route}}
+                }
+            }
+        }
     }
 }
