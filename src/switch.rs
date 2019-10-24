@@ -1,8 +1,8 @@
-//! Route based on enums.
+//! Parses routes into enums or structs.
 use crate::{route::Route, RouteState};
 use std::fmt::Write;
 
-/// Routing trait for enums.
+/// Derivable routing trait that allows instances of implementors to be constructed from Routes.
 ///
 /// # Note
 /// Don't try to implement this yourself, rely on the derive macro.
@@ -250,4 +250,3 @@ mod test {
     }
 }
 
-// TODO add implementations for Dates - with various formats, UUIDs

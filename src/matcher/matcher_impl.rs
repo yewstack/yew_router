@@ -1,8 +1,6 @@
 use crate::matcher::{
-    route_matcher::{
-        util::{consume_until, next_delimiter, tag_possibly_case_sensitive},
-        MatcherSettings,
-    },
+    util::{consume_until, next_delimiter, tag_possibly_case_sensitive},
+    MatcherSettings,
     Captures,
 };
 use log::trace;
@@ -37,8 +35,8 @@ impl<'a> CaptureCollection<'a> for Captures<'a> {
     }
 }
 
+// TODO try to change the impl target to just Vec<String>
 impl<'a> CaptureCollection<'a> for Vec<(&'a str, String)> {
-    // TODO try to change this just to Vec<String>
     fn new2() -> Self {
         Vec::new()
     }
