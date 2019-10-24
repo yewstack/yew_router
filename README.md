@@ -1,8 +1,6 @@
 # yew-router
 A routing library for the [Yew](https://github.com/yewstack/yew) frontend framework.
 
-This project has just joined efforts with [saschagrunert/yew-router](https://github.com/saschagrunert/yew-router) and is working towards a new design.
-
 
 ### Example
 ```rust

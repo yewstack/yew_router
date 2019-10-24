@@ -3,6 +3,9 @@ name = "yew-router-route-parser"
 version = "0.6.0"
 authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 edition = "2018"
+license = "MIT/Apache-2.0"
+description = "The parser for the routing syntax used with yew-router"
+repository = "https://github.com/yewstack/yew_router"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
