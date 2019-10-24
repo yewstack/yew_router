@@ -8,6 +8,7 @@ use nom::{
     sequence::{delimited, pair, separated_pair},
     IResult,
 };
+use std::cell::RefCell;
 
 /// Tokens generated from parsing a route matcher string.
 /// They will be optimized to another token type that is used to match URLs.
@@ -318,7 +319,7 @@ fn parse_impl<'a>(
                         ExpectedToken::Separator,
                         ExpectedToken::QueryBegin,
                         ExpectedToken::FragmentBegin,
-                        ExpectedToken::End,
+//                        ExpectedToken::End,
                     ],
                 })
                 .map_err(nom::Err::Error),
@@ -452,8 +453,19 @@ fn get_end(i: &str) -> IResult<&str, RouteParserToken> {
 }
 
 fn rust_ident(i: &str) -> IResult<&str, &str> {
-    let invalid_ident_chars = r##" \|/{}[]()?+=-1234567890!@#$%^&*~`'";:"##;
-    take_till1(move |c| invalid_ident_chars.contains(c))(i)
+    let invalid_ident_chars = r##" \|/{}[]()?+=-!@#$%^&*~`'";:"##;
+    let invalid_ident_chars_first_character = r##" \|/{}[]()?+=-1234567890!@#$%^&*~`'";:"##;
+
+    // Use a refcell to get around Fn vs FnMut restrictions.
+    let is_first_character = RefCell::new(true);
+    take_till1(move |c| {
+        if *is_first_character.borrow() {
+            is_first_character.replace(false);
+            invalid_ident_chars_first_character.contains(c)
+        } else {
+            invalid_ident_chars.contains(c)
+        }
+    })(i)
 }
 
 fn exact_impl(i: &str) -> IResult<&str, &str> {
@@ -592,6 +604,15 @@ mod test {
             bad_capture("{ident}").expect_err("should not parse");
             bad_capture("{*:ident}").expect_err("should not parse");
             bad_capture("{2:ident}").expect_err("should not parse");
+        }
+
+        #[test]
+        fn non_leading_numbers_in_ident() {
+            rust_ident("hello5").expect("sholud parse");
+        }
+        #[test]
+        fn leading_numbers_in_ident_fails() {
+            rust_ident("5hello").expect_err("sholud not parse");
         }
     }
 

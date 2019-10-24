@@ -47,7 +47,7 @@ impl ToTokens for ShadowCaptureVariant {
                 quote! {::yew_router::matcher::CaptureVariant::ManyNamed(#name.to_string())}
             }
             ShadowCaptureVariant::NumberedNamed { sections, name } => {
-                quote! {::yew_router::matcher::CaptureVariant::NumberedNamed{#sections, #name.to_string()}}
+                quote! {::yew_router::matcher::CaptureVariant::NumberedNamed{sections: #sections, name: #name.to_string()}}
             }
         };
         ts.extend(t)

@@ -128,12 +128,14 @@ impl<U: Switch> Switch for Option<U> {
 }
 
 /// Allows a section to match if its contents are entirely missing, or starts with a '/'.
-#[derive(Debug)]
-pub struct AllowMissing<T>(pub Option<T>);
-impl<U: Switch> Switch for AllowMissing<U> {
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct AllowMissing<T: std::fmt::Debug>(pub Option<T>);
+impl<U: Switch + std::fmt::Debug> Switch for AllowMissing<U> {
     fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>) {
+        println!("{:?}", &part.route);
         let route = part.route.clone();
         let (inner, inner_state) = U::from_route_part(part);
+        println!("{:?}", &inner);
         if inner.is_some() {
             (Some(AllowMissing(inner)), inner_state)
         } else {

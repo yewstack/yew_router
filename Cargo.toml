@@ -34,15 +34,20 @@ nom = {version = "5.0.0"}
 proc-macro-hack = {version = "0.5.9"}
 uuid = "0.8.1"
 
+#[[test]]
+#name = "macro_test"
+#path = "tests/macro_test"
+
+
+
 
 [workspace]
-
 members = [
     "crates/yew_router_route_parser",
     "crates/yew_router_macro",
     "examples/router_component",
     "examples/guide",
     "examples/switch",
-    "examples/minimal"
+    "examples/minimal",
+    "tests/macro_test"
 ]
-

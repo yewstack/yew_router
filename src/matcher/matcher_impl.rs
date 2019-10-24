@@ -180,6 +180,7 @@ fn capture_numbered_named<'a, 'b, CAP: CaptureCollection<'b>>(
                 let (ii, c) = terminated(valid_capture_characters, tag("/"))(i)?;
                 i = ii;
                 captured += c;
+                captured += "/";
             } else {
                 // Don't consume the next character on the last section
                 let (ii, c) = valid_capture_characters(i)?;
