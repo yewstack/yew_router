@@ -1,7 +1,6 @@
 use crate::matcher::{
     util::{consume_until, next_delimiter, tag_possibly_case_sensitive},
-    MatcherSettings,
-    Captures,
+    Captures, MatcherSettings,
 };
 use log::trace;
 use nom::{
@@ -107,7 +106,6 @@ fn matcher_impl<'a, 'b: 'a, CAP: CaptureCollection<'b>>(
 
     Ok((i, captures))
 }
-
 
 fn capture_named<'a, 'b: 'a, CAP: CaptureCollection<'b>>(
     i: &'a str,

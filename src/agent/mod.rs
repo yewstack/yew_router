@@ -24,12 +24,7 @@ pub use dispatcher::RouteAgentDispatcher;
 pub trait AgentState<'de>: RouteState + Serialize + Deserialize<'de> + Debug {}
 impl<'de, T> AgentState<'de> for T where T: RouteState + Serialize + Deserialize<'de> + Debug {}
 
-/// Non-instantiable type.
-#[derive(Serialize, Deserialize, Clone, Copy, Debug)]
-pub enum Void {}
-impl Transferable for Void {}
-
-/// Message used for the RouteAgent.
+/// Internal Message used for the RouteAgent.
 #[derive(Debug)]
 pub enum Msg<T> {
     /// Message for when the route is changed.
@@ -52,10 +47,6 @@ pub enum RouteRequest<T> {
     ChangeRouteNoBroadcast(Route<T>),
     /// Gets the current route.
     GetCurrentRoute,
-    /// Removes the entity from the Router Agent
-    // TODO this is a temporary message because yew currently doesn't call the destructor, so it
-    // must be manually engaged
-    Disconnect,
 }
 
 impl<T> Transferable for RouteRequest<T> where for<'de> T: Serialize + Deserialize<'de> {}
@@ -66,10 +57,10 @@ impl<T> Transferable for RouteRequest<T> where for<'de> T: Serialize + Deseriali
 /// route.
 ///
 /// # Warning
-/// All routing-related components should use the same type parameter across your application.
+/// All routing-related components/agents/services should use the same type parameter across your application.
 ///
-/// If you don't, then multiple RouteAgents will be spawned, and will not communicate messages to
-/// routing components of different types.
+/// If you use multiple agents with different types, then the Agents won't be able to communicate to
+/// each other and associated components may not work as intended.
 pub struct RouteAgent<T>
 where
     for<'de> T: AgentState<'de>,
@@ -77,6 +68,7 @@ where
     // In order to have the AgentLink<Self> below, apparently T must be constrained like this.
     // Unfortunately, this means that everything related to an agent requires this constraint.
     link: AgentLink<RouteAgent<T>>,
+    /// The service through which communication with the browser happens.
     route_service: RouteService<T>,
     /// A list of all entities connected to the router.
     /// When a route changes, either initiated by the browser or by the app,
@@ -168,9 +160,6 @@ where
             RouteRequest::GetCurrentRoute => {
                 let route = Route::current_route(&self.route_service);
                 self.link.response(who, route.clone());
-            }
-            RouteRequest::Disconnect => {
-                self.disconnected(who);
             }
         }
     }

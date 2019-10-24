@@ -12,7 +12,9 @@ use yew::{
     Bridge, Callback,
 };
 
-/// A simplified interface to the router agent.
+/// A wrapped bridge to the route agent.
+///
+/// A component that owns this can send and receive messages from the agent.
 pub struct RouteAgentBridge<T>(Box<dyn Bridge<RouteAgent<T>>>)
 where
     for<'de> T: AgentState<'de>;
@@ -36,10 +38,6 @@ where
         RouteAgentBridge(router_agent)
     }
 }
-
-/// A wrapper around the bridge
-// pub (crate) struct RouteAgentBridge<T: for<'de> YewRouterState<'de>>(pub Box<dyn
-// Bridge<RouteAgent<T>>>);
 
 impl<T: for<'de> AgentState<'de>> Debug for RouteAgentBridge<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {

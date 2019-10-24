@@ -8,7 +8,6 @@ use nom::{combinator::all_consuming, IResult};
 use std::collections::HashSet;
 use yew_router_route_parser::{parse_str_and_optimize_tokens, PrettyParseError};
 
-
 pub use yew_router_route_parser::{CaptureVariant, Captures, MatcherToken};
 
 /// Attempts to match routes, transform the route to Component props and render that Component.
@@ -20,7 +19,7 @@ pub struct RouteMatcher {
     pub settings: MatcherSettings,
 }
 
-/// Settings used for the matcher (and optimization of the parsed tokens that make up the matcher).
+/// Settings used for the matcher.
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct MatcherSettings {
     /// A matcher must consume all of the input to succeed.

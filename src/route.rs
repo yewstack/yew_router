@@ -14,7 +14,7 @@ impl<T> RouteState for T where T: Clone + Default + JsSerialize + TryFrom<Value>
 pub struct Route<T> {
     /// The route string
     pub route: String,
-    /// The state
+    /// The state stored in the history api
     pub state: Option<T>,
 }
 

@@ -1,4 +1,4 @@
-//! Service to handle routing.
+//! Service that interfaces with the browser to handle routing.
 
 use stdweb::{
     web::{event::PopStateEvent, window, EventListenerHandle, History, IEventTarget, Location},
@@ -9,17 +9,16 @@ use yew::callback::Callback;
 use crate::route::RouteState;
 use std::marker::PhantomData;
 
-/// A service that facilitates manipulation of the browser's URL bar and responding to browser
-/// 'forward' and 'back' events.
+/// A service that facilitates manipulation of the browser's URL bar and responding to browser events
+/// when users press 'forward' or 'back'.
 ///
 /// The `T` determines what route state can be stored in the route service.
 #[derive(Debug)]
 pub struct RouteService<T> {
     history: History,
     location: Location,
-    event_listener: Option<EventListenerHandle>, /* maybe this should not be stored in the
-                                                  * service itself, and instead returned by
-                                                  * register_callback() */
+    event_listener: Option<EventListenerHandle>,
+
     phantom_data: PhantomData<T>,
 }
 
@@ -54,7 +53,7 @@ impl<T> RouteService<T> {
         crate::route::format_route_string(&path, &query, &fragment)
     }
 
-    /// Gets the concatenated path, query, and fragment strings
+    /// Gets the concatenated path, query, and fragment.
     pub fn get_route(&self) -> String {
         Self::get_route_from_location(&self.location)
     }
@@ -98,8 +97,8 @@ where
 
     /// Sets the browser's url bar to contain the provided route,
     /// and creates a history entry that can be navigated via the forward and back buttons.
-    /// The route should be a relative path that starts with a '/'.
-    /// A state object be stored with the url.
+    ///
+    /// The route should be a relative path that starts with a `/`.
     pub fn set_route(&mut self, route: &str, state: T) {
         self.history.push_state(state, "", Some(route));
     }

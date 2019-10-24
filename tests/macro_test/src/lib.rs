@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use yew_router::Switch;
-    use yew_router::prelude::Route;
+    use yew_router::{prelude::Route, Switch};
 
     #[test]
     fn single_enum_variant() {
@@ -23,9 +22,15 @@ mod tests {
             Variant(String),
         }
         let route = Route::from("/variant");
-        assert!(Test::switch(route).is_none(), "there should not be a way to ever create this variant.");
+        assert!(
+            Test::switch(route).is_none(),
+            "there should not be a way to ever create this variant."
+        );
         let route = Route::from("/variant/some/stuff");
-        assert!(Test::switch(route).is_none(), "there should not be a way to ever create this variant.");
+        assert!(
+            Test::switch(route).is_none(),
+            "there should not be a way to ever create this variant."
+        );
     }
 
     #[test]
@@ -33,11 +38,16 @@ mod tests {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "/variant/{item}"]
-            Variant{item: String},
+            Variant { item: String },
         }
         let route = Route::from("/variant/thing");
         let switched = Test::switch(route).expect("should produce item");
-        assert_eq!(switched, Test::Variant{item: "thing".to_string()})
+        assert_eq!(
+            switched,
+            Test::Variant {
+                item: "thing".to_string()
+            }
+        )
     }
 
     #[test]
@@ -61,7 +71,10 @@ mod tests {
         }
         let route = Route::from("/variant/thing/other");
         let switched = Test::switch(route).expect("should produce item");
-        assert_eq!(switched, Test::Variant("thing".to_string(), "other".to_string()))
+        assert_eq!(
+            switched,
+            Test::Variant("thing".to_string(), "other".to_string())
+        )
     }
 
     #[test]
@@ -69,14 +82,17 @@ mod tests {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "/variant/{item1}/{item2}"]
-            Variant{item1: String, item2: String},
+            Variant { item1: String, item2: String },
         }
         let route = Route::from("/variant/thing/other");
         let switched = Test::switch(route).expect("should produce item");
-        assert_eq!(switched, Test::Variant {
-            item1: "thing".to_string(),
-            item2: "other".to_string()
-        })
+        assert_eq!(
+            switched,
+            Test::Variant {
+                item1: "thing".to_string(),
+                item2: "other".to_string()
+            }
+        )
     }
 
     #[test]
@@ -84,11 +100,16 @@ mod tests {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "/variant{item}"]
-            Variant{item: String},
+            Variant { item: String },
         }
         let route = Route::from("/variantthing");
         let switched = Test::switch(route).expect("should produce item");
-        assert_eq!(switched, Test::Variant{item: "thing".to_string()})
+        assert_eq!(
+            switched,
+            Test::Variant {
+                item: "thing".to_string()
+            }
+        )
     }
 
     #[test]
@@ -96,11 +117,16 @@ mod tests {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "/variant{item}stuff"]
-            Variant{item: String},
+            Variant { item: String },
         }
         let route = Route::from("/variantthingstuff");
         let switched = Test::switch(route).expect("should produce item");
-        assert_eq!(switched, Test::Variant{item: "thing".to_string()})
+        assert_eq!(
+            switched,
+            Test::Variant {
+                item: "thing".to_string()
+            }
+        )
     }
 
     #[test]
@@ -125,7 +151,11 @@ mod tests {
         }
         let route = Route::from("/variant/stuff");
         let switched = Test::switch(route).expect("should produce item");
-        assert_eq!(switched, Test::Variant2, "The first variant should be passed over")
+        assert_eq!(
+            switched,
+            Test::Variant2,
+            "The first variant should be passed over"
+        )
     }
 
     #[test]
@@ -139,10 +169,12 @@ mod tests {
         }
         let route = Route::from("/variant/stuff");
         let switched = Test::switch(route).expect("should produce item");
-        assert_eq!(switched, Test::Variant1, "The first variant should match first")
+        assert_eq!(
+            switched,
+            Test::Variant1,
+            "The first variant should match first"
+        )
     }
-
-
 
     #[test]
     fn single_enum_variant_convert_usize() {
@@ -192,25 +224,25 @@ mod tests {
     }
 
     // TODO allow missing is a little broken at the moment.
-//    #[test]
-//    fn single_enum_variant_missing_section_produces_none() {
-//    use yew_router::switch::AllowMissing;
-//        #[derive(Debug, Switch, PartialEq)]
-//        pub enum Test {
-//            #[to = "/variant/{cap}"]
-//            Variant(AllowMissing<String>),
-//        }
-//        let route = Route::from("/variant/");
-//        let switched = Test::switch(route).expect("should produce item");
-//        assert_eq!(switched, Test::Variant(AllowMissing(None)))
-//    }
+    //    #[test]
+    //    fn single_enum_variant_missing_section_produces_none() {
+    //    use yew_router::switch::AllowMissing;
+    //        #[derive(Debug, Switch, PartialEq)]
+    //        pub enum Test {
+    //            #[to = "/variant/{cap}"]
+    //            Variant(AllowMissing<String>),
+    //        }
+    //        let route = Route::from("/variant/");
+    //        let switched = Test::switch(route).expect("should produce item");
+    //        assert_eq!(switched, Test::Variant(AllowMissing(None)))
+    //    }
 
     #[test]
     fn leading_slash() {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "/"]
-            Variant
+            Variant,
         }
         let route = Route::from("/");
         let switched = Test::switch(route).expect("should produce item");
@@ -222,7 +254,7 @@ mod tests {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "{cap}"]
-            Variant(String)
+            Variant(String),
         }
         let route = Route::from("hello");
         let switched = Test::switch(route).expect("should produce item");
@@ -234,7 +266,7 @@ mod tests {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "{2:cap}"]
-            Variant(String)
+            Variant(String),
         }
         let route = Route::from("hello/there");
         let switched = Test::switch(route).expect("should produce item");
@@ -246,7 +278,7 @@ mod tests {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "{*:cap}"]
-            Variant(String)
+            Variant(String),
         }
         let route = Route::from("hello/there");
         let switched = Test::switch(route).expect("should produce item");
@@ -258,7 +290,7 @@ mod tests {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "?query={hello}"]
-            Variant(String)
+            Variant(String),
         }
         let route = Route::from("?query=lorem");
         let switched = Test::switch(route).expect("should produce item");
@@ -270,7 +302,7 @@ mod tests {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "#fragment"]
-            Variant
+            Variant,
         }
         let route = Route::from("#fragment");
         let switched = Test::switch(route).expect("should produce item");
@@ -282,14 +314,13 @@ mod tests {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "#{cap}ipsum{cap}"]
-            Variant(String, String)
+            Variant(String, String),
         }
         let route = Route::from("#loremipsumdolor");
         let switched = Test::switch(route).expect("should produce item");
-        assert_eq!(switched, Test::Variant("lorem".to_string(), "dolor".to_string()))
+        assert_eq!(
+            switched,
+            Test::Variant("lorem".to_string(), "dolor".to_string())
+        )
     }
-
 }
-
-
-

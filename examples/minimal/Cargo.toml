@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 yew = "0.9.0"
-yew_router = {path = "../../", default-features=false}
+yew-router = {path = "../../", default-features=false}
 web_logger = "0.1"
 log = "0.4.8"
 wee_alloc = "0.4.5"

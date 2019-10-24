@@ -1,4 +1,7 @@
-//! Components that integrate with the [route agent](struct.RouteAgent.html).
+//! Components that integrate with the [route agent](agent/struct.RouteAgent.html).
+//!
+//! At least one bridge to the agent needs to exist for these to work.
+//! This can be done transitively by using a `Router` component, which owns a bridge to the agent.
 
 mod router_button;
 mod router_link;

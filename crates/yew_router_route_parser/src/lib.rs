@@ -20,6 +20,8 @@ mod optimizer;
 pub use optimizer::{convert_tokens, parse_str_and_optimize_tokens};
 use std::collections::HashMap;
 
+/// Alias of `HashMap<&'a str, String>` that represent strings captured from a route.
+///
 /// Captures contain keys corresponding to named match sections,
 /// and values containing the content captured by those sections.
 pub type Captures<'a> = HashMap<&'a str, String>;

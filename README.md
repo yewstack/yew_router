@@ -39,7 +39,7 @@ html! {
 
 ### How it works
 This library works by getting the url location from the browser and uses it to instantiate a type that implements Switch.
-Simply using `<a/>` tags to go to your route will not work out of the box, and are inefficient because the server will return the whole app bundle again at best, and at worst just return a 404 message if the server isn't configured properly.
+Simply using `<a></a>` tags to go to your route will not work out of the box, and are inefficient because the server will return the whole app bundle again at best, and at worst just return a 404 message if the server isn't configured properly.
 Using this library's RouteService, RouteAgent, RouterButton, and RouterLink to set the location via `history.push_state()` will change the route without retrieving the whole app again.
 #### Server configuration
 In order for an external link to your webapp to work, the server must be configured to return the `index.html` file for any GET request that would otherwise return a `404` for any conceivable client-side route.
@@ -51,20 +51,21 @@ If you choose to serve the app from the same server as your api, it is recommend
 Look at https://webpack.js.org/configuration/dev-server/#devserverhistoryapifallback for info on how to configure a webpack dev server to have this behavior.
 
 
-
 ### How to Include
+You can use the released version by adding these to your dependencies.
+```toml
+[dependencies]
+yew-router = "0.6.0"
+yew = "0.9.0"
+```
+
 You can use the in-development version in your project by adding it to your dependencies like so:
 ```toml
 [dependencies]
 yew_router = { git = "https://github.com/yewstack/yew_router", branch="master" }
-yew = "0.9.2"
+yew = {git = "https://github.com/yewstack/yew", branch = "master"}
 ```
-Or if you want to use the prior version before the projects merged:
-```toml
-[dependencies]
-yew-router = "0.5.0"
-yew = "0.9.2"
-```
+
 
 #### Minimum rustc
 Currently, this library targets rustc 1.37.0, but development is done on the latest stable release.

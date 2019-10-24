@@ -1,6 +1,6 @@
 [package]
-name = "yew_router_route_parser"
-version = "0.1.0"
+name = "yew-router-route-parser"
+version = "0.6.0"
 authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 edition = "2018"
 

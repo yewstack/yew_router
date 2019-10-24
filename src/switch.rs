@@ -230,13 +230,17 @@ mod test {
 
     #[test]
     fn uuid_from_route() {
-        let x = uuid::Uuid::switch::<()>(Route{route: "5dc48134-35b5-4b8c-aa93-767bf00ae1d8".to_string(), state: None});
+        let x = uuid::Uuid::switch::<()>(Route {
+            route: "5dc48134-35b5-4b8c-aa93-767bf00ae1d8".to_string(),
+            state: None,
+        });
         assert!(x.is_some())
     }
     #[test]
     fn uuid_to_route() {
         use std::str::FromStr;
-        let id = uuid::Uuid::from_str("5dc48134-35b5-4b8c-aa93-767bf00ae1d8").expect("should parse");
+        let id =
+            uuid::Uuid::from_str("5dc48134-35b5-4b8c-aa93-767bf00ae1d8").expect("should parse");
         let mut buf = String::new();
         id.build_route_section::<()>(&mut buf);
         assert_eq!(buf, "5dc48134-35b5-4b8c-aa93-767bf00ae1d8".to_string())
@@ -251,4 +255,3 @@ mod test {
         assert_eq!(s, Some(Some("".to_string())))
     }
 }
-
