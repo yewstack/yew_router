@@ -178,6 +178,7 @@ macro_rules! impl_switch_for_from_to_str {
 
 impl_switch_for_from_to_str! {
     String,
+    uuid::Uuid,
     bool,
     f64,
     f32,
@@ -223,6 +224,20 @@ mod test {
             state: None,
         });
         assert_eq!(s, Some("".to_string()))
+    }
+
+    #[test]
+    fn uuid_from_route() {
+        let x = uuid::Uuid::switch::<()>(Route{route: "5dc48134-35b5-4b8c-aa93-767bf00ae1d8".to_string(), state: None});
+        assert!(x.is_some())
+    }
+    #[test]
+    fn uuid_to_route() {
+        use std::str::FromStr;
+        let id = uuid::Uuid::from_str("5dc48134-35b5-4b8c-aa93-767bf00ae1d8").expect("should parse");
+        let mut buf = String::new();
+        id.build_route_section::<()>(&mut buf);
+        assert_eq!(buf, "5dc48134-35b5-4b8c-aa93-767bf00ae1d8".to_string())
     }
 
     #[test]

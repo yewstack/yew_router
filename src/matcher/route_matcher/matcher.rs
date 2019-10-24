@@ -234,16 +234,6 @@ mod integration_test {
             .expect("should match");
     }
 
-    // TODO this should be able to be less strict. A trailing slash before a # or ? should be
-    // ignored
-
-    //    #[test]
-    //    fn match_query_after_path_slash_ignored() {
-    //        let x =
-    // yew_router_route_parser::parse_str_and_optimize_tokens("/a/path/?hello=there").expect("Should
-    // parse");        match_paths(&x, "/a/path?hello=there").expect("should match");
-    //    }
-
     #[test]
     fn match_query() {
         let x = yew_router_route_parser::parse_str_and_optimize_tokens("?lorem=ipsum")
