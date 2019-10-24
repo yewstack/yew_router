@@ -24,7 +24,6 @@ use std::collections::HashMap;
 /// and values containing the content captured by those sections.
 pub type Captures<'a> = HashMap<&'a str, String>;
 
-
 /// Tokens used to determine how to match and capture sections from a URL.
 #[derive(Debug, PartialEq, Clone)]
 pub enum MatcherToken {

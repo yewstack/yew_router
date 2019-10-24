@@ -112,7 +112,6 @@ impl fmt::Display for ExpectedToken {
     }
 }
 
-
 /// A concrete reason why a parse failed
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ParserErrorReason {
@@ -120,6 +119,8 @@ pub enum ParserErrorReason {
     TokensAfterEndToken,
     /// Two slashes are able to occur next to each other.
     DoubleSlash,
+    /// End after a {}
+    EndAfterCapture,
     /// A & appears before a ?
     AndBeforeQuestion,
     /// Captures can't be next to each other
@@ -164,6 +165,9 @@ impl fmt::Display for ParserErrorReason {
                     "The character: '{}' could not be used as a Rust identifier.",
                     c
                 ))?;
+            }
+            ParserErrorReason::EndAfterCapture => {
+                f.write_str("The end token (!) can't appear after a capture ({}).")?;
             }
         }
         Ok(())

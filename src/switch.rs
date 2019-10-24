@@ -176,7 +176,6 @@ macro_rules! impl_switch_for_from_to_str {
     };
 }
 
-
 impl_switch_for_from_to_str! {
     String,
     bool,

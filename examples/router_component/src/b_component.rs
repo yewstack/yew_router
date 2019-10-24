@@ -150,7 +150,6 @@ impl Renderable<BModel> for BModel {
     }
 }
 
-
 impl BModel {
     fn display_number(&self) -> String {
         if let Some(number) = self.props.number {

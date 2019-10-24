@@ -41,9 +41,9 @@ where
                     pre.add_child(top.into());
                     top = pre;
                 } else if let Tag::Table(aligns) = tag {
-                    for r in top.childs.iter_mut() {
+                    for r in top.children.iter_mut() {
                         if let &mut VNode::VTag(ref mut vtag) = r {
-                            for (i, c) in vtag.childs.iter_mut().enumerate() {
+                            for (i, c) in vtag.children.iter_mut().enumerate() {
                                 if let &mut VNode::VTag(ref mut vtag) = c {
                                     match aligns[i] {
                                         Alignment::None => {}
@@ -56,7 +56,7 @@ where
                         }
                     }
                 } else if let Tag::TableHead = tag {
-                    for c in top.childs.iter_mut() {
+                    for c in top.children.iter_mut() {
                         if let &mut VNode::VTag(ref mut vtag) = c {
                             // TODO
                             //                            vtag.tag = "th".into();

@@ -25,6 +25,7 @@ pub fn tag_possibly_case_sensitive<'a, 'b: 'a>(
 }
 
 /// Similar to alt, but works on a vector of tags.
+#[allow(unused)]
 pub fn alternative(alternatives: Vec<String>) -> impl Fn(&str) -> IResult<&str, &str> {
     move |i: &str| {
         for alternative in &alternatives {
@@ -34,6 +35,11 @@ pub fn alternative(alternatives: Vec<String>) -> impl Fn(&str) -> IResult<&str, 
         }
         Err(nom::Err::Error((i, ErrorKind::Tag))) // nothing found.
     }
+}
+
+/// Tag using a string
+pub fn owned_tag(string: String) -> impl Fn(&str) -> IResult<&str, &str> {
+    move |i: &str| tag(string.as_str())(i)
 }
 
 /// Consumes the input until the provided parser succeeds.
@@ -57,40 +63,29 @@ where
     }
 }
 
-// TODO see if this function can be removed, as it doesn't offer much now that optional sections are gone.
 /// Produces a parser combinator that searches for the next possible set of strings of
 /// characters used to terminate a forward search.
 ///
-/// Take a peekable iterator.
-/// Until a top level Match is encountered, peek through optional sections.
-/// If a match is found, then move the list of delimiters into a take_till seeing if the current
-/// input slice is found in the list of decimeters. If a match is not found, then do the same, or
-/// accept as part of an alt() a take the rest of the input (as long as it is valid). return this
-/// take_till configuration and use that to terminate / capture the given string for the capture
-/// token.
-pub fn next_delimiters<'a>(
-    iter: Peekable<Iter<MatcherToken>>,
+/// # Panics
+/// This function assumes that the next item after a Capture must be an Exact.
+/// If this is violated, this function will panic.
+pub fn next_delimiter<'a>(
+    iter: &mut Peekable<Iter<MatcherToken>>,
 ) -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
-    let mut sequences = vec![];
-    for next in iter {
-        match next {
-            MatcherToken::Exact(sequence) => {
-                sequences.push(sequence);
-                break;
+    let s = iter
+        .peek()
+        .map(|next| match next {
+            MatcherToken::Exact(sequence) => sequence.clone(),
+            MatcherToken::End => {
+                panic!("underlying parser should not allow an end token after a capture")
             }
-            _ => panic!("underlying parser should not allow token order not of match or optional"),
-        }
-    }
+            MatcherToken::Capture(_) => {
+                panic!("underlying parser should not allow two captures in a row")
+            }
+        })
+        .unwrap();
 
-    let delimiters: Vec<String> = sequences.into_iter().map(String::from).collect();
-
-    log::trace!(
-        "delimiters in read_until_next_known_delimiter: {:?}",
-        delimiters
-    );
-
-    // if the sequence contains an optional section, it can attempt to match until the end.
-    map(alternative(delimiters), |x| x)
+    owned_tag(s)
 }
 
 #[cfg(test)]

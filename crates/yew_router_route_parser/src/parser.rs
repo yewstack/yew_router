@@ -67,7 +67,6 @@ pub enum CaptureOrExact<'a> {
     Capture(RefCaptureVariant<'a>),
 }
 
-
 /// Represents the states the parser can be in.
 #[derive(Clone, PartialEq)]
 enum ParserState<'a> {
@@ -192,7 +191,6 @@ impl<'a> ParserState<'a> {
     }
 }
 
-
 /// Parse a matching string into a vector of RouteParserTokens.
 ///
 /// The parsing logic involves using a state machine.
@@ -305,26 +303,25 @@ fn parse_impl<'a>(
                     })
                     .map_err(nom::Err::Error)
             }
-            RouteParserToken::Capture(_) => {
-                alt((get_slash, exact, get_question, get_hash, get_end))(i)
-                    .map_err(|_| {
-                        capture(i)
-                            .map(|_| ParserErrorReason::AdjacentCaptures)
-                            .or_else(|_| get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion))
-                            .ok()
-                    })
-                    .map_err(|reason| ParseError {
-                        reason,
-                        expected: vec![
-                            ExpectedToken::Literal,
-                            ExpectedToken::Separator,
-                            ExpectedToken::QueryBegin,
-                            ExpectedToken::FragmentBegin,
-                            ExpectedToken::End,
-                        ],
-                    })
-                    .map_err(nom::Err::Error)
-            }
+            RouteParserToken::Capture(_) => alt((get_slash, exact, get_question, get_hash))(i)
+                .map_err(|_| {
+                    capture(i)
+                        .map(|_| ParserErrorReason::AdjacentCaptures)
+                        .or_else(|_| get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion))
+                        .or_else(|_| get_end(i).map(|_| ParserErrorReason::EndAfterCapture))
+                        .ok()
+                })
+                .map_err(|reason| ParseError {
+                    reason,
+                    expected: vec![
+                        ExpectedToken::Literal,
+                        ExpectedToken::Separator,
+                        ExpectedToken::QueryBegin,
+                        ExpectedToken::FragmentBegin,
+                        ExpectedToken::End,
+                    ],
+                })
+                .map_err(nom::Err::Error),
             _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
                 expected: vec![],
@@ -374,21 +371,23 @@ fn parse_impl<'a>(
                     expected: vec![ExpectedToken::QueryCapture, ExpectedToken::QueryLiteral],
                 })
                 .map_err(nom::Err::Error),
-            RouteParserToken::Query { .. } => alt((get_and, get_hash, get_end))(i)
-                .map_err(|_| {
-                    get_question(i)
-                        .map(|_| ParserErrorReason::MultipleQuestions)
-                        .ok()
-                })
-                .map_err(|reason| ParseError {
-                    reason,
-                    expected: vec![
-                        ExpectedToken::QuerySeparator,
-                        ExpectedToken::FragmentBegin,
-                        ExpectedToken::End,
-                    ],
-                })
-                .map_err(nom::Err::Error),
+            RouteParserToken::Query { .. } => {
+                alt((get_and, get_hash, get_end))(i) // TODO only allow ends after "literals"
+                    .map_err(|_| {
+                        get_question(i)
+                            .map(|_| ParserErrorReason::MultipleQuestions)
+                            .ok()
+                    })
+                    .map_err(|reason| ParseError {
+                        reason,
+                        expected: vec![
+                            ExpectedToken::QuerySeparator,
+                            ExpectedToken::FragmentBegin,
+                            ExpectedToken::End,
+                        ],
+                    })
+                    .map_err(nom::Err::Error)
+            }
             _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
                 expected: vec![],
@@ -405,10 +404,10 @@ fn parse_impl<'a>(
                     ],
                 })
                 .map_err(nom::Err::Error),
-            RouteParserToken::Exact(_) => capture_single(i)
+            RouteParserToken::Exact(_) => alt((capture_single, get_end))(i)
                 .map_err(|_| ParseError {
                     reason: None,
-                    expected: vec![ExpectedToken::CaptureNamed],
+                    expected: vec![ExpectedToken::CaptureNamed, ExpectedToken::End],
                 })
                 .map_err(nom::Err::Error),
             RouteParserToken::Capture(_) => exact(i)
@@ -562,7 +561,6 @@ fn bad_capture(i: &str) -> IResult<&str, ParserErrorReason> {
         },
     )(i)
 }
-
 
 #[cfg(test)]
 mod test {

@@ -15,7 +15,6 @@ use yew::{
     ShouldRender,
 };
 
-
 use crate::agent::AgentState;
 
 /// Any state that can be managed by the `Router` must meet the criteria of this trait.
@@ -108,7 +107,6 @@ where
         Some(Redirect::new(f))
     }
 }
-
 
 /// Message for Router.
 #[derive(Debug, Clone)]

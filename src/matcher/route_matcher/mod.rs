@@ -3,7 +3,7 @@
 
 pub use yew_router_route_parser::{CaptureVariant, MatcherToken};
 
-mod match_paths;
+mod matcher;
 mod util;
 
 use super::Captures;
@@ -61,9 +61,9 @@ impl RouteMatcher {
         i: &'a str,
     ) -> IResult<&'a str, Captures<'a>> {
         if self.settings.complete {
-            all_consuming(match_paths::match_path(&self.tokens, &self.settings))(i)
+            all_consuming(matcher::match_into_map(&self.tokens, &self.settings))(i)
         } else {
-            match_paths::match_path(&self.tokens, &self.settings)(i)
+            matcher::match_into_map(&self.tokens, &self.settings)(i)
         }
     }
 
@@ -72,10 +72,11 @@ impl RouteMatcher {
         &'b self,
         i: &'a str,
     ) -> IResult<&'a str, Vec<(&'b str, String)>> {
+        // TODO this return type mandates that a key exist, which for the purposes of this function, may not be present.
         if self.settings.complete {
-            all_consuming(match_paths::match_path_list(&self.tokens, &self.settings))(i)
+            all_consuming(matcher::match_into_vec(&self.tokens, &self.settings))(i)
         } else {
-            match_paths::match_path_list(&self.tokens, &self.settings)(i)
+            matcher::match_into_vec(&self.tokens, &self.settings)(i)
         }
     }
 
