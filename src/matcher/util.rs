@@ -9,6 +9,7 @@ use nom::{
 };
 use std::{iter::Peekable, rc::Rc, slice::Iter};
 use yew_router_route_parser::MatcherToken;
+use nom::combinator::rest;
 
 /// Allows a configurable tag that can optionally be case insensitive.
 pub fn tag_possibly_case_sensitive<'a, 'b: 'a>(
@@ -35,11 +36,6 @@ pub fn alternative(alternatives: Vec<String>) -> impl Fn(&str) -> IResult<&str, 
         }
         Err(nom::Err::Error((i, ErrorKind::Tag))) // nothing found.
     }
-}
-
-/// Tag using a string
-pub fn owned_tag(string: String) -> impl Fn(&str) -> IResult<&str, &str> {
-    move |i: &str| tag(string.as_str())(i)
 }
 
 /// Consumes the input until the provided parser succeeds.
@@ -72,20 +68,21 @@ where
 pub fn next_delimiter<'a>(
     iter: &mut Peekable<Iter<MatcherToken>>,
 ) -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
-    let s = iter
+    let t: MatcherToken = iter
         .peek()
-        .map(|next| match next {
-            MatcherToken::Exact(sequence) => sequence.clone(),
-            MatcherToken::End => {
-                panic!("underlying parser should not allow an end token after a capture")
-            }
+        .copied()
+        .cloned()
+        .expect("There must be at least one token to peak in next_delimiter");
+
+    move |i: &'a str| {
+        match &t {
+            MatcherToken::Exact(sequence) => tag(sequence.as_str())(i),
+            MatcherToken::End => rest(i),
             MatcherToken::Capture(_) => {
                 panic!("underlying parser should not allow two captures in a row")
             }
-        })
-        .unwrap();
-
-    owned_tag(s)
+        }
+    }
 }
 
 #[cfg(test)]

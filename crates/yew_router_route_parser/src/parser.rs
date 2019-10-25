@@ -304,12 +304,12 @@ fn parse_impl<'a>(
                     })
                     .map_err(nom::Err::Error)
             }
-            RouteParserToken::Capture(_) => alt((get_slash, exact, get_question, get_hash))(i)
+            RouteParserToken::Capture(_) => alt((get_slash, exact, get_question, get_hash, get_end))(i)
                 .map_err(|_| {
                     capture(i)
                         .map(|_| ParserErrorReason::AdjacentCaptures)
                         .or_else(|_| get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion))
-                        .or_else(|_| get_end(i).map(|_| ParserErrorReason::EndAfterCapture))
+//                        .or_else(|_| get_end(i).map(|_| ParserErrorReason::EndAfterCapture))
                         .ok()
                 })
                 .map_err(|reason| ParseError {
@@ -319,7 +319,7 @@ fn parse_impl<'a>(
                         ExpectedToken::Separator,
                         ExpectedToken::QueryBegin,
                         ExpectedToken::FragmentBegin,
-                        //                        ExpectedToken::End,
+                        ExpectedToken::End,
                     ],
                 })
                 .map_err(nom::Err::Error),
@@ -373,7 +373,7 @@ fn parse_impl<'a>(
                 })
                 .map_err(nom::Err::Error),
             RouteParserToken::Query { .. } => {
-                alt((get_and, get_hash, get_end))(i) // TODO only allow ends after "literals"
+                alt((get_and, get_hash, get_end))(i)
                     .map_err(|_| {
                         get_question(i)
                             .map(|_| ParserErrorReason::MultipleQuestions)
@@ -411,7 +411,7 @@ fn parse_impl<'a>(
                     expected: vec![ExpectedToken::CaptureNamed, ExpectedToken::End],
                 })
                 .map_err(nom::Err::Error),
-            RouteParserToken::Capture(_) => exact(i)
+            RouteParserToken::Capture(_) => alt((exact, get_end))(i)
                 .map_err(|_| bad_capture(i).map(|(_, reason)| reason).ok())
                 .map_err(|reason| ParseError {
                     reason,
@@ -887,6 +887,45 @@ mod test {
             ];
             assert_eq!(parsed, expected);
         }
+
+        #[test]
+        fn end_after_path_capture() {
+            let parsed = parse("/lorem/{cap}!").unwrap();
+            let expected = vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Exact("lorem"),
+                RouteParserToken::Separator,
+                RouteParserToken::Capture(RefCaptureVariant::Named("cap")),
+                RouteParserToken::End,
+            ];
+            assert_eq!(parsed, expected);
+        }
+
+        #[test]
+        fn end_after_query_capture() {
+            let parsed = parse("?lorem={cap}!").unwrap();
+            let expected = vec![
+                RouteParserToken::QueryBegin,
+                RouteParserToken::Query{
+                    ident: "lorem",
+                    capture_or_exact: CaptureOrExact::Capture(RefCaptureVariant::Named("cap"))
+                },
+                RouteParserToken::End,
+            ];
+            assert_eq!(parsed, expected);
+        }
+
+        #[test]
+        fn end_after_frag_capture() {
+            let parsed = parse("#{cap}!").unwrap();
+            let expected = vec![
+                RouteParserToken::FragmentBegin,
+                RouteParserToken::Capture(RefCaptureVariant::Named("cap")),
+                RouteParserToken::End,
+            ];
+            assert_eq!(parsed, expected);
+        }
+
 
         #[test]
         fn just_end() {
