@@ -66,13 +66,7 @@ pub trait Switch: Sized {
     }
 }
 
-/// Builds a route from a switch.
-pub fn build_route_from_switch<T: Switch, U>(switch: T) -> Route<U> {
-    let mut buf = String::with_capacity(50); // TODO, play with this to maximize perf/size.
 
-    let state = switch.build_route_section(&mut buf);
-    Route { route: buf, state }
-}
 
 /// Wrapper that requires that an implementor of Switch must start with a `/`.
 ///
@@ -206,6 +200,25 @@ impl_switch_for_from_to_str! {
     std::num::NonZeroI32,
     std::num::NonZeroI16,
     std::num::NonZeroI8
+}
+
+/// Builds a route from a switch.
+fn build_route_from_switch<T: Switch, U>(switch: T) -> Route<U> {
+    // URLs are recommended to not be over 255 characters,
+    // although browsers frequently support up to about 2000.
+    // Routes, being a subset of URLs should probably be smaller than 255 characters for the vast
+    // majority of circumstances, preventing reallocation under most conditions.
+    let mut buf = String::with_capacity(255);
+    let state = switch.build_route_section(&mut buf);
+    buf.shrink_to_fit();
+
+    Route { route: buf, state }
+}
+
+impl <SW: Switch, T> From<SW> for Route<T> {
+    fn from(switch: SW) -> Self {
+        build_route_from_switch(switch)
+    }
 }
 
 #[cfg(test)]

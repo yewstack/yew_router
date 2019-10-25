@@ -42,7 +42,7 @@ impl<T> Route<T> {
     pub fn current_route(route_service: &RouteService<T>) -> Self {
         let route = route_service.get_route();
         // TODO, should try to get the state using the history api once that is exposed through
-        // stdweb.
+        // stdweb. https://github.com/koute/stdweb/issues/371
         Route { route, state: None }
     }
 }
@@ -50,15 +50,6 @@ impl<T> Route<T> {
 impl<T> fmt::Display for Route<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.route.fmt(f)
-    }
-}
-
-impl<T> From<String> for Route<T> {
-    fn from(string: String) -> Route<T> {
-        Route {
-            route: string,
-            state: None,
-        }
     }
 }
 
