@@ -132,7 +132,6 @@ pub fn exact(i: &str) -> IResult<&str, RouteParserToken, ParseError> {
     map(exact_impl, RouteParserToken::Exact)(i)
 }
 
-
 pub fn capture<'a>(
     field_type: FieldType,
 ) -> impl Fn(&'a str) -> IResult<&'a str, RouteParserToken<'a>, ParseError> {
@@ -259,7 +258,6 @@ pub fn query<'a>(
         )(i)
     }
 }
-
 
 #[cfg(test)]
 mod test {
