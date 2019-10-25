@@ -66,8 +66,6 @@ pub trait Switch: Sized {
     }
 }
 
-
-
 /// Wrapper that requires that an implementor of Switch must start with a `/`.
 ///
 /// This is needed for any non-derived type provided by yew-router to be used by itself.
@@ -215,7 +213,7 @@ fn build_route_from_switch<T: Switch, U>(switch: T) -> Route<U> {
     Route { route: buf, state }
 }
 
-impl <SW: Switch, T> From<SW> for Route<T> {
+impl<SW: Switch, T> From<SW> for Route<T> {
     fn from(switch: SW) -> Self {
         build_route_from_switch(switch)
     }

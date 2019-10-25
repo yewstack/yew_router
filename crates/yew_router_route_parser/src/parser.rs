@@ -408,7 +408,6 @@ fn parse_impl<'a>(
     }
 }
 
-
 #[cfg(test)]
 mod test {
     //    use super::*;
@@ -420,10 +419,8 @@ mod test {
         actual_parse(i, FieldType::Unnamed)
     }
 
-
     mod does_parse {
         use super::*;
-
 
         #[test]
         fn slash() {
@@ -737,7 +734,6 @@ mod test {
             ];
             assert_eq!(parsed, expected);
         }
-
 
         #[test]
         fn just_end() {
