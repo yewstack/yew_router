@@ -3,7 +3,76 @@ use proc_macro::TokenStream;
 
 mod switch;
 
-/// Implements `Switch` trait based on attributes present on the struct or enum variants.
+/// Implements the `Switch` trait based on attributes present on the struct or enum variants.
+///
+/// If deriving an enum, each variant should have a `#[to = ""]` attribute,
+/// and if deriving a struct, the struct itself should have a `#[to = ""]` attribute.
+///
+/// Inside the `""` you should put your **route matcher string**.
+/// At its simplest, the route matcher string will create your variant/struct if it exactly matches the browser's route.
+/// If the route in the url bar is `http://yoursite.com/some/route` and your route matcher string
+/// for an enum variant is `/some/route`, then that variant will be created when `switch()` is called with the route.
+///
+/// But the route matcher has other capabilities.
+/// If you want to capture data from the route matcher string, for example, extract an id or user name from the route,
+/// you can use `{field_name}` to capture data from the route.
+/// For example, `#[to = "/route/{id}"]` will capture the content after "/route/",
+/// and if the associated variant is defined as `Route{id: usize}`, then the string that was captured will be
+/// transformed into a `usize`.
+/// If the conversion fails, then the match won't succeed and the next variant will be tried instead.
+///
+/// There are also `{*:field_name}` and `{3:field_name}` types of capture sections that will capture
+/// _everything_, and the next 3 path sections respectively.
+/// `{1:field_name}` is the same as `{field_name}`.
+///
+/// Tuple-structs and Tuple-enum-variants are also supported.
+/// At the moment, dummy field-names still need to be provided to capture sections, but in the future,
+/// `{}`, `{*}`, and `{4}` will be valid matchers when used on structs and variants without named fields.
+///
+/// # Note
+/// It should be mentioned that the derived function for matching will try enum variants in order,
+/// from top to bottom, and that the whole route doesn't need to be matched by the route
+/// matcher string in order for the match to succeed.
+/// What is meant by this is that `[to = "/"]` will match "/", but also "/anything/else",
+/// because as soon as the "/" is satisfied, that is considered a match.
+///
+/// This can be mitigated by specifying a `!` at the end of your route to inform the matcher that if
+/// any characters are left after matching the route matcher string, the match should fail.
+/// This means that `[to = "/!"]` will match "/" and _only_ "/".
+///
+/// -----
+/// There are other attributes as well.
+/// `#[rest]`, `#[rest="field_name"]` and `#[end]` attributes exist as well.
+/// `#[rest]` and `#[rest="field_name"]` are equivalent to `{*}` and `{*:field_name}` respectively.
+/// `#[end]` is equivalent to `!`.
+/// The `#[rest]` attributes are good if you just want to delegate the whole matching of a variant to a specific
+/// wrapped struct or enum that also implements `Switch`.
+///
+/// ------
+/// # Example
+/// ```
+/// use yew_router::Switch;
+///
+/// #[derive(Switch)]
+/// enum AppRoute {
+///     #[to="/some/simple/route"]
+///     SomeSimpleRoute,
+///     #[to="/capture/{cap}"]
+///     Capture(String),
+///     #[to="/convert/{id}"]
+///     Convert{id: usize},
+///     #[rest] // #[to="{*:rest}"] would work just as well here
+///     Inner(InnerRoute)
+/// }
+///
+/// #[derive(Switch)]
+/// #[to="/inner/route/{first}/{second}"]
+/// struct InnerRoute {
+///     first: String,
+///     second: String
+/// }
+/// ```
+/// Check out the examples directory in the repository to see some more usages of the routing syntax.
 #[proc_macro_derive(Switch, attributes(to, rest, end))]
 pub fn switch(tokens: TokenStream) -> TokenStream {
     crate::switch::switch_impl(tokens)
