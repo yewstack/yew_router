@@ -1,4 +1,5 @@
 use std::fmt;
+use nom::error::ErrorKind;
 
 /// Parser error that can print itself in a human-readable format.
 #[derive(Clone, PartialEq)]
@@ -27,6 +28,7 @@ impl<'a> fmt::Debug for PrettyParseError<'a> {
         f.write_str("\n")?;
 
         let offset = offset(self.input, self.remaining);
+        let offset = offset + self.error.offset;
         let pad = (0..offset + route_str.len())
             .map(|_| '-')
             .collect::<String>();
@@ -66,6 +68,44 @@ pub struct ParseError {
     pub reason: Option<ParserErrorReason>,
     /// Expected token sequences
     pub expected: Vec<ExpectedToken>,
+    /// Additional offset for failures within sub-parsers.
+    /// Eg. if `{` parses, but then a bad ident is presented, some offset is needed here then.
+    pub offset: usize,
+}
+
+impl ParseError {
+    pub (crate) fn expected(expected: ExpectedToken) -> Self {
+        ParseError {
+            reason: None,
+            expected: vec![expected],
+            offset: 0
+        }
+    }
+}
+
+impl nom::error::ParseError<&str> for  ParseError {
+    fn from_error_kind(_input: &str, _kind: ErrorKind) -> Self {
+        ParseError {
+            reason: None,
+            expected: vec![],
+            offset: 0
+        }
+    }
+
+    fn append(_input: &str, _kind: ErrorKind, other: Self) -> Self {
+        other
+    }
+
+    fn or(mut self, other: Self) -> Self {
+        self.expected.extend(other.expected);
+//        self.expected.dedup(); // TODO enforce that these are actually sorted
+
+        ParseError {
+            reason: other.reason.or(self.reason), // Take the right most reason
+            expected: self.expected,
+            offset: other.offset // TODO panicing might be an option if the offsets aren't the same, Maybe add them? eeeh?, maybe create layers of expected with specific offsets?
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -92,6 +132,18 @@ pub enum ExpectedToken {
     FragmentBegin,
     /// !
     End,
+    /// identifier within {}
+    Ident,
+    /// {
+    OpenBracket,
+    /// }
+    CloseBracket,
+    /// =
+    Equals,
+    /// *
+    Star,
+    /// :
+    Colon
 }
 
 impl fmt::Display for ExpectedToken {
@@ -108,6 +160,12 @@ impl fmt::Display for ExpectedToken {
             ExpectedToken::QueryLiteral => f.write_str("<literal>=<literal>"),
             ExpectedToken::FragmentBegin => f.write_str("#"),
             ExpectedToken::End => f.write_str("!"),
+            ExpectedToken::Ident => f.write_str("<ident>"),
+            ExpectedToken::OpenBracket => f.write_str("{"),
+            ExpectedToken::CloseBracket => f.write_str("}"),
+            ExpectedToken::Equals => f.write_str("="),
+            ExpectedToken::Star => f.write_str("*"),
+            ExpectedToken::Colon => f.write_str(":"),
         }
     }
 }
@@ -129,11 +187,15 @@ pub enum ParserErrorReason {
     MultipleQuestions,
     /// The provided ident within a capture group could never match with a valid rust identifier.
     BadRustIdent(char),
+    /// A bad literal.
+    BadLiteral,
     /// Invalid state
     InvalidState,
     /// Internal check on valid state transitions
     /// This should never actually be created.
     NotAllowedStateTransition,
+    /// Expected a specific token
+    Expected(ExpectedToken)
 }
 
 impl fmt::Display for ParserErrorReason {
@@ -169,7 +231,22 @@ impl fmt::Display for ParserErrorReason {
             ParserErrorReason::EndAfterCapture => {
                 f.write_str("The end token (!) can't appear after a capture ({}).")?;
             }
+            ParserErrorReason::Expected(expected) => {
+                f.write_str(&format!("Expected: {}", expected))?;
+            }
+            ParserErrorReason::BadLiteral => {
+                f.write_str("Malformed literal.")?;
+            }
         }
         Ok(())
+    }
+}
+
+pub (crate) fn get_reason(err: &mut nom::Err<ParseError>) -> &mut Option<ParserErrorReason> {
+    match err {
+        nom::Err::Error(err)
+        | nom::Err::Failure(err)
+        => &mut err.reason,
+        nom::Err::Incomplete(_) => panic!("Incomplete not possible")
     }
 }

@@ -1,14 +1,14 @@
 //! Parser that consumes a string and produces the first representation of the matcher.
-use crate::error::{ExpectedToken, ParseError, ParserErrorReason, PrettyParseError};
+use crate::error::{ParseError, ParserErrorReason, PrettyParseError, get_reason};
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take_till1, take_until},
-    character::complete::{char, digit1},
-    combinator::{map, map_opt},
-    sequence::{delimited, pair, separated_pair},
+//    bytes::complete::{tag, take_till1, take_until},
+//    character::complete::{char, digit1},
+//    combinator::{map, map_opt},
+//    sequence::{delimited, pair, separated_pair},
     IResult,
 };
-use std::cell::RefCell;
+use crate::core::{get_slash, capture, get_question, get_end, get_hash, get_and, exact, query, capture_single};
 
 /// Tokens generated from parsing a route matcher string.
 /// They will be optimized to another token type that is used to match URLs.
@@ -219,6 +219,7 @@ pub fn parse(mut i: &str) -> Result<Vec<RouteParserToken>, PrettyParseError> {
             let error = ParseError {
                 reason: Some(reason),
                 expected: vec![],
+                offset: 0
             };
             PrettyParseError {
                 error,
@@ -242,379 +243,148 @@ fn parse_impl<'a>(
 ) -> IResult<&'a str, RouteParserToken<'a>, ParseError> {
     match state {
         ParserState::None => alt((get_slash, get_question, get_hash, capture, exact, get_end))(i)
-            .map_err(|_| {
-                get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion) // TODO, technically, a sub-switch may want to start with a &query=something, so enabling this might make sense.
-                    .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
+            .map_err(|mut e: nom::Err<ParseError>| {
+                // Detect likely failures if the above failed to match.
+                let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
+                *reason = get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion) // TODO, technically, a sub-switch may want to start with a &query=something, so enabling this might make sense.
+//                    .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
                     .ok()
-            })
-            .map_err(|reason| ParseError {
-                reason,
-                expected: vec![
-                    ExpectedToken::Separator,
-                    ExpectedToken::QueryBegin,
-                    ExpectedToken::FragmentBegin,
-                    ExpectedToken::CaptureManyNamed,
-                ],
-            })
-            .map_err(nom::Err::Error),
+                    .or(*reason);
+                e
+            }),
         ParserState::Path { prev_token } => match prev_token {
             RouteParserToken::Separator => {
                 alt((exact, capture, get_question, get_hash, get_end))(i)
-                    .map_err(|_| {
+                    .map_err(|mut e: nom::Err<ParseError>| {
                         // Detect likely failures if the above failed to match.
-                        get_slash(i)
+                        let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
+                        *reason = get_slash(i)
                             .map(|_| ParserErrorReason::DoubleSlash)
                             .or_else(|_| get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion))
-                            .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
+//                            .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
                             .ok()
+                            .or(*reason);
+                        e
                     })
-                    .map_err(|reason| ParseError {
-                        reason,
-                        expected: vec![
-                            ExpectedToken::Literal,
-                            ExpectedToken::CaptureNamed,
-                            ExpectedToken::CaptureManyNamed,
-                            ExpectedToken::CaptureNumberedNamed,
-                            ExpectedToken::QueryBegin,
-                            ExpectedToken::FragmentBegin,
-                            ExpectedToken::End,
-                        ],
-                    })
-                    .map_err(nom::Err::Error)
             }
             RouteParserToken::Exact(_) => {
                 alt((get_slash, capture, get_question, get_hash, get_end))(i)
-                    .map_err(|_| {
-                        get_and(i)
+                    .map_err(|mut e: nom::Err<ParseError>| {
+                        // Detect likely failures if the above failed to match.
+                        let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
+                        *reason = get_and(i)
                             .map(|_| ParserErrorReason::AndBeforeQuestion)
-                            .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
+//                            .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
                             .ok()
+                            .or(*reason);
+                        e
                     })
-                    .map_err(|reason| ParseError {
-                        reason,
-                        expected: vec![
-                            ExpectedToken::Separator,
-                            ExpectedToken::QueryBegin,
-                            ExpectedToken::FragmentBegin,
-                            ExpectedToken::End,
-                            ExpectedToken::CaptureNamed,
-                            ExpectedToken::CaptureManyNamed,
-                            ExpectedToken::CaptureNumberedNamed,
-                        ],
-                    })
-                    .map_err(nom::Err::Error)
             }
             RouteParserToken::Capture(_) => alt((get_slash, exact, get_question, get_hash, get_end))(i)
-                .map_err(|_| {
-                    capture(i)
+                .map_err(|mut e: nom::Err<ParseError>| {
+                    // Detect likely failures if the above failed to match.
+                    let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
+                    *reason = capture(i)
                         .map(|_| ParserErrorReason::AdjacentCaptures)
                         .or_else(|_| get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion))
-//                        .or_else(|_| get_end(i).map(|_| ParserErrorReason::EndAfterCapture))
                         .ok()
-                })
-                .map_err(|reason| ParseError {
-                    reason,
-                    expected: vec![
-                        ExpectedToken::Literal,
-                        ExpectedToken::Separator,
-                        ExpectedToken::QueryBegin,
-                        ExpectedToken::FragmentBegin,
-                        ExpectedToken::End,
-                    ],
-                })
-                .map_err(nom::Err::Error),
+                        .or(*reason);
+                    e
+                }),
             _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
                 expected: vec![],
+                offset: 0
             })),
         },
         ParserState::FirstQuery { prev_token } => match prev_token {
             RouteParserToken::QueryBegin => query(i)
-                .map_err(|_| {
-                    get_question(i)
+                .map_err(|mut e: nom::Err<ParseError>| {
+                    // Detect likely failures if the above failed to match.
+                    let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
+                    *reason = get_question(i)
                         .map(|_| ParserErrorReason::MultipleQuestions)
                         .ok()
-                })
-                .map_err(|reason| ParseError {
-                    reason,
-                    expected: vec![ExpectedToken::QueryCapture, ExpectedToken::QueryLiteral],
-                })
-                .map_err(nom::Err::Error),
+                        .or(*reason);
+                    e
+                }),
             RouteParserToken::Query { .. } => alt((get_and, get_hash, get_end))(i)
-                .map_err(|_| {
-                    get_question(i)
+                .map_err(|mut e: nom::Err<ParseError>| {
+                    // Detect likely failures if the above failed to match.
+                    let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
+                    *reason = get_question(i)
                         .map(|_| ParserErrorReason::MultipleQuestions)
                         .ok()
-                })
-                .map_err(|reason| ParseError {
-                    reason,
-                    expected: vec![
-                        ExpectedToken::QuerySeparator,
-                        ExpectedToken::FragmentBegin,
-                        ExpectedToken::End,
-                    ],
-                })
-                .map_err(nom::Err::Error),
+                        .or(*reason);
+                    e
+                }),
             _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
                 expected: vec![],
+                offset: 0
             })),
         },
         ParserState::NthQuery { prev_token } => match prev_token {
             RouteParserToken::QuerySeparator => query(i)
-                .map_err(|_| {
-                    get_question(i)
+                .map_err(|mut e: nom::Err<ParseError>| {
+                    // Detect likely failures if the above failed to match.
+                    let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
+                    *reason = get_question(i)
                         .map(|_| ParserErrorReason::MultipleQuestions)
                         .ok()
-                })
-                .map_err(|reason| ParseError {
-                    reason,
-                    expected: vec![ExpectedToken::QueryCapture, ExpectedToken::QueryLiteral],
-                })
-                .map_err(nom::Err::Error),
+                        .or(*reason);
+                    e
+                }),
             RouteParserToken::Query { .. } => {
                 alt((get_and, get_hash, get_end))(i)
-                    .map_err(|_| {
-                        get_question(i)
+                    .map_err(|mut e: nom::Err<ParseError>| {
+                        // Detect likely failures if the above failed to match.
+                        let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
+                        *reason = get_question(i)
                             .map(|_| ParserErrorReason::MultipleQuestions)
                             .ok()
+                            .or(*reason);
+                        e
                     })
-                    .map_err(|reason| ParseError {
-                        reason,
-                        expected: vec![
-                            ExpectedToken::QuerySeparator,
-                            ExpectedToken::FragmentBegin,
-                            ExpectedToken::End,
-                        ],
-                    })
-                    .map_err(nom::Err::Error)
             }
             _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
                 expected: vec![],
+                offset: 0
             })),
         },
         ParserState::Fragment { prev_token } => match prev_token {
-            RouteParserToken::FragmentBegin => alt((exact, capture_single, get_end))(i)
-                .map_err(|_| ParseError {
-                    reason: None,
-                    expected: vec![
-                        ExpectedToken::Literal,
-                        ExpectedToken::CaptureNamed,
-                        ExpectedToken::End,
-                    ],
-                })
-                .map_err(nom::Err::Error),
-            RouteParserToken::Exact(_) => alt((capture_single, get_end))(i)
-                .map_err(|_| ParseError {
-                    reason: None,
-                    expected: vec![ExpectedToken::CaptureNamed, ExpectedToken::End],
-                })
-                .map_err(nom::Err::Error),
-            RouteParserToken::Capture(_) => alt((exact, get_end))(i)
-                .map_err(|_| bad_capture(i).map(|(_, reason)| reason).ok())
-                .map_err(|reason| ParseError {
-                    reason,
-                    expected: vec![ExpectedToken::CaptureNamed],
-                })
-                .map_err(nom::Err::Error),
+            RouteParserToken::FragmentBegin => alt((exact, capture_single, get_end))(i),
+            RouteParserToken::Exact(_) => alt((capture_single, get_end))(i),
+            RouteParserToken::Capture(_) => alt((exact, get_end))(i),
+//                .map_err(|mut e: nom::Err<ParseError>| {
+//                    // Detect likely failures if the above failed to match.
+//                    let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
+//                    *reason = bad_capture(i).map(|(_, reason)| reason).ok()
+//                        .or(*reason);
+//                    e
+//                }),
             _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
                 expected: vec![],
+                offset: 0
             })),
         },
         ParserState::End => Err(nom::Err::Failure(ParseError {
             reason: Some(ParserErrorReason::TokensAfterEndToken),
             expected: vec![],
+            offset: 0
         })),
     }
 }
 
-fn get_slash(i: &str) -> IResult<&str, RouteParserToken> {
-    map(char('/'), |_: char| RouteParserToken::Separator)(i)
-}
 
-fn get_question(i: &str) -> IResult<&str, RouteParserToken> {
-    map(char('?'), |_: char| RouteParserToken::QueryBegin)(i)
-}
-
-fn get_and(i: &str) -> IResult<&str, RouteParserToken> {
-    map(char('&'), |_: char| RouteParserToken::QuerySeparator)(i)
-}
-
-/// Returns a FragmentBegin variant if the next character is '\#'.
-fn get_hash(i: &str) -> IResult<&str, RouteParserToken> {
-    map(char('#'), |_: char| RouteParserToken::FragmentBegin)(i)
-}
-
-/// Returns an End variant if the next character is a '!`.
-fn get_end(i: &str) -> IResult<&str, RouteParserToken> {
-    map(char('!'), |_: char| RouteParserToken::End)(i)
-}
-
-fn rust_ident(i: &str) -> IResult<&str, &str> {
-    let invalid_ident_chars = r##" \|/{}[]()?+=-!@#$%^&*~`'";:"##;
-    let invalid_ident_chars_first_character = r##" \|/{}[]()?+=-1234567890!@#$%^&*~`'";:"##;
-
-    // Use a refcell to get around Fn vs FnMut restrictions.
-    let is_first_character = RefCell::new(true);
-    take_till1(move |c| {
-        if *is_first_character.borrow() {
-            is_first_character.replace(false);
-            invalid_ident_chars_first_character.contains(c)
-        } else {
-            invalid_ident_chars.contains(c)
-        }
-    })(i)
-}
-
-fn exact_impl(i: &str) -> IResult<&str, &str> {
-    let special_chars = r##"/?&#={}!"##; // TODO these might allow escaping one day.
-    take_till1(move |c| special_chars.contains(c))(i)
-}
-
-fn exact(i: &str) -> IResult<&str, RouteParserToken> {
-    map(exact_impl, |s| RouteParserToken::Exact(s))(i)
-}
-
-fn capture(i: &str) -> IResult<&str, RouteParserToken> {
-    map(named_capture_impl, |cv: RefCaptureVariant| {
-        RouteParserToken::Capture(cv)
-    })(i)
-}
-
-fn capture_single(i: &str) -> IResult<&str, RouteParserToken> {
-    map(
-        delimited(char('{'), single_capture_impl, char('}')),
-        RouteParserToken::Capture,
-    )(i)
-}
-
-/// Captures {ident}, {*:ident}, {<number>:ident}
-fn named_capture_impl(i: &str) -> IResult<&str, RefCaptureVariant> {
-    let inner = alt((
-        single_capture_impl,
-        many_capture_impl,
-        numbered_capture_impl,
-    ));
-    delimited(char('{'), inner, char('}'))(i)
-}
-
-fn single_capture_impl(i: &str) -> IResult<&str, RefCaptureVariant> {
-    map(rust_ident, |key| RefCaptureVariant::Named(key))(i)
-}
-
-fn many_capture_impl(i: &str) -> IResult<&str, RefCaptureVariant> {
-    map(
-        separated_pair(char('*'), char(':'), rust_ident),
-        |(_, key)| RefCaptureVariant::ManyNamed(key),
-    )(i)
-}
-
-fn numbered_capture_impl(i: &str) -> IResult<&str, RefCaptureVariant> {
-    map(
-        separated_pair(digit1, char(':'), rust_ident),
-        |(number, key)| RefCaptureVariant::NumberedNamed {
-            sections: number.parse().unwrap(),
-            name: key,
-        },
-    )(i)
-}
-
-/// Gets a capture or exact, mapping it to the CaptureOrExact enum - to provide a limited subset.
-fn cap_or_exact(i: &str) -> IResult<&str, CaptureOrExact> {
-    alt((
-        map(
-            delimited(char('{'), single_capture_impl, char('}')),
-            CaptureOrExact::Capture,
-        ),
-        map(exact_impl, |exact| CaptureOrExact::Exact(exact)),
-    ))(i)
-}
-
-/// Matches a query
-fn query(i: &str) -> IResult<&str, RouteParserToken> {
-    map(
-        separated_pair(exact_impl, char('='), cap_or_exact),
-        |(ident, capture_or_exact)| RouteParserToken::Query {
-            ident,
-            capture_or_exact,
-        },
-    )(i)
-}
-
-/// Succeeds if an invalid character is used as an ident.
-fn bad_capture(i: &str) -> IResult<&str, ParserErrorReason> {
-    let invalid_ident_chars = r##" \|/{[]()?+=-1234567890!@#$%^&*~`'";:"##;
-
-    let number_capture = map(
-        separated_pair(digit1, char(':'), take_until("}")),
-        |(_, ident)| ident,
-    );
-    let many_capture = map(pair(tag("*:"), take_until("}")), |(_, ident)| ident);
-    let simple_capture = take_until("}");
-    map_opt(
-        delimited(
-            char('{'),
-            alt((number_capture, many_capture, simple_capture)),
-            char('}'),
-        ),
-        move |s: &str| {
-            s.chars()
-                .map(|ch| {
-                    if invalid_ident_chars.contains(ch) {
-                        Some(ParserErrorReason::BadRustIdent(ch))
-                    } else {
-                        None
-                    }
-                })
-                .flatten()
-                .next()
-        },
-    )(i)
-}
 
 #[cfg(test)]
 mod test {
     use super::*;
 
-    mod sub_parsers {
-        use super::*;
 
-        #[test]
-        fn cap_or_exact_match_lit() {
-            cap_or_exact("lorem").expect("Should parse");
-        }
-        #[test]
-        fn cap_or_exact_match_cap() {
-            cap_or_exact("{lorem}").expect("Should parse");
-        }
-        #[test]
-        fn query_section() {
-            query("lorem=ipsum").expect("should parse");
-        }
-
-        #[test]
-        fn bad_capture_with_ampersand() {
-            bad_capture("{ident&}").expect("should parse");
-        }
-
-        #[test]
-        fn bad_capture_approves_valid_idents() {
-            bad_capture("{ident}").expect_err("should not parse");
-            bad_capture("{*:ident}").expect_err("should not parse");
-            bad_capture("{2:ident}").expect_err("should not parse");
-        }
-
-        #[test]
-        fn non_leading_numbers_in_ident() {
-            rust_ident("hello5").expect("sholud parse");
-        }
-        #[test]
-        fn leading_numbers_in_ident_fails() {
-            rust_ident("5hello").expect_err("sholud not parse");
-        }
-    }
 
     mod does_parse {
         use super::*;
@@ -687,6 +457,7 @@ mod test {
 
     mod does_not_parse {
         use super::*;
+        use crate::error::ExpectedToken;
 
         // TODO, should empty be ok?
         #[test]
@@ -709,7 +480,8 @@ mod test {
         #[test]
         fn non_ident_capture() {
             let x = parse("/{lor#m}").expect_err("Should not parse");
-            assert_eq!(x.error.reason, Some(ParserErrorReason::BadRustIdent('#')))
+            assert_eq!(x.error.reason, Some(ParserErrorReason::BadRustIdent('#')));
+            assert_eq!(x.error.expected, vec![ExpectedToken::CloseBracket, ExpectedToken::Ident])
         }
 
         #[test]

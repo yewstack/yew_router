@@ -1,3 +1,5 @@
+use yew_router::{route::Route, Switch};
+
 fn main() {
     let route = Route::<()>::from("/some/route");
     let app_route = AppRoute::switch(route);
@@ -47,7 +49,6 @@ fn main() {
     OtherSingle(23).build_route_section::<()>(&mut buf);
     println!("{}", buf);
 }
-use yew_router::{route::Route, Switch};
 
 #[derive(Debug, Switch)]
 pub enum AppRoute {
@@ -94,6 +95,6 @@ pub struct OtherSingle(u32);
 
 //#[derive(Switch, Debug)]
 // pub enum Bad {
-//    #[to = "/bad_route?query=&query=no"]
+//    #[to = "/bad_route{4hello}"]
 //    X,
 //}

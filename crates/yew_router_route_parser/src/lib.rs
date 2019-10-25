@@ -15,6 +15,7 @@
 
 mod error;
 pub mod parser;
+mod core;
 pub use error::{ParseError, PrettyParseError};
 mod optimizer;
 pub use optimizer::{convert_tokens, parse_str_and_optimize_tokens};
