@@ -26,8 +26,9 @@ mod switch;
 /// `{1:field_name}` is the same as `{field_name}`.
 ///
 /// Tuple-structs and Tuple-enum-variants are also supported.
-/// At the moment, dummy field-names still need to be provided to capture sections, but in the future,
-/// `{}`, `{*}`, and `{4}` will be valid matchers when used on structs and variants without named fields.
+/// If you don't want to specify keys that don't correspond to any specific field,
+/// `{}`, `{*}`, and `{4}` also denote valid capture sections when used on structs and variants without named fields.
+/// In datastructures without field names, the captures will be assigned in order - left to right.
 ///
 /// # Note
 /// It should be mentioned that the derived function for matching will try enum variants in order,
@@ -55,21 +56,23 @@ mod switch;
 ///
 /// #[derive(Switch)]
 /// enum AppRoute {
-///     #[to="/some/simple/route"]
+///     #[to = "/some/simple/route"]
 ///     SomeSimpleRoute,
-///     #[to="/capture/{cap}"]
+///     #[to = "/capture/{}"]
 ///     Capture(String),
-///     #[to="/convert/{id}"]
-///     Convert{id: usize},
-///     #[rest] // #[to="{*:rest}"] would work just as well here
-///     Inner(InnerRoute)
+///     #[to = "/named/capture/{name}"]
+///     NamedCapture { name: String },
+///     #[to = "/convert/{id}"]
+///     Convert { id: usize },
+///     #[rest] // shorthand for #[to="{*}"]
+///     Inner(InnerRoute),
 /// }
 ///
 /// #[derive(Switch)]
-/// #[to="/inner/route/{first}/{second}"]
+/// #[to = "/inner/route/{first}/{second}"]
 /// struct InnerRoute {
 ///     first: String,
-///     second: String
+///     second: String,
 /// }
 /// ```
 /// Check out the examples directory in the repository to see some more usages of the routing syntax.

@@ -55,20 +55,22 @@ pub enum AppRoute {
     #[to = "/some/route"]
     SomeRoute,
     #[to = "/some/{thing}/{other}"]
+    // If you have a variant with named fields, the field names should appear in the matcher string.
     Something { thing: String, other: String },
-    #[to = "/another/{thing}"]
+    #[to = "/another/{}"] // Tuple-enums don't need names in the capture groups.
     Another(String),
-    #[to = "/doot/{one}/{two}"]
+    #[to = "/doot/{}/{something}"]
+    // You can still puts names in the capture groups to improve readability.
     Yeet(String, String),
     #[to = "/inner"]
-    #[rest]
+    #[rest] // same as /inner{*}
     Nested(InnerRoute),
     #[rest] // Rest delegates the remaining input to the next attribute
     Single(Single),
     #[rest]
     OtherSingle(OtherSingle),
     /// Because this is an option, the inner item doesn't have to match.
-    #[to = "/option/{thing}"]
+    #[to = "/option/{}"]
     Optional(Option<String>),
     /// Because this is an option, a corresponding capture group doesn't need to exist
     #[to = "/missing/capture"]

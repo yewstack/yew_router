@@ -1,5 +1,5 @@
-use std::fmt;
 use nom::error::ErrorKind;
+use std::fmt;
 
 /// Parser error that can print itself in a human-readable format.
 #[derive(Clone, PartialEq)]
@@ -74,21 +74,21 @@ pub struct ParseError {
 }
 
 impl ParseError {
-    pub (crate) fn expected(expected: ExpectedToken) -> Self {
+    pub(crate) fn expected(expected: ExpectedToken) -> Self {
         ParseError {
             reason: None,
             expected: vec![expected],
-            offset: 0
+            offset: 0,
         }
     }
 }
 
-impl nom::error::ParseError<&str> for  ParseError {
+impl nom::error::ParseError<&str> for ParseError {
     fn from_error_kind(_input: &str, _kind: ErrorKind) -> Self {
         ParseError {
             reason: None,
             expected: vec![],
-            offset: 0
+            offset: 0,
         }
     }
 
@@ -98,12 +98,12 @@ impl nom::error::ParseError<&str> for  ParseError {
 
     fn or(mut self, other: Self) -> Self {
         self.expected.extend(other.expected);
-//        self.expected.dedup(); // TODO enforce that these are actually sorted
+        //        self.expected.dedup(); // TODO enforce that these are actually sorted
 
         ParseError {
             reason: other.reason.or(self.reason), // Take the right most reason
             expected: self.expected,
-            offset: other.offset // TODO panicing might be an option if the offsets aren't the same, Maybe add them? eeeh?, maybe create layers of expected with specific offsets?
+            offset: other.offset, /* TODO panicing might be an option if the offsets aren't the same, Maybe add them? eeeh?, maybe create layers of expected with specific offsets? */
         }
     }
 }
@@ -143,7 +143,7 @@ pub enum ExpectedToken {
     /// *
     Star,
     /// :
-    Colon
+    Colon,
 }
 
 impl fmt::Display for ExpectedToken {
@@ -195,7 +195,7 @@ pub enum ParserErrorReason {
     /// This should never actually be created.
     NotAllowedStateTransition,
     /// Expected a specific token
-    Expected(ExpectedToken)
+    Expected(ExpectedToken),
 }
 
 impl fmt::Display for ParserErrorReason {
@@ -242,11 +242,9 @@ impl fmt::Display for ParserErrorReason {
     }
 }
 
-pub (crate) fn get_reason(err: &mut nom::Err<ParseError>) -> &mut Option<ParserErrorReason> {
+pub(crate) fn get_reason(err: &mut nom::Err<ParseError>) -> &mut Option<ParserErrorReason> {
     match err {
-        nom::Err::Error(err)
-        | nom::Err::Failure(err)
-        => &mut err.reason,
-        nom::Err::Incomplete(_) => panic!("Incomplete not possible")
+        nom::Err::Error(err) | nom::Err::Failure(err) => &mut err.reason,
+        nom::Err::Incomplete(_) => panic!("Incomplete not possible"),
     }
 }

@@ -29,10 +29,14 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
 
     match input.data {
         Data::Struct(ds) => {
+            let field_type = match ds.fields {
+                Fields::Unnamed(_) | Fields::Unit => yew_router_route_parser::FieldType::Unnamed,
+                Fields::Named(_) => yew_router_route_parser::FieldType::Named,
+            };
             let matcher = AttrToken::convert_attributes_to_tokens(input.attrs)
                 .into_iter()
                 .enumerate()
-                .map(|(index, at)| at.into_shadow_matcher_tokens(index))
+                .map(|(index, at)| at.into_shadow_matcher_tokens(index, field_type))
                 .flatten()
                 .collect::<Vec<_>>();
             let switch_item = SwitchItem {
@@ -47,10 +51,16 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                 .variants
                 .into_iter()
                 .map(|variant: Variant| {
+                    let field_type = match variant.fields {
+                        Fields::Unnamed(_) | Fields::Unit => {
+                            yew_router_route_parser::FieldType::Unnamed
+                        }
+                        Fields::Named(_) => yew_router_route_parser::FieldType::Named,
+                    };
                     let matcher = AttrToken::convert_attributes_to_tokens(variant.attrs)
                         .into_iter()
                         .enumerate()
-                        .map(|(index, at)| at.into_shadow_matcher_tokens(index))
+                        .map(|(index, at)| at.into_shadow_matcher_tokens(index, field_type))
                         .flatten()
                         .collect::<Vec<_>>();
                     SwitchItem {
@@ -120,17 +130,18 @@ fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> Toke
                         state = state.or(#name.build_route_section(buf));
                     }
                 }
-            },
-            FieldType::Unnamed { index } => match &capture {
-                ShadowCaptureVariant::Named(_)
-                | ShadowCaptureVariant::ManyNamed(_)
-                | ShadowCaptureVariant::NumberedNamed { .. } => {
-                    let name = unnamed_field_index_item(index);
-                    quote! {
-                        state = state.or(#name.build_route_section(&mut buf));
-                    }
+                ShadowCaptureVariant::Unnamed
+                | ShadowCaptureVariant::ManyUnnamed
+                | ShadowCaptureVariant::NumberedUnnamed { .. } => {
+                    panic!("Unnamed matcher sections not allowed for named field types")
                 }
             },
+            FieldType::Unnamed { index } => {
+                let name = unnamed_field_index_item(index);
+                quote! {
+                    state = state.or(#name.build_route_section(&mut buf));
+                }
+            }
         },
         ShadowMatcherToken::End => quote! {},
     }

@@ -13,9 +13,10 @@
     unused_qualifications
 )]
 
+mod core;
 mod error;
 pub mod parser;
-mod core;
+pub use crate::core::FieldType;
 pub use error::{ParseError, PrettyParseError};
 mod optimizer;
 pub use optimizer::{convert_tokens, parse_str_and_optimize_tokens};
@@ -43,6 +44,15 @@ pub enum MatcherToken {
 /// Variants that indicate how part of a string should be captured.
 #[derive(Debug, PartialEq, Clone)]
 pub enum CaptureVariant {
+    /// {}
+    Unnamed,
+    /// {*}
+    ManyUnnamed,
+    /// {5}
+    NumberedUnnamed {
+        /// Number of sections to match.
+        sections: usize,
+    },
     /// {name} - captures a section and adds it to the map with a given name.
     Named(String),
     /// {*:name} - captures over many sections and adds it to the map with a given name.

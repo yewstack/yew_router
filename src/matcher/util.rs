@@ -1,7 +1,7 @@
 use nom::{
     bytes::complete::{tag, tag_no_case},
     character::complete::anychar,
-    combinator::{cond, map, peek},
+    combinator::{cond, map, peek, rest},
     error::{ErrorKind, ParseError},
     multi::many_till,
     sequence::pair,
@@ -9,7 +9,6 @@ use nom::{
 };
 use std::{iter::Peekable, rc::Rc, slice::Iter};
 use yew_router_route_parser::MatcherToken;
-use nom::combinator::rest;
 
 /// Allows a configurable tag that can optionally be case insensitive.
 pub fn tag_possibly_case_sensitive<'a, 'b: 'a>(
@@ -74,13 +73,11 @@ pub fn next_delimiter<'a>(
         .cloned()
         .expect("There must be at least one token to peak in next_delimiter");
 
-    move |i: &'a str| {
-        match &t {
-            MatcherToken::Exact(sequence) => tag(sequence.as_str())(i),
-            MatcherToken::End => rest(i),
-            MatcherToken::Capture(_) => {
-                panic!("underlying parser should not allow two captures in a row")
-            }
+    move |i: &'a str| match &t {
+        MatcherToken::Exact(sequence) => tag(sequence.as_str())(i),
+        MatcherToken::End => rest(i),
+        MatcherToken::Capture(_) => {
+            panic!("underlying parser should not allow two captures in a row")
         }
     }
 }

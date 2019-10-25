@@ -29,6 +29,15 @@ pub enum ShadowMatcherToken {
 }
 
 pub enum ShadowCaptureVariant {
+    /// {}
+    Unnamed,
+    /// {*}
+    ManyUnnamed,
+    /// {5}
+    NumberedUnnamed {
+        /// Number of sections to match.
+        sections: usize,
+    },
     /// {name} - captures a section and adds it to the map with a given name
     Named(String),
     /// {*:name} - captures over many sections and adds it to the map with a given name.
@@ -48,6 +57,15 @@ impl ToTokens for ShadowCaptureVariant {
             }
             ShadowCaptureVariant::NumberedNamed { sections, name } => {
                 quote! {::yew_router::matcher::CaptureVariant::NumberedNamed{sections: #sections, name: #name.to_string()}}
+            }
+            ShadowCaptureVariant::Unnamed => {
+                quote! {::yew_router::matcher::CaptureVariant::Unnamed}
+            }
+            ShadowCaptureVariant::ManyUnnamed => {
+                quote! {::yew_router::matcher::CaptureVariant::ManyUnnamed}
+            }
+            ShadowCaptureVariant::NumberedUnnamed { sections } => {
+                quote! {::yew_router::matcher::CaptureVariant::NumberedUnnamed{sections: #sections}}
             }
         };
         ts.extend(t)
@@ -75,6 +93,9 @@ impl From<CaptureVariant> for ShadowCaptureVariant {
             CaptureVariant::NumberedNamed { sections, name } => {
                 SCV::NumberedNamed { sections, name }
             }
+            CaptureVariant::Unnamed => SCV::Unnamed,
+            CaptureVariant::ManyUnnamed => SCV::ManyUnnamed,
+            CaptureVariant::NumberedUnnamed { sections } => SCV::NumberedUnnamed { sections },
         }
     }
 }

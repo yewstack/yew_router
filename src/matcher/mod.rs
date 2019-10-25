@@ -47,7 +47,7 @@ impl RouteMatcher {
     /// Creates a new Matcher with settings.
     pub fn new(i: &str, settings: MatcherSettings) -> Result<Self, PrettyParseError> {
         Ok(RouteMatcher {
-            tokens: parse_str_and_optimize_tokens(i)?,
+            tokens: parse_str_and_optimize_tokens(i, yew_router_route_parser::FieldType::Unnamed)?, /* TODO this field type should be a superset of Named, but it would be better to source this from settings, and make sure that the macro generates settings as such. */
             settings,
         })
     }
@@ -93,6 +93,9 @@ impl RouteMatcher {
                             | CaptureVariant::NumberedNamed { name, .. } => {
                                 acc.insert(&name);
                             }
+                            CaptureVariant::Unnamed
+                            | CaptureVariant::ManyUnnamed
+                            | CaptureVariant::NumberedUnnamed { .. } => {}
                         },
                     }
                     acc

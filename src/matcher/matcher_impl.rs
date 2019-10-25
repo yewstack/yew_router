@@ -91,6 +91,11 @@ fn matcher_impl<'a, 'b: 'a, CAP: CaptureCollection<'b>>(
                 CaptureVariant::NumberedNamed { sections, name } => {
                     capture_numbered_named(i, &mut iter, Some((&name, &mut captures)), *sections)?
                 }
+                CaptureVariant::Unnamed => capture_named(i, &mut iter, "", &mut captures)?,
+                CaptureVariant::ManyUnnamed => capture_many_named(i, &mut iter, "", &mut captures)?,
+                CaptureVariant::NumberedUnnamed { sections } => {
+                    capture_numbered_named(i, &mut iter, Some(("", &mut captures)), *sections)?
+                }
             },
             MatcherToken::End => {
                 if !i.is_empty() {
@@ -210,39 +215,51 @@ fn valid_many_capture_characters(i: &str) -> IResult<&str, &str> {
 mod integration_test {
     use super::*;
 
-    use yew_router_route_parser;
+    use yew_router_route_parser::{self, FieldType};
 
     use super::super::Captures;
     //    use nom::combinator::all_consuming;
 
     #[test]
     fn match_query_after_path() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path?lorem=ipsum")
-            .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "/a/path?lorem=ipsum",
+            FieldType::Unnamed,
+        )
+        .expect("Should parse");
         matcher_impl::<Captures>(&x, MatcherSettings::default(), "/a/path?lorem=ipsum")
             .expect("should match");
     }
 
     #[test]
     fn match_query_after_path_trailing_slash() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path/?lorem=ipsum")
-            .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "/a/path/?lorem=ipsum",
+            FieldType::Unnamed,
+        )
+        .expect("Should parse");
         matcher_impl::<Captures>(&x, MatcherSettings::default(), "/a/path/?lorem=ipsum")
             .expect("should match");
     }
 
     #[test]
     fn match_query() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("?lorem=ipsum")
-            .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "?lorem=ipsum",
+            FieldType::Unnamed,
+        )
+        .expect("Should parse");
         matcher_impl::<Captures>(&x, MatcherSettings::default(), "?lorem=ipsum")
             .expect("should match");
     }
 
     #[test]
     fn named_capture_query() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("?lorem={ipsum}")
-            .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "?lorem={ipsum}",
+            FieldType::Unnamed,
+        )
+        .expect("Should parse");
         let (_, matches) = matcher_impl::<Captures>(&x, MatcherSettings::default(), "?lorem=ipsum")
             .expect("should match");
         assert_eq!(matches["ipsum"], "ipsum".to_string())
@@ -250,8 +267,11 @@ mod integration_test {
 
     #[test]
     fn match_n_paths_3() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/{*:cap}/thing")
-            .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "/{*:cap}/thing",
+            FieldType::Unnamed,
+        )
+        .expect("Should parse");
         let matches: Captures =
             matcher_impl(&x, MatcherSettings::default(), "/anything/other/thing")
                 .expect("should match")
@@ -261,8 +281,11 @@ mod integration_test {
 
     #[test]
     fn match_n_paths_4() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/{*:cap}/thing")
-            .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "/{*:cap}/thing",
+            FieldType::Unnamed,
+        )
+        .expect("Should parse");
         let matches: Captures =
             matcher_impl(&x, MatcherSettings::default(), "/anything/thing/thing")
                 .expect("should match")
@@ -272,8 +295,11 @@ mod integration_test {
 
     #[test]
     fn match_path_5() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/{cap}/thing")
-            .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "/{cap}/thing",
+            FieldType::Unnamed,
+        )
+        .expect("Should parse");
         let matches: Captures =
             matcher_impl(&x, MatcherSettings::default(), "/anything/thing/thing")
                 .expect("should match")
@@ -283,48 +309,59 @@ mod integration_test {
 
     #[test]
     fn match_fragment() {
-        let x =
-            yew_router_route_parser::parse_str_and_optimize_tokens("#test").expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("#test", FieldType::Unnamed)
+            .expect("Should parse");
         matcher_impl::<Captures>(&x, MatcherSettings::default(), "#test").expect("should match");
     }
 
     #[test]
     fn match_fragment_after_path() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path/#test")
-            .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "/a/path/#test",
+            FieldType::Unnamed,
+        )
+        .expect("Should parse");
         matcher_impl::<Captures>(&x, MatcherSettings::default(), "/a/path/#test")
             .expect("should match");
     }
 
     #[test]
     fn match_fragment_after_path_no_slash() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path#test")
-            .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "/a/path#test",
+            FieldType::Unnamed,
+        )
+        .expect("Should parse");
         matcher_impl::<Captures>(&x, MatcherSettings::default(), "/a/path#test")
             .expect("should match");
     }
 
     #[test]
     fn match_fragment_after_query() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/a/path?query=thing#test")
-            .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "/a/path?query=thing#test",
+            FieldType::Unnamed,
+        )
+        .expect("Should parse");
         matcher_impl::<Captures>(&x, MatcherSettings::default(), "/a/path?query=thing#test")
             .expect("should match");
     }
 
     #[test]
     fn match_fragment_after_query_capture() {
-        let x =
-            yew_router_route_parser::parse_str_and_optimize_tokens("/a/path?query={capture}#test")
-                .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "/a/path?query={capture}#test",
+            FieldType::Unnamed,
+        )
+        .expect("Should parse");
         matcher_impl::<Captures>(&x, MatcherSettings::default(), "/a/path?query=thing#test")
             .expect("should match");
     }
 
     #[test]
     fn capture_as_only_token() {
-        let x =
-            yew_router_route_parser::parse_str_and_optimize_tokens("{any}").expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens("{any}", FieldType::Unnamed)
+            .expect("Should parse");
         matcher_impl::<Captures>(&x, MatcherSettings::default(), "literally_anything")
             .expect("should match");
     }
@@ -332,7 +369,8 @@ mod integration_test {
     #[test]
     fn case_insensitive() {
         let x =
-            yew_router_route_parser::parse_str_and_optimize_tokens("/hello").expect("Should parse");
+            yew_router_route_parser::parse_str_and_optimize_tokens("/hello", FieldType::Unnamed)
+                .expect("Should parse");
         let settings = MatcherSettings {
             case_insensitive: true,
             ..Default::default()
@@ -342,8 +380,9 @@ mod integration_test {
 
     #[test]
     fn end_token() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("/lorem!")
-            .expect("Should parse");
+        let x =
+            yew_router_route_parser::parse_str_and_optimize_tokens("/lorem!", FieldType::Unnamed)
+                .expect("Should parse");
 
         matcher_impl::<Captures>(&x, Default::default(), "/lorem/ipsum")
             .expect_err("should not match");

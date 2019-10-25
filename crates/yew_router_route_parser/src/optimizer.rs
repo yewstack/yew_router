@@ -3,7 +3,7 @@ use crate::{
     parser::{parse, CaptureOrExact, RefCaptureVariant, RouteParserToken},
 };
 
-use crate::{CaptureVariant, MatcherToken};
+use crate::{core::FieldType, CaptureVariant, MatcherToken};
 
 impl<'a> From<RefCaptureVariant<'a>> for CaptureVariant {
     fn from(v: RefCaptureVariant<'a>) -> Self {
@@ -14,6 +14,11 @@ impl<'a> From<RefCaptureVariant<'a>> for CaptureVariant {
                 sections,
                 name: name.to_string(),
             },
+            RefCaptureVariant::Unnamed => CaptureVariant::Unnamed,
+            RefCaptureVariant::ManyUnnamed => CaptureVariant::ManyUnnamed,
+            RefCaptureVariant::NumberedUnnamed { sections } => {
+                CaptureVariant::NumberedUnnamed { sections }
+            }
         }
     }
 }
@@ -43,8 +48,11 @@ impl<'a> RouteParserToken<'a> {
 }
 
 /// Parse the provided "matcher string" and then optimize the tokens.
-pub fn parse_str_and_optimize_tokens(i: &str) -> Result<Vec<MatcherToken>, PrettyParseError> {
-    let tokens = parse(i)?;
+pub fn parse_str_and_optimize_tokens(
+    i: &str,
+    field_type: FieldType,
+) -> Result<Vec<MatcherToken>, PrettyParseError> {
+    let tokens = parse(i, field_type)?;
     Ok(convert_tokens(&tokens))
 }
 
