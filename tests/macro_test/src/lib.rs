@@ -66,7 +66,7 @@ mod tests {
     fn single_enum_variant_multiple_unnamed_capture() {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
-            #[to = "/variant/{item}/{item}"] // For unnamed variants, the names don't matter at all
+            #[to = "/variant/{}/{}"] // For unnamed variants, the names don't matter at all
             Variant(String, String),
         }
         let route = Route::from("/variant/thing/other");
@@ -250,10 +250,22 @@ mod tests {
     }
 
     #[test]
-    fn leading_simple_capture() {
+    fn leading_named_capture() {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "{cap}"]
+            Variant(String),
+        }
+        let route = Route::from("hello");
+        let switched = Test::switch(route).expect("should produce item");
+        assert_eq!(switched, Test::Variant("hello".to_string()))
+    }
+
+    #[test]
+    fn leading_unnamed_capture() {
+        #[derive(Debug, Switch, PartialEq)]
+        pub enum Test {
+            #[to = "{}"]
             Variant(String),
         }
         let route = Route::from("hello");
@@ -274,7 +286,19 @@ mod tests {
     }
 
     #[test]
-    fn leading_many_capture() {
+    fn leading_number_capture_unnamed() {
+        #[derive(Debug, Switch, PartialEq)]
+        pub enum Test {
+            #[to = "{2}"]
+            Variant(String),
+        }
+        let route = Route::from("hello/there");
+        let switched = Test::switch(route).expect("should produce item");
+        assert_eq!(switched, Test::Variant("hello/there".to_string()))
+    }
+
+    #[test]
+    fn leading_many_capture_named() {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "{*:cap}"]
@@ -286,10 +310,34 @@ mod tests {
     }
 
     #[test]
-    fn leading_query() {
+    fn leading_many_capture_unnamed() {
+        #[derive(Debug, Switch, PartialEq)]
+        pub enum Test {
+            #[to = "{*}"]
+            Variant(String),
+        }
+        let route = Route::from("hello/there");
+        let switched = Test::switch(route).expect("should produce item");
+        assert_eq!(switched, Test::Variant("hello/there".to_string()))
+    }
+
+    #[test]
+    fn leading_query_named() {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "?query={hello}"]
+            Variant(String),
+        }
+        let route = Route::from("?query=lorem");
+        let switched = Test::switch(route).expect("should produce item");
+        assert_eq!(switched, Test::Variant("lorem".to_string()))
+    }
+
+    #[test]
+    fn leading_query_unnamed() {
+        #[derive(Debug, Switch, PartialEq)]
+        pub enum Test {
+            #[to = "?query={}"]
             Variant(String),
         }
         let route = Route::from("?query=lorem");
@@ -310,10 +358,25 @@ mod tests {
     }
 
     #[test]
-    fn fragment_with_captures() {
+    fn fragment_with_named_captures() {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
             #[to = "#{cap}ipsum{cap}"]
+            Variant(String, String),
+        }
+        let route = Route::from("#loremipsumdolor");
+        let switched = Test::switch(route).expect("should produce item");
+        assert_eq!(
+            switched,
+            Test::Variant("lorem".to_string(), "dolor".to_string())
+        )
+    }
+
+    #[test]
+    fn fragment_with_unnamed_captures() {
+        #[derive(Debug, Switch, PartialEq)]
+        pub enum Test {
+            #[to = "#{}ipsum{}"]
             Variant(String, String),
         }
         let route = Route::from("#loremipsumdolor");
