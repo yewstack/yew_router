@@ -265,7 +265,6 @@ fn parse_impl<'a>(
             // Detect likely failures if the above failed to match.
             let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
             *reason = get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion) // TODO, technically, a sub-switch may want to start with a &query=something, so enabling this might make sense.
-//                    .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
                     .ok()
                     .or(*reason);
             e
@@ -279,7 +278,6 @@ fn parse_impl<'a>(
                         *reason = get_slash(i)
                             .map(|_| ParserErrorReason::DoubleSlash)
                             .or_else(|_| get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion))
-//                            .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
                             .ok()
                             .or(*reason);
                         e
@@ -387,13 +385,6 @@ fn parse_impl<'a>(
             RouteParserToken::FragmentBegin => alt((exact, capture_single(field_type), get_end))(i),
             RouteParserToken::Exact(_) => alt((capture_single(field_type), get_end))(i),
             RouteParserToken::Capture(_) => alt((exact, get_end))(i),
-            //                .map_err(|mut e: nom::Err<ParseError>| {
-            //                    // Detect likely failures if the above failed to match.
-            //                    let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
-            //                    *reason = bad_capture(i).map(|(_, reason)| reason).ok()
-            //                        .or(*reason);
-            //                    e
-            //                }),
             _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
                 expected: vec![],
@@ -421,6 +412,13 @@ mod test {
 
     mod does_parse {
         use super::*;
+
+        #[test]
+        fn empty() {
+            let x = parse("").expect("Should not parse");
+            assert_eq!(x.len(), 1);
+            assert_eq!(x[0], RouteParserToken::Exact("")) // TODO not super sure if this is acceptable
+        }
 
         #[test]
         fn slash() {
@@ -486,17 +484,53 @@ mod test {
         fn query_with_capture_fragment() {
             parse("?lorem=ipsum#{dolor}").expect("should parse");
         }
+
+        #[test]
+        fn escaped_backslash() {
+            let tokens = parse(r#"/escaped\\backslash"#).expect("should parse");
+            let expected = vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Exact(r#"escaped\\backslash"#)
+            ];
+            assert_eq!(tokens, expected);
+        }
+
+        #[test]
+        fn escaped_exclamation() {
+            let tokens = parse(r#"/escaped\!exclamation"#).expect("should parse");
+            let expected = vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Exact(r#"escaped\!exclamation"#)
+            ];
+            assert_eq!(tokens, expected);
+        }
+
+        #[test]
+        fn escaped_open_bracket() {
+            let tokens = parse(r#"/escaped\{bracket"#).expect("should parse");
+            let expected = vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Exact(r#"escaped\{bracket"#)
+            ];
+            assert_eq!(tokens, expected);
+        }
+
+        #[test]
+        fn escaped_close_bracket() {
+            let tokens = parse(r#"/escaped\}bracket"#).expect("should parse");
+            let expected = vec![
+                RouteParserToken::Separator,
+                RouteParserToken::Exact(r#"escaped\}bracket"#)
+            ];
+            assert_eq!(tokens, expected);
+        }
     }
 
     mod does_not_parse {
         use super::*;
         use crate::error::{ExpectedToken, ParserErrorReason};
 
-        // TODO, should empty be ok?
-        #[test]
-        fn empty() {
-            parse("").expect_err("Should not parse");
-        }
+
 
         #[test]
         fn double_slash() {

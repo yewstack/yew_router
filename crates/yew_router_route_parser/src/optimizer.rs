@@ -64,6 +64,39 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
     let mut new_tokens = vec![];
     let mut run: Vec<RouteParserToken> = vec![];
 
+    fn empty_run(run: &mut Vec<RouteParserToken>) -> MatcherToken {
+        let segment = run
+            .iter()
+            .map(RouteParserToken::as_str)
+            .collect::<String>();
+        run.clear();
+
+        let segment = remove_escape_chars(segment);
+        MatcherToken::Exact(segment)
+    }
+
+    fn empty_run_with_query_cap_at_end(run: &mut Vec<RouteParserToken>, query_lhs: &str) -> MatcherToken {
+        let segment = run
+            .iter()
+            .map(RouteParserToken::as_str)
+            .chain(Some(query_lhs))
+            .chain(Some("="))
+            .collect::<String>();
+        run.clear();
+
+        let segment = remove_escape_chars(segment);
+        MatcherToken::Exact(segment)
+    }
+
+    fn remove_escape_chars(input: String) -> String {
+        input
+        .replace(r#"\\"#, r#"\"#)
+            .replace(r#"\!"#, r#"!"#)
+            .replace(r#"\{"#, r#"\{"#)
+            .replace(r#"\}"#, r#"\}"#)
+    }
+
+
     for token in tokens.iter() {
         match token {
             RouteParserToken::QueryBegin
@@ -72,10 +105,7 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
             | RouteParserToken::QuerySeparator
             | RouteParserToken::Exact(_) => run.push(*token),
             RouteParserToken::Capture(cap) => {
-                new_tokens.push(MatcherToken::Exact(
-                    run.iter().map(RouteParserToken::as_str).collect(),
-                ));
-                run = vec![];
+                new_tokens.push(empty_run(&mut run));
                 new_tokens.push(MatcherToken::Capture(CaptureVariant::from(*cap)))
             }
             RouteParserToken::Query {
@@ -88,21 +118,12 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
                     run.push(RouteParserToken::Exact(s));
                 }
                 CaptureOrExact::Capture(cap) => {
-                    let sequence = run
-                        .iter()
-                        .map(RouteParserToken::as_str)
-                        .chain(Some(*ident))
-                        .chain(Some("="))
-                        .collect();
-                    new_tokens.push(MatcherToken::Exact(sequence));
-                    run = vec![];
+                    new_tokens.push(empty_run_with_query_cap_at_end(&mut run, *ident));
                     new_tokens.push(MatcherToken::Capture(CaptureVariant::from(*cap)))
                 }
             },
             RouteParserToken::End => {
-                let sequence = run.iter().map(RouteParserToken::as_str).collect();
-                new_tokens.push(MatcherToken::Exact(sequence));
-                run = vec![];
+                new_tokens.push(empty_run(&mut run));
                 new_tokens.push(MatcherToken::End);
             }
         }
@@ -110,9 +131,7 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
 
     // Empty the run at the end.
     if !run.is_empty() {
-        new_tokens.push(MatcherToken::Exact(
-            run.iter().map(RouteParserToken::as_str).collect(),
-        ));
+        new_tokens.push(empty_run(&mut run));
     }
 
     new_tokens

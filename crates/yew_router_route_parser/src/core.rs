@@ -15,6 +15,8 @@ use nom::{
     sequence::{delimited, separated_pair},
     IResult,
 };
+use nom::bytes::complete::escaped;
+use nom::character::complete::one_of;
 
 /// Indicates if the parser is working to create a matcher for a datastructure with named or unnamed fields.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Ord, PartialOrd)]
@@ -113,19 +115,25 @@ fn rust_ident(i: &str) -> IResult<&str, &str, ParseError> {
 }
 
 fn exact_impl(i: &str) -> IResult<&str, &str, ParseError> {
-    let special_chars = r##"/?&#={}!"##; // TODO these might allow escaping one day.
-    take_till1(move |c| special_chars.contains(c))(i).map_err(|x: nom::Err<(&str, ErrorKind)>| {
-        let s = match x {
-            nom::Err::Error((s, _)) => s,
-            nom::Err::Failure((s, _)) => s,
-            nom::Err::Incomplete(_) => panic!(),
-        };
-        nom::Err::Error(ParseError {
-            reason: Some(ParserErrorReason::BadLiteral),
-            expected: vec![ExpectedToken::Literal],
-            offset: 1 + i.len() - s.len(),
+    let special_chars = r##"/?&#={}!\"##;
+    let escaped_chars = r##"{}!\"##;
+    escaped(
+    take_till1(move |c| special_chars.contains(c)),
+    '\\',
+    one_of(escaped_chars)
+    )(i)
+        .map_err(|x: nom::Err<(&str, ErrorKind)>| {
+            let s = match x {
+                nom::Err::Error((s, _)) => s,
+                nom::Err::Failure((s, _)) => s,
+                nom::Err::Incomplete(_) => panic!(),
+            };
+            nom::Err::Error(ParseError {
+                reason: Some(ParserErrorReason::BadLiteral),
+                expected: vec![ExpectedToken::Literal],
+                offset: 1 + i.len() - s.len(),
+            })
         })
-    })
 }
 
 pub fn exact(i: &str) -> IResult<&str, RouteParserToken, ParseError> {

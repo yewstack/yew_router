@@ -386,4 +386,36 @@ mod tests {
             Test::Variant("lorem".to_string(), "dolor".to_string())
         )
     }
+
+    #[test]
+    fn escape_exclaim() {
+        #[derive(Debug, Switch, PartialEq)]
+        pub enum Test {
+            #[to = "/escape\\!"]
+            Variant,
+        }
+        let route = Route::from("/escape!");
+        let switched = Test::switch(route).expect("should produce item");
+        assert_eq!(
+            switched,
+            Test::Variant
+        )
+    }
+
+    // TODO, apparently the attribute expects a format string, requiring {{ to escape.
+    // Maybe the escapes should operate on a !! \\, {{, }} basis instead of a \*.
+//    #[test]
+//    fn escape_bracket() {
+//        #[derive(Debug, Switch, PartialEq)]
+//        pub enum Test {
+//            #[to = r##"/escape\{"##]
+//            Variant,
+//        }
+//        let route = Route::from("/escape{");
+//        let switched = Test::switch(route).expect("should produce item");
+//        assert_eq!(
+//            switched,
+//            Test::Variant
+//        )
+//    }
 }
