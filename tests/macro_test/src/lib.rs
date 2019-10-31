@@ -391,7 +391,7 @@ mod tests {
     fn escape_exclaim() {
         #[derive(Debug, Switch, PartialEq)]
         pub enum Test {
-            #[to = "/escape\\!"]
+            #[to = "/escape!!"]
             Variant,
         }
         let route = Route::from("/escape!");

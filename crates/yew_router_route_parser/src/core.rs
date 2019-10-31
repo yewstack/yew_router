@@ -5,7 +5,7 @@ use crate::{
 };
 use nom::{
     branch::alt,
-    bytes::complete::take_till1,
+    bytes::complete::{tag, take_till1},
     character::{
         complete::{char, digit1},
         is_digit,
@@ -15,8 +15,6 @@ use nom::{
     sequence::{delimited, separated_pair},
     IResult,
 };
-use nom::bytes::complete::escaped;
-use nom::character::complete::one_of;
 
 /// Indicates if the parser is working to create a matcher for a datastructure with named or unnamed fields.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Ord, PartialOrd)]
@@ -114,26 +112,35 @@ fn rust_ident(i: &str) -> IResult<&str, &str, ParseError> {
     })(i)
 }
 
+
+/// Matches escaped items
+fn escaped_item_impl(i: &str) -> IResult<&str, &str> {
+    map(alt((tag("!!"), tag("{{"), tag("}}"))), |s| match s {
+        "!!" => "!",
+        "}}" => "}",
+        "{{" => "{",
+        _ => unreachable!(),
+    })(i)
+}
+
 fn exact_impl(i: &str) -> IResult<&str, &str, ParseError> {
-    let special_chars = r##"/?&#={}!\"##;
-    let escaped_chars = r##"{}!\"##;
-    escaped(
-    take_till1(move |c| special_chars.contains(c)),
-    '\\',
-    one_of(escaped_chars)
-    )(i)
-        .map_err(|x: nom::Err<(&str, ErrorKind)>| {
-            let s = match x {
-                nom::Err::Error((s, _)) => s,
-                nom::Err::Failure((s, _)) => s,
-                nom::Err::Incomplete(_) => panic!(),
-            };
-            nom::Err::Error(ParseError {
-                reason: Some(ParserErrorReason::BadLiteral),
-                expected: vec![ExpectedToken::Literal],
-                offset: 1 + i.len() - s.len(),
-            })
+    let special_chars = r##"/?&#={}!"##;
+    alt((
+        take_till1(move |c| special_chars.contains(c)),
+        escaped_item_impl,
+    ))(i)
+    .map_err(|x: nom::Err<(&str, ErrorKind)>| {
+        let s = match x {
+            nom::Err::Error((s, _))
+            | nom::Err::Failure((s, _)) => s,
+            nom::Err::Incomplete(_) => panic!(),
+        };
+        nom::Err::Error(ParseError {
+            reason: Some(ParserErrorReason::BadLiteral),
+            expected: vec![ExpectedToken::Literal],
+            offset: 1 + i.len() - s.len(),
         })
+    })
 }
 
 pub fn exact(i: &str) -> IResult<&str, RouteParserToken, ParseError> {
@@ -170,6 +177,8 @@ fn capture_single_impl<'a>(
 }
 
 /// Captures {ident}, {*:ident}, {<number>:ident}
+///
+/// Depending on the provided field type, it may also match {}, {*}, and {<number>} for unnamed fields.
 fn capture_impl<'a>(
     field_type: FieldType,
 ) -> impl Fn(&'a str) -> IResult<&'a str, RefCaptureVariant, ParseError> {
@@ -270,6 +279,13 @@ pub fn query<'a>(
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn lit() {
+        let x = exact_impl("hello").expect("Should parse");
+        assert_eq!(x.1, "hello")
+    }
+
 
     #[test]
     fn cap_or_exact_match_lit() {

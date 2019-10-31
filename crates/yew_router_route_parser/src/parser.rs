@@ -7,6 +7,7 @@ use crate::{
     FieldType,
 };
 use nom::{branch::alt, IResult};
+// use crate::core::escaped_item;
 
 /// Tokens generated from parsing a route matcher string.
 /// They will be optimized to another token type that is used to match URLs.
@@ -120,7 +121,9 @@ impl<'a> ParserState<'a> {
                         _ => Err(ParserErrorReason::NotAllowedStateTransition),
                     },
                     RouteParserToken::Exact(_) => match token {
-                        RouteParserToken::Separator | RouteParserToken::Capture(_) => {
+                        RouteParserToken::Exact(_)
+                        | RouteParserToken::Separator
+                        | RouteParserToken::Capture(_) => {
                             Ok(ParserState::Path { prev_token: token })
                         }
                         RouteParserToken::QueryBegin => {
@@ -287,6 +290,7 @@ fn parse_impl<'a>(
             RouteParserToken::Exact(_) => {
                 alt((
                     get_slash,
+                    exact, // This will handle escaped items
                     capture(field_type),
                     get_question,
                     get_hash,
@@ -296,10 +300,9 @@ fn parse_impl<'a>(
                     // Detect likely failures if the above failed to match.
                     let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
                     *reason = get_and(i)
-                            .map(|_| ParserErrorReason::AndBeforeQuestion)
-//                            .or_else(|_| bad_capture(i).map(|(_, reason)| reason))
-                            .ok()
-                            .or(*reason);
+                        .map(|_| ParserErrorReason::AndBeforeQuestion)
+                        .ok()
+                        .or(*reason);
                     e
                 })
             }
@@ -413,12 +416,12 @@ mod test {
     mod does_parse {
         use super::*;
 
-        #[test]
-        fn empty() {
-            let x = parse("").expect("Should not parse");
-            assert_eq!(x.len(), 1);
-            assert_eq!(x[0], RouteParserToken::Exact("")) // TODO not super sure if this is acceptable
-        }
+        //        #[test]
+        //        fn empty() {
+        //            let x = parse("").expect("Should not parse");
+        //            assert_eq!(x.len(), 1);
+        //            assert_eq!(x[0], RouteParserToken::Exact("")) // TODO not super sure if this is acceptable
+        //        }
 
         #[test]
         fn slash() {
@@ -490,37 +493,43 @@ mod test {
             let tokens = parse(r#"/escaped\\backslash"#).expect("should parse");
             let expected = vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Exact(r#"escaped\\backslash"#)
+                RouteParserToken::Exact(r#"escaped\\backslash"#),
             ];
             assert_eq!(tokens, expected);
         }
 
         #[test]
         fn escaped_exclamation() {
-            let tokens = parse(r#"/escaped\!exclamation"#).expect("should parse");
+            let tokens = parse(r#"/escaped!!exclamation"#).expect("should parse");
             let expected = vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Exact(r#"escaped\!exclamation"#)
+                RouteParserToken::Exact(r#"escaped"#),
+                RouteParserToken::Exact(r#"!"#),
+                RouteParserToken::Exact(r#"exclamation"#),
             ];
             assert_eq!(tokens, expected);
         }
 
         #[test]
         fn escaped_open_bracket() {
-            let tokens = parse(r#"/escaped\{bracket"#).expect("should parse");
+            let tokens = parse(r#"/escaped{{bracket"#).expect("should parse");
             let expected = vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Exact(r#"escaped\{bracket"#)
+                RouteParserToken::Exact(r#"escaped"#),
+                RouteParserToken::Exact(r#"{"#),
+                RouteParserToken::Exact(r#"bracket"#),
             ];
             assert_eq!(tokens, expected);
         }
 
         #[test]
         fn escaped_close_bracket() {
-            let tokens = parse(r#"/escaped\}bracket"#).expect("should parse");
+            let tokens = parse(r#"/escaped}}bracket"#).expect("should parse");
             let expected = vec![
                 RouteParserToken::Separator,
-                RouteParserToken::Exact(r#"escaped\}bracket"#)
+                RouteParserToken::Exact(r#"escaped"#),
+                RouteParserToken::Exact(r#"}"#),
+                RouteParserToken::Exact(r#"bracket"#),
             ];
             assert_eq!(tokens, expected);
         }
@@ -529,7 +538,6 @@ mod test {
     mod does_not_parse {
         use super::*;
         use crate::error::{ExpectedToken, ParserErrorReason};
-
 
 
         #[test]
@@ -566,11 +574,12 @@ mod test {
             assert_eq!(x.error.reason, Some(ParserErrorReason::TokensAfterEndToken));
         }
 
-        #[test]
-        fn double_end() {
-            let x = parse("/hello!!").expect_err("Should not parse");
-            assert_eq!(x.error.reason, Some(ParserErrorReason::TokensAfterEndToken));
-        }
+        // TODO remove this test, this is now accepted syntax.
+        //        #[test]
+        //        fn double_end() {
+        //            let x = parse("/hello!!").expect_err("Should not parse");
+        //            assert_eq!(x.error.reason, Some(ParserErrorReason::TokensAfterEndToken));
+        //        }
     }
 
     mod correct_parse {

@@ -65,17 +65,16 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
     let mut run: Vec<RouteParserToken> = vec![];
 
     fn empty_run(run: &mut Vec<RouteParserToken>) -> MatcherToken {
-        let segment = run
-            .iter()
-            .map(RouteParserToken::as_str)
-            .collect::<String>();
+        let segment = run.iter().map(RouteParserToken::as_str).collect::<String>();
         run.clear();
 
-        let segment = remove_escape_chars(segment);
         MatcherToken::Exact(segment)
     }
 
-    fn empty_run_with_query_cap_at_end(run: &mut Vec<RouteParserToken>, query_lhs: &str) -> MatcherToken {
+    fn empty_run_with_query_cap_at_end(
+        run: &mut Vec<RouteParserToken>,
+        query_lhs: &str,
+    ) -> MatcherToken {
         let segment = run
             .iter()
             .map(RouteParserToken::as_str)
@@ -84,16 +83,7 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
             .collect::<String>();
         run.clear();
 
-        let segment = remove_escape_chars(segment);
         MatcherToken::Exact(segment)
-    }
-
-    fn remove_escape_chars(input: String) -> String {
-        input
-        .replace(r#"\\"#, r#"\"#)
-            .replace(r#"\!"#, r#"!"#)
-            .replace(r#"\{"#, r#"\{"#)
-            .replace(r#"\}"#, r#"\}"#)
     }
 
 
