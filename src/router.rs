@@ -11,7 +11,7 @@ use std::{
     rc::Rc,
 };
 use yew::{
-    html, virtual_dom::VNode, Callback, Component, ComponentLink, Html, Properties, Renderable,
+    html, virtual_dom::VNode, Callback, Component, ComponentLink, Html, Properties,
     ShouldRender,
 };
 
@@ -27,6 +27,7 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 /// ```
 /// use yew::prelude::*;
 /// use yew_router::{router::Router, Switch};
+/// use yew::virtual_dom::VNode;
 ///
 /// pub enum Msg {}
 ///
@@ -41,6 +42,19 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 /// #   fn update(&mut self, msg: Self::Message) -> ShouldRender {
 /// #        false
 /// #   }
+///
+/// fn view(&self) -> VNode<Self> {
+///     html! {
+///         <Router<(), S, Msg>
+///            callback = From::from
+///            render = Router::render(|switch: S| {
+///                match switch {
+///                    S::Variant => html!{"variant route was matched"},
+///                }
+///            })
+///         />
+///         }
+///     }
 /// }
 ///
 /// #[derive(Switch)]
@@ -49,20 +63,6 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 ///     Variant,
 /// }
 ///
-/// impl Renderable<Model> for Model {
-///     fn view(&self) -> Html<Self> {
-///         html! {
-///             <Router<(), S, Msg>
-///                callback = From::from
-///                render = Router::render(|switch: S| {
-///                    match switch {
-///                        S::Variant => html!{"variant route was matched"},
-///                    }
-///                })
-///             />
-///         }
-///     }
-/// }
 /// ```
 #[derive(Debug)]
 pub struct Router<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> {
@@ -229,11 +229,7 @@ where
         self.props = props;
         true
     }
-}
 
-impl<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> Renderable<Router<T, SW, M>>
-    for Router<T, SW, M>
-{
     fn view(&self) -> VNode<Self> {
         let switch: Option<SW> = SW::switch(self.route.clone());
         match switch {
@@ -249,3 +245,4 @@ impl<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> Renderable<
         }
     }
 }
+

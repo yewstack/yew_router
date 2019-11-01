@@ -7,6 +7,7 @@ use yew::prelude::*;
 
 use super::{Msg, Props};
 use crate::RouterState;
+use yew::virtual_dom::VNode;
 
 /// Changes the route when clicked.
 #[derive(Debug)]
@@ -41,10 +42,8 @@ impl<T: for<'de> RouterState<'de>> Component for RouterButton<T> {
         self.props = props;
         true
     }
-}
 
-impl<T: for<'de> RouterState<'de>> Renderable<RouterButton<T>> for RouterButton<T> {
-    fn view(&self) -> Html<RouterButton<T>> {
+    fn view(&self) -> VNode<Self> {
         html! {
             <button
                 class=self.props.classes.clone(),
@@ -56,3 +55,4 @@ impl<T: for<'de> RouterState<'de>> Renderable<RouterButton<T>> for RouterButton<
         }
     }
 }
+

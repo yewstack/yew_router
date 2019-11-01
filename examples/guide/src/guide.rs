@@ -4,6 +4,7 @@ use crate::{
 };
 use yew::{html::ChildrenWithProps, prelude::*, Properties};
 use yew_router::{agent::RouteRequest::GetCurrentRoute, matcher::RouteMatcher, prelude::*};
+use yew::virtual_dom::VNode;
 
 pub struct Guide {
     router_agent: Box<dyn Bridge<RouteAgent>>,
@@ -47,10 +48,8 @@ impl Component for Guide {
         }
         true
     }
-}
 
-impl Renderable<Guide> for Guide {
-    fn view(&self) -> Html<Guide> {
+    fn view(&self) -> VNode<Self> {
         if let Some(route) = &self.route {
             let active_markdown_uri: Option<String> = self
                 .props

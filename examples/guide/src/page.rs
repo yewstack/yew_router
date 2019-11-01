@@ -1,4 +1,5 @@
 use yew::prelude::*;
+use yew::virtual_dom::VNode;
 
 pub struct Page;
 
@@ -22,5 +23,9 @@ impl Component for Page {
 
     fn update(&mut self, _msg: Self::Message) -> bool {
         false
+    }
+
+    fn view(&self) -> VNode<Self> {
+        unimplemented!()
     }
 }

@@ -7,6 +7,7 @@ use yew::prelude::*;
 
 use super::{Msg, Props};
 use crate::RouterState;
+use yew::virtual_dom::VNode;
 
 /// An anchor tag Component that when clicked, will navigate to the provided route.
 #[derive(Debug)]
@@ -41,10 +42,8 @@ impl<T: for<'de> RouterState<'de>> Component for RouterLink<T> {
         self.props = props;
         true
     }
-}
 
-impl<T: for<'de> RouterState<'de>> Renderable<RouterLink<T>> for RouterLink<T> {
-    fn view(&self) -> Html<Self> {
+    fn view(&self) -> VNode<Self> {
         use stdweb::web::event::IEvent;
         let target: &str = &self.props.link;
 
@@ -63,3 +62,4 @@ impl<T: for<'de> RouterState<'de>> Renderable<RouterLink<T>> for RouterLink<T> {
         }
     }
 }
+
