@@ -13,6 +13,7 @@ use crate::{
     c_component::CModel,
 };
 use yew_router::switch::AllowMissing;
+use yew::virtual_dom::VNode;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -37,28 +38,8 @@ impl Component for Model {
     fn update(&mut self, _msg: Self::Message) -> ShouldRender {
         false
     }
-}
 
-#[derive(Debug, Switch)]
-pub enum AppRoute {
-    #[to = "/a{*:inner}"]
-    A(AllowMissing<ARoute>),
-    #[to = "/b{*:inner}"]
-    B(BRoute),
-    #[to = "/c"]
-    C,
-    #[to = "/e/{string}"]
-    E(String),
-    #[to = "/page-not-found"]
-    PageNotFound(Option<String>),
-}
-
-#[derive(Debug, Switch, PartialEq, Clone)]
-#[to = "/c"]
-pub struct ARoute;
-
-impl Renderable<Model> for Model {
-    fn view(&self) -> Html<Self> {
+    fn view(&self) -> VNode<Self> {
         html! {
             <div>
                 <nav class="menu",>
@@ -94,3 +75,21 @@ impl Renderable<Model> for Model {
         }
     }
 }
+
+#[derive(Debug, Switch)]
+pub enum AppRoute {
+    #[to = "/a{*:inner}"]
+    A(AllowMissing<ARoute>),
+    #[to = "/b{*:inner}"]
+    B(BRoute),
+    #[to = "/c"]
+    C,
+    #[to = "/e/{string}"]
+    E(String),
+    #[to = "/page-not-found"]
+    PageNotFound(Option<String>),
+}
+
+#[derive(Debug, Switch, PartialEq, Clone)]
+#[to = "/c"]
+pub struct ARoute;

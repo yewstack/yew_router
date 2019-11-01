@@ -1,6 +1,7 @@
 use crate::{c_component::CModel, ARoute};
 use yew::{prelude::*, Properties};
 use yew_router::prelude::*;
+use yew::virtual_dom::VNode;
 
 pub struct AModel {
     props: Props,
@@ -30,10 +31,8 @@ impl Component for AModel {
         self.props = props;
         true
     }
-}
 
-impl Renderable<AModel> for AModel {
-    fn view(&self) -> Html<Self> {
+    fn view(&self) -> VNode<Self> {
         html! {
             <div>
                 { "I am the A component"}
@@ -59,3 +58,4 @@ impl Renderable<AModel> for AModel {
         }
     }
 }
+

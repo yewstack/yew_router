@@ -1,6 +1,7 @@
 use std::usize;
 use yew::{prelude::*, Properties};
 use yew_router::{agent::RouteRequest, prelude::*};
+use yew::virtual_dom::VNode;
 
 pub struct BModel {
     props: Props,
@@ -131,10 +132,8 @@ impl Component for BModel {
     fn change(&mut self, _props: Self::Properties) -> ShouldRender {
         true
     }
-}
 
-impl Renderable<BModel> for BModel {
-    fn view(&self) -> Html<Self> {
+    fn view(&self) -> VNode<Self> {
         html! {
             <div>
                 <div>
@@ -149,6 +148,7 @@ impl Renderable<BModel> for BModel {
         }
     }
 }
+
 
 impl BModel {
     fn display_number(&self) -> String {

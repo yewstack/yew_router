@@ -1,4 +1,5 @@
 use yew::{prelude::*, Properties};
+use yew::virtual_dom::VNode;
 
 pub struct CModel;
 
@@ -22,10 +23,8 @@ impl Component for CModel {
     fn change(&mut self, _props: Self::Properties) -> ShouldRender {
         true
     }
-}
 
-impl Renderable<CModel> for CModel {
-    fn view(&self) -> Html<Self> {
+    fn view(&self) -> VNode<Self> {
         html! {
             <div>
                 {" I am the C component"}

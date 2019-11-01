@@ -1,6 +1,7 @@
 use yew::prelude::*;
 
 use guide::{Guide, Page};
+use yew::virtual_dom::VNode;
 
 fn main() {
     yew::initialize();
@@ -22,10 +23,8 @@ impl Component for Model {
     fn update(&mut self, _msg: Self::Message) -> bool {
         false
     }
-}
 
-impl Renderable<Model> for Model {
-    fn view(&self) -> Html<Model> {
+    fn view(&self) -> VNode<Self> {
         html! {
             <Guide>
                 <Page
@@ -57,3 +56,4 @@ impl Renderable<Model> for Model {
         }
     }
 }
+

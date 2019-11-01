@@ -2,6 +2,7 @@
 use yew::prelude::*;
 
 use yew_router::{route::Route, service::RouteService, Switch};
+use yew::virtual_dom::VNode;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -21,6 +22,16 @@ pub struct Model {
 pub enum Msg {
     RouteChanged(Route<()>),
     ChangeRoute(AppRoute),
+}
+
+#[derive(Debug, Switch)]
+pub enum AppRoute {
+    #[to = "/a/{anything}"]
+    A(String),
+    #[to = "/b/{anything}/{number}"]
+    B { anything: String, number: u32 },
+    #[to = "/c"]
+    C,
 }
 
 impl Component for Model {
@@ -63,20 +74,8 @@ impl Component for Model {
         }
         true
     }
-}
 
-#[derive(Debug, Switch)]
-pub enum AppRoute {
-    #[to = "/a/{anything}"]
-    A(String),
-    #[to = "/b/{anything}/{number}"]
-    B { anything: String, number: u32 },
-    #[to = "/c"]
-    C,
-}
-
-impl Renderable<Model> for Model {
-    fn view(&self) -> Html<Self> {
+    fn view(&self) -> VNode<Self> {
         html! {
             <div>
                 <nav class="menu",>
@@ -98,3 +97,5 @@ impl Renderable<Model> for Model {
         }
     }
 }
+
+
