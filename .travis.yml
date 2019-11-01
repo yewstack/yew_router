@@ -1,0 +1,33 @@
+branches:
+  only:
+    - staging
+    - trying
+    - master
+
+dist: trusty
+language: rust
+sudo: false
+
+cache: cargo
+before_cache:
+  - ./ci/clear_cache.sh
+
+rust:
+  - 1.37.0 # min supported
+  - stable
+  - nightly
+
+matrix:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+
+install:
+  - nvm install 9
+  - rustup component add rustfmt
+  - rustup component add clippy
+  - rustup target add wasm32-unknown-unknown
+  - cargo install cargo-update || true
+
+script:
+  - ./ci/run_checks.sh
