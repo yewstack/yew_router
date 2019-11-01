@@ -117,7 +117,7 @@ fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> Toke
     match token {
         ShadowMatcherToken::Exact(lit) => {
             quote! {
-                write!(buf, #lit).unwrap();
+                write!(buf, "{}", #lit).unwrap();
             }
         }
         ShadowMatcherToken::Capture(capture) => match naming_scheme {
