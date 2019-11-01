@@ -11,7 +11,7 @@ use std::{
     rc::Rc,
 };
 use yew::{
-    html, virtual_dom::VNode, Callback, Component, ComponentLink, Html, Properties, Renderable,
+    html, virtual_dom::VNode, Callback, Component, ComponentLink, Html, Properties,
     ShouldRender,
 };
 
@@ -229,11 +229,7 @@ where
         self.props = props;
         true
     }
-}
 
-impl<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> Renderable<Router<T, SW, M>>
-    for Router<T, SW, M>
-{
     fn view(&self) -> VNode<Self> {
         let switch: Option<SW> = SW::switch(self.route.clone());
         match switch {
@@ -249,3 +245,4 @@ impl<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> Renderable<
         }
     }
 }
+

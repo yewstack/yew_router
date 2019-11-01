@@ -49,7 +49,6 @@ pub enum RouteRequest<T> {
     GetCurrentRoute,
 }
 
-impl<T> Transferable for RouteRequest<T> where for<'de> T: Serialize + Deserialize<'de> {}
 
 /// The RouteAgent holds on to the RouteService singleton and mediates access to it.
 ///
