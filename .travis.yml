@@ -7,8 +7,8 @@ branches:
 dist: trusty
 language: rust
 sudo: false
-addons:
-  chrome: stable
+#addons:
+#  chrome: stable
 
 cache: cargo
 before_cache:
