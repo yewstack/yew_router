@@ -53,7 +53,7 @@ Look at https://webpack.js.org/configuration/dev-server/#devserverhistoryapifall
 You can use the released version by adding these to your dependencies.
 ```toml
 [dependencies]
-yew-router = "0.6.0"
+yew-router = "0.6.1"
 yew = "0.9.0"
 ```
 
