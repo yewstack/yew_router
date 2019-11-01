@@ -4,7 +4,7 @@ use crate::{
         capture, capture_single, exact, get_and, get_end, get_hash, get_question, get_slash, query,
     },
     error::{get_reason, ParseError, ParserErrorReason, PrettyParseError},
-    FieldType,
+    FieldNamingScheme,
 };
 use nom::{branch::alt, IResult};
 // use crate::core::escaped_item;
@@ -212,14 +212,14 @@ impl<'a> ParserState<'a> {
 /// This continues until the string is exhausted, or none of the parsers for the current state can parse the current input.
 pub fn parse(
     mut i: &str,
-    field_type: FieldType,
+    field_naming_scheme: FieldNamingScheme,
 ) -> Result<Vec<RouteParserToken>, PrettyParseError> {
     let input = i;
     let mut tokens: Vec<RouteParserToken> = vec![];
     let mut state = ParserState::None;
 
     loop {
-        let (ii, token) = parse_impl(i, &state, field_type).map_err(|e| match e {
+        let (ii, token) = parse_impl(i, &state, field_naming_scheme).map_err(|e| match e {
             nom::Err::Error(e) | nom::Err::Failure(e) => PrettyParseError {
                 error: e,
                 input,
@@ -253,14 +253,14 @@ pub fn parse(
 fn parse_impl<'a>(
     i: &'a str,
     state: &ParserState,
-    field_type: FieldType,
+    field_naming_scheme: FieldNamingScheme,
 ) -> IResult<&'a str, RouteParserToken<'a>, ParseError> {
     match state {
         ParserState::None => alt((
             get_slash,
             get_question,
             get_hash,
-            capture(field_type),
+            capture(field_naming_scheme),
             exact,
             get_end,
         ))(i)
@@ -274,7 +274,7 @@ fn parse_impl<'a>(
         }),
         ParserState::Path { prev_token } => match prev_token {
             RouteParserToken::Separator => {
-                alt((exact, capture(field_type), get_question, get_hash, get_end))(i).map_err(
+                alt((exact, capture(field_naming_scheme), get_question, get_hash, get_end))(i).map_err(
                     |mut e: nom::Err<ParseError>| {
                         // Detect likely failures if the above failed to match.
                         let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
@@ -291,7 +291,7 @@ fn parse_impl<'a>(
                 alt((
                     get_slash,
                     exact, // This will handle escaped items
-                    capture(field_type),
+                    capture(field_naming_scheme),
                     get_question,
                     get_hash,
                     get_end,
@@ -311,7 +311,7 @@ fn parse_impl<'a>(
                     |mut e: nom::Err<ParseError>| {
                         // Detect likely failures if the above failed to match.
                         let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
-                        *reason = capture(field_type)(i)
+                        *reason = capture(field_naming_scheme)(i)
                             .map(|_| ParserErrorReason::AdjacentCaptures)
                             .or_else(|_| get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion))
                             .ok()
@@ -328,7 +328,7 @@ fn parse_impl<'a>(
         },
         ParserState::FirstQuery { prev_token } => match prev_token {
             RouteParserToken::QueryBegin => {
-                query(field_type)(i).map_err(|mut e: nom::Err<ParseError>| {
+                query(field_naming_scheme)(i).map_err(|mut e: nom::Err<ParseError>| {
                     // Detect likely failures if the above failed to match.
                     let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
                     *reason = get_question(i)
@@ -357,7 +357,7 @@ fn parse_impl<'a>(
         },
         ParserState::NthQuery { prev_token } => match prev_token {
             RouteParserToken::QuerySeparator => {
-                query(field_type)(i).map_err(|mut e: nom::Err<ParseError>| {
+                query(field_naming_scheme)(i).map_err(|mut e: nom::Err<ParseError>| {
                     // Detect likely failures if the above failed to match.
                     let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
                     *reason = get_question(i)
@@ -385,8 +385,8 @@ fn parse_impl<'a>(
             })),
         },
         ParserState::Fragment { prev_token } => match prev_token {
-            RouteParserToken::FragmentBegin => alt((exact, capture_single(field_type), get_end))(i),
-            RouteParserToken::Exact(_) => alt((capture_single(field_type), get_end))(i),
+            RouteParserToken::FragmentBegin => alt((exact, capture_single(field_naming_scheme), get_end))(i),
+            RouteParserToken::Exact(_) => alt((capture_single(field_naming_scheme), get_end))(i),
             RouteParserToken::Capture(_) => alt((exact, get_end))(i),
             _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
@@ -406,11 +406,11 @@ fn parse_impl<'a>(
 mod test {
     //    use super::*;
     use super::parse as actual_parse;
-    use crate::{parser::RouteParserToken, FieldType, PrettyParseError};
+    use crate::{parser::RouteParserToken, FieldNamingScheme, PrettyParseError};
 
     // Call all tests to parse with the Unnamed variant
     fn parse(i: &str) -> Result<Vec<RouteParserToken>, PrettyParseError> {
-        actual_parse(i, FieldType::Unnamed)
+        actual_parse(i, FieldNamingScheme::Unnamed)
     }
 
     mod does_parse {
@@ -573,13 +573,6 @@ mod test {
             let x = parse("/lorem/ipsum!/dolor").expect_err("Should not parse");
             assert_eq!(x.error.reason, Some(ParserErrorReason::TokensAfterEndToken));
         }
-
-        // TODO remove this test, this is now accepted syntax.
-        //        #[test]
-        //        fn double_end() {
-        //            let x = parse("/hello!!").expect_err("Should not parse");
-        //            assert_eq!(x.error.reason, Some(ParserErrorReason::TokensAfterEndToken));
-        //        }
     }
 
     mod correct_parse {
