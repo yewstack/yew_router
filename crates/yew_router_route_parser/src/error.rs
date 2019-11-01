@@ -191,6 +191,8 @@ pub enum ParserErrorReason {
     BadLiteral,
     /// Invalid state
     InvalidState,
+    /// Can't have capture sections for unit structs/variants
+    CapturesInUnit,
     /// Internal check on valid state transitions
     /// This should never actually be created.
     NotAllowedStateTransition,
@@ -236,6 +238,9 @@ impl fmt::Display for ParserErrorReason {
             }
             ParserErrorReason::BadLiteral => {
                 f.write_str("Malformed literal.")?;
+            }
+            ParserErrorReason::CapturesInUnit => {
+                f.write_str("Cannot have a capture section for a unit struct or variant.")?;
             }
         }
         Ok(())

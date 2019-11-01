@@ -23,6 +23,8 @@ pub enum FieldType {
     Named,
     /// for Thing(String)
     Unnamed,
+    /// for Thing
+    Unit
 }
 
 pub fn get_slash(i: &str) -> IResult<&str, RouteParserToken, ParseError> {
@@ -173,6 +175,13 @@ fn capture_single_impl<'a>(
             alt((named::single_capture_impl, unnamed::single_capture_impl)),
             get_close_bracket,
         )(i),
+        FieldType::Unit => {
+            Err(nom::Err::Error(ParseError {
+                reason: Some(ParserErrorReason::CapturesInUnit),
+                expected: vec![],
+                offset: 0
+            }))
+        }
     }
 }
 
@@ -201,6 +210,13 @@ fn capture_impl<'a>(
                 unnamed::single_capture_impl,
             ));
             delimited(get_open_bracket, inner, get_close_bracket)(i)
+        }
+        FieldType::Unit => {
+            Err(nom::Err::Error(ParseError {
+                reason: Some(ParserErrorReason::CapturesInUnit),
+                expected: vec![],
+                offset: 0
+            }))
         }
     }
 }
