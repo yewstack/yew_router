@@ -18,11 +18,13 @@ use nom::{
 
 /// Indicates if the parser is working to create a matcher for a datastructure with named or unnamed fields.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Ord, PartialOrd)]
-pub enum FieldType {
+pub enum FieldNamingScheme {
     /// For Thing { field: String }
     Named,
     /// for Thing(String)
     Unnamed,
+    /// for Thing
+    Unit
 }
 
 pub fn get_slash(i: &str) -> IResult<&str, RouteParserToken, ParseError> {
@@ -148,42 +150,50 @@ pub fn exact(i: &str) -> IResult<&str, RouteParserToken, ParseError> {
 }
 
 pub fn capture<'a>(
-    field_type: FieldType,
+    field_naming_scheme: FieldNamingScheme,
 ) -> impl Fn(&'a str) -> IResult<&'a str, RouteParserToken<'a>, ParseError> {
-    map(capture_impl(field_type), RouteParserToken::Capture)
+    map(capture_impl(field_naming_scheme), RouteParserToken::Capture)
 }
 
 pub fn capture_single<'a>(
-    field_type: FieldType,
+    field_naming_scheme: FieldNamingScheme,
 ) -> impl Fn(&'a str) -> IResult<&'a str, RouteParserToken<'a>, ParseError> {
-    map(capture_single_impl(field_type), RouteParserToken::Capture)
+    map(capture_single_impl(field_naming_scheme), RouteParserToken::Capture)
 }
 
 fn capture_single_impl<'a>(
-    field_type: FieldType,
+    field_naming_scheme: FieldNamingScheme,
 ) -> impl Fn(&'a str) -> IResult<&'a str, RefCaptureVariant<'a>, ParseError> {
-    move |i: &str| match field_type {
-        FieldType::Named => delimited(
+    move |i: &str| match field_naming_scheme {
+        FieldNamingScheme::Named => delimited(
             get_open_bracket,
             named::single_capture_impl,
             get_close_bracket,
         )(i),
-        FieldType::Unnamed => delimited(
+        FieldNamingScheme::Unnamed => delimited(
             get_open_bracket,
             alt((named::single_capture_impl, unnamed::single_capture_impl)),
             get_close_bracket,
         )(i),
+        FieldNamingScheme::Unit => {
+            println!("Unit encountered, erroring in capture single");
+            Err(nom::Err::Failure(ParseError {
+                reason: Some(ParserErrorReason::CapturesInUnit),
+                expected: vec![],
+                offset: 0
+            }))
+        }
     }
 }
 
 /// Captures {ident}, {*:ident}, {<number>:ident}
 ///
-/// Depending on the provided field type, it may also match {}, {*}, and {<number>} for unnamed fields.
+/// Depending on the provided field naming, it may also match {}, {*}, and {<number>} for unnamed fields, or none at all for units.
 fn capture_impl<'a>(
-    field_type: FieldType,
+    field_naming_scheme: FieldNamingScheme,
 ) -> impl Fn(&'a str) -> IResult<&'a str, RefCaptureVariant, ParseError> {
-    move |i: &str| match field_type {
-        FieldType::Named => {
+    move |i: &str| match field_naming_scheme {
+        FieldNamingScheme::Named => {
             let inner = alt((
                 named::many_capture_impl,
                 named::numbered_capture_impl,
@@ -191,7 +201,7 @@ fn capture_impl<'a>(
             ));
             delimited(get_open_bracket, inner, get_close_bracket)(i)
         }
-        FieldType::Unnamed => {
+        FieldNamingScheme::Unnamed => {
             let inner = alt((
                 named::many_capture_impl,
                 unnamed::many_capture_impl,
@@ -201,6 +211,13 @@ fn capture_impl<'a>(
                 unnamed::single_capture_impl,
             ));
             delimited(get_open_bracket, inner, get_close_bracket)(i)
+        }
+        FieldNamingScheme::Unit => {
+            Err(nom::Err::Error(ParseError {
+                reason: Some(ParserErrorReason::CapturesInUnit),
+                expected: vec![],
+                offset: 0
+            }))
         }
     }
 }
@@ -251,11 +268,11 @@ mod unnamed {
 
 /// Gets a capture or exact, mapping it to the CaptureOrExact enum - to provide a limited subset.
 fn cap_or_exact<'a>(
-    field_type: FieldType,
+    field_naming_scheme: FieldNamingScheme,
 ) -> impl Fn(&'a str) -> IResult<&'a str, CaptureOrExact<'a>, ParseError> {
     move |i: &str| {
         alt((
-            map(capture_single_impl(field_type), CaptureOrExact::Capture),
+            map(capture_single_impl(field_naming_scheme), CaptureOrExact::Capture),
             map(exact_impl, CaptureOrExact::Exact),
         ))(i)
     }
@@ -263,11 +280,11 @@ fn cap_or_exact<'a>(
 
 /// Matches a query
 pub fn query<'a>(
-    field_type: FieldType,
+    field_naming_scheme: FieldNamingScheme,
 ) -> impl Fn(&'a str) -> IResult<&'a str, RouteParserToken<'a>, ParseError> {
     move |i: &str| {
         map(
-            separated_pair(exact_impl, get_eq, cap_or_exact(field_type)),
+            separated_pair(exact_impl, get_eq, cap_or_exact(field_naming_scheme)),
             |(ident, capture_or_exact)| RouteParserToken::Query {
                 ident,
                 capture_or_exact,
@@ -289,29 +306,29 @@ mod test {
 
     #[test]
     fn cap_or_exact_match_lit() {
-        cap_or_exact(FieldType::Named)("lorem").expect("Should parse");
+        cap_or_exact(FieldNamingScheme::Named)("lorem").expect("Should parse");
     }
     #[test]
     fn cap_or_exact_match_cap() {
-        cap_or_exact(FieldType::Named)("{lorem}").expect("Should parse");
+        cap_or_exact(FieldNamingScheme::Named)("{lorem}").expect("Should parse");
     }
 
     #[test]
     fn query_section_exact() {
-        query(FieldType::Named)("lorem=ipsum").expect("should parse");
+        query(FieldNamingScheme::Named)("lorem=ipsum").expect("should parse");
     }
 
     #[test]
     fn query_section_capture_named() {
-        query(FieldType::Named)("lorem={ipsum}").expect("should parse");
+        query(FieldNamingScheme::Named)("lorem={ipsum}").expect("should parse");
     }
     #[test]
     fn query_section_capture_named_fails_without_key() {
-        query(FieldType::Named)("lorem={}").expect_err("should not parse");
+        query(FieldNamingScheme::Named)("lorem={}").expect_err("should not parse");
     }
     #[test]
     fn query_section_capture_unnamed_succeeds_without_key() {
-        query(FieldType::Unnamed)("lorem={}").expect("should parse");
+        query(FieldNamingScheme::Unnamed)("lorem={}").expect("should parse");
     }
 
     #[test]

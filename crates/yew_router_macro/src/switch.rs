@@ -14,6 +14,7 @@ mod shadow;
 mod struct_impl;
 
 use self::attribute::AttrToken;
+use yew_router_route_parser::FieldNamingScheme;
 
 /// Holds data that is required to derive Switch for a struct or a single enum variant.
 pub struct SwitchItem {
@@ -29,14 +30,15 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
 
     match input.data {
         Data::Struct(ds) => {
-            let field_type = match ds.fields {
-                Fields::Unnamed(_) | Fields::Unit => yew_router_route_parser::FieldType::Unnamed,
-                Fields::Named(_) => yew_router_route_parser::FieldType::Named,
+            let field_naming_scheme = match ds.fields {
+                Fields::Unnamed(_) => FieldNamingScheme::Unnamed,
+                Fields::Unit => FieldNamingScheme::Unit,
+                Fields::Named(_) => FieldNamingScheme::Named,
             };
             let matcher = AttrToken::convert_attributes_to_tokens(input.attrs)
                 .into_iter()
                 .enumerate()
-                .map(|(index, at)| at.into_shadow_matcher_tokens(index, field_type))
+                .map(|(index, at)| at.into_shadow_matcher_tokens(index, field_naming_scheme))
                 .flatten()
                 .collect::<Vec<_>>();
             let switch_item = SwitchItem {
@@ -52,10 +54,11 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                 .into_iter()
                 .map(|variant: Variant| {
                     let field_type = match variant.fields {
-                        Fields::Unnamed(_) | Fields::Unit => {
-                            yew_router_route_parser::FieldType::Unnamed
+                        Fields::Unnamed(_) => {
+                            yew_router_route_parser::FieldNamingScheme::Unnamed
                         }
-                        Fields::Named(_) => yew_router_route_parser::FieldType::Named,
+                        Fields::Unit => FieldNamingScheme::Unit,
+                        Fields::Named(_) => yew_router_route_parser::FieldNamingScheme::Named,
                     };
                     let matcher = AttrToken::convert_attributes_to_tokens(variant.attrs)
                         .into_iter()

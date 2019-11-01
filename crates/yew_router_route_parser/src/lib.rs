@@ -16,7 +16,7 @@
 mod core;
 mod error;
 pub mod parser;
-pub use crate::core::FieldType;
+pub use crate::core::FieldNamingScheme;
 pub use error::{ParseError, PrettyParseError};
 mod optimizer;
 pub use optimizer::{convert_tokens, parse_str_and_optimize_tokens};

@@ -97,6 +97,6 @@ pub struct OtherSingle(u32);
 
 //#[derive(Switch, Debug)]
 // pub enum Bad {
-//    #[to = "/bad_route{4hello}"]
+//    #[to = "/bad_route/{hello}"]
 //    X,
 //}

@@ -1,5 +1,6 @@
 use crate::switch::shadow::{ShadowCaptureVariant, ShadowMatcherToken};
 use syn::{Attribute, Lit, Meta, MetaNameValue};
+use yew_router_route_parser::FieldNamingScheme;
 
 pub enum AttrToken {
     To(String),
@@ -56,11 +57,11 @@ impl AttrToken {
     pub fn into_shadow_matcher_tokens(
         self,
         id: usize,
-        field_type: yew_router_route_parser::FieldType,
+        field_naming_scheme: FieldNamingScheme,
     ) -> Vec<ShadowMatcherToken> {
         match self {
             AttrToken::To(matcher_string) => {
-                yew_router_route_parser::parse_str_and_optimize_tokens(&matcher_string, field_type)
+                yew_router_route_parser::parse_str_and_optimize_tokens(&matcher_string, field_naming_scheme)
                     .expect("Invalid Matcher") // This is the point where users should see an error message if their matcher string has some syntax error.
                     .into_iter()
                     .map(crate::switch::shadow::ShadowMatcherToken::from)
