@@ -54,9 +54,7 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                 .into_iter()
                 .map(|variant: Variant| {
                     let field_type = match variant.fields {
-                        Fields::Unnamed(_) => {
-                            yew_router_route_parser::FieldNamingScheme::Unnamed
-                        }
+                        Fields::Unnamed(_) => yew_router_route_parser::FieldNamingScheme::Unnamed,
                         Fields::Unit => FieldNamingScheme::Unit,
                         Fields::Named(_) => yew_router_route_parser::FieldNamingScheme::Named,
                     };
@@ -213,7 +211,7 @@ pub fn build_serializer_for_enum(
         }
     });
     quote! {
-        use ::std::fmt::Write as __Write; // TODO: is importing this here hygienic?
+        use ::std::fmt::Write as __Write;
         let mut state: Option<T> = None;
         match #match_item {
             #(#variants)*,

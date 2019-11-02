@@ -11,8 +11,7 @@ use std::{
     rc::Rc,
 };
 use yew::{
-    html, virtual_dom::VNode, Callback, Component, ComponentLink, Html, Properties,
-    ShouldRender,
+    html, virtual_dom::VNode, Callback, Component, ComponentLink, Html, Properties, ShouldRender,
 };
 
 use crate::agent::AgentState;
@@ -25,9 +24,8 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 ///
 /// # Example
 /// ```
-/// use yew::prelude::*;
+/// use yew::{prelude::*, virtual_dom::VNode};
 /// use yew_router::{router::Router, Switch};
-/// use yew::virtual_dom::VNode;
 ///
 /// pub enum Msg {}
 ///
@@ -43,8 +41,8 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 /// #        false
 /// #   }
 ///
-/// fn view(&self) -> VNode<Self> {
-///     html! {
+///     fn view(&self) -> VNode<Self> {
+///         html! {
 ///         <Router<(), S, Msg>
 ///            callback = From::from
 ///            render = Router::render(|switch: S| {
@@ -62,7 +60,6 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 ///     #[to = "/v"]
 ///     Variant,
 /// }
-///
 /// ```
 #[derive(Debug)]
 pub struct Router<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> {
@@ -245,4 +242,3 @@ where
         }
     }
 }
-

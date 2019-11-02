@@ -49,7 +49,6 @@ pub enum RouteRequest<T> {
     GetCurrentRoute,
 }
 
-
 /// The RouteAgent holds on to the RouteService singleton and mediates access to it.
 ///
 /// It serves as a means to propagate messages to components interested in the state of the current

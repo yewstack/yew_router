@@ -1,7 +1,6 @@
 use crate::{c_component::CModel, ARoute};
-use yew::{prelude::*, Properties};
+use yew::{prelude::*, virtual_dom::VNode, Properties};
 use yew_router::prelude::*;
-use yew::virtual_dom::VNode;
 
 pub struct AModel {
     props: Props,
@@ -58,4 +57,3 @@ impl Component for AModel {
         }
     }
 }
-

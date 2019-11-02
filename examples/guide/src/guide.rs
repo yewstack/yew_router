@@ -2,9 +2,8 @@ use crate::{
     markdown_window::MarkdownWindow,
     page::{Page, PageProps},
 };
-use yew::{html::ChildrenWithProps, prelude::*, Properties};
+use yew::{html::ChildrenWithProps, prelude::*, virtual_dom::VNode, Properties};
 use yew_router::{agent::RouteRequest::GetCurrentRoute, matcher::RouteMatcher, prelude::*};
-use yew::virtual_dom::VNode;
 
 pub struct Guide {
     router_agent: Box<dyn Bridge<RouteAgent>>,

@@ -55,4 +55,3 @@ impl<T: for<'de> RouterState<'de>> Component for RouterButton<T> {
         }
     }
 }
-

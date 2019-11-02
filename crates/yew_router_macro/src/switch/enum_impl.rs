@@ -119,7 +119,7 @@ fn build_variant_from_captures(
                 quote! {
                     {
                         let (v, s) = match drain.next() {
-                            ::std::option::Option::Some((_key, value)) => {
+                            ::std::option::Option::Some(value) => {
                                 <#field_ty as ::yew_router::Switch>::from_route_part(
                                     ::yew_router::route::Route {
                                         route: value,

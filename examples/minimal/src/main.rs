@@ -1,8 +1,8 @@
 #![recursion_limit = "256"]
 use yew::prelude::*;
 
-use yew_router::{route::Route, service::RouteService, Switch};
 use yew::virtual_dom::VNode;
+use yew_router::{route::Route, service::RouteService, Switch};
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -97,5 +97,3 @@ impl Component for Model {
         }
     }
 }
-
-
