@@ -423,12 +423,7 @@ mod test {
     mod does_parse {
         use super::*;
 
-        //        #[test]
-        //        fn empty() {
-        //            let x = parse("").expect("Should not parse");
-        //            assert_eq!(x.len(), 1);
-        //            assert_eq!(x[0], RouteParserToken::Exact("")) // TODO not super sure if this is acceptable
-        //        }
+
 
         #[test]
         fn slash() {
@@ -545,6 +540,12 @@ mod test {
     mod does_not_parse {
         use super::*;
         use crate::error::{ExpectedToken, ParserErrorReason};
+
+        #[test]
+        fn empty() {
+            let _x = parse("").expect_err("Should not parse");
+//            assert_eq!(x.error.reason, None) // TODO this should have a custom error message.
+        }
 
         #[test]
         fn double_slash() {

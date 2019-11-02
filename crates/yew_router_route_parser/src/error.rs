@@ -97,12 +97,13 @@ impl nom::error::ParseError<&str> for ParseError {
     }
 
     fn or(mut self, other: Self) -> Self {
+        // It is assumed that there aren't duplicates.
         self.expected.extend(other.expected);
 
         ParseError {
             reason: other.reason.or(self.reason), // Take the right most reason
             expected: self.expected,
-            offset: other.offset, /* TODO panicing might be an option if the offsets aren't the same, Maybe add them? eeeh?, maybe create layers of expected with specific offsets? */
+            offset: other.offset, // Defer to the "other"'s offset. TODO it might make sense if the offsets are different, only show the other's "expected".
         }
     }
 }
