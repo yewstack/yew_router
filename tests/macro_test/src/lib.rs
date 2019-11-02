@@ -399,8 +399,6 @@ mod tests {
         assert_eq!(switched, Test::Variant)
     }
 
-    // TODO, the way that the write to buffer function works, the use of write!() uses the {} literals to break stuff.
-    // Rewrite that to not use write!
     #[test]
     fn escape_bracket() {
         #[derive(Debug, Switch, PartialEq)]

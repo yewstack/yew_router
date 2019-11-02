@@ -233,7 +233,7 @@ where
             Some(switch) => (&self.props.render.0)(switch),
             None => {
                 if let Some(redirect_fn) = &self.props.redirect {
-                    let switch: SW = (redirect_fn.0)(self.route.clone()); // TODO This should be used to set the route in the browser
+                    let switch: SW = (redirect_fn.0)(self.route.clone()); // TODO This should be used to set the route in the browser https://github.com/yewstack/yew_router/issues/171
                     (&self.props.render.0)(switch)
                 } else {
                     html! {format!{"No route for {}", self.route.route}}

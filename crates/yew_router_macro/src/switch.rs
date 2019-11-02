@@ -96,7 +96,7 @@ impl<T> Flatten<T> for Option<Option<T>> {
 fn build_matcher_from_tokens(tokens: &[ShadowMatcherToken]) -> TokenStream2 {
     quote! {
         let settings = ::yew_router::matcher::MatcherSettings {
-            complete: false, // Allow incomplete matches. // TODO remove this setting, having complete always be false.
+            complete: false, // Allow incomplete matches. // TODO remove this setting, having complete always be false.https://github.com/yewstack/yew_router/issues/170
             case_insensitive: true,
         };
         let matcher = ::yew_router::matcher::RouteMatcher {
