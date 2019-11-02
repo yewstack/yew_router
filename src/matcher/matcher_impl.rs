@@ -34,14 +34,13 @@ impl<'a> CaptureCollection<'a> for Captures<'a> {
     }
 }
 
-// TODO try to change the impl target to just Vec<String>
-impl<'a> CaptureCollection<'a> for Vec<(&'a str, String)> {
+impl<'a> CaptureCollection<'a> for Vec<String> {
     fn new2() -> Self {
         Vec::new()
     }
 
-    fn insert2(&mut self, key: &'a str, value: String) {
-        self.push((key, value))
+    fn insert2(&mut self, _key: &'a str, value: String) {
+        self.push(value)
     }
 
     fn extend2(&mut self, other: Self) {
@@ -61,8 +60,7 @@ pub(super) fn match_into_map<'a, 'b: 'a>(
 pub(super) fn match_into_vec<'a, 'b: 'a>(
     tokens: &'b [MatcherToken],
     settings: &'b MatcherSettings,
-) -> impl Fn(&'a str) -> IResult<&'a str, Vec<(&'b str, String)>> {
-    // TODO this return type is not ideal.
+) -> impl Fn(&'a str) -> IResult<&'a str, Vec<String>> {
     move |i: &str| matcher_impl(tokens, *settings, i)
 }
 
@@ -137,14 +135,15 @@ fn capture_many_named<'a, 'b, CAP: CaptureCollection<'b>>(
     capture_key: &'b str,
     matches: &mut CAP,
 ) -> Result<&'a str, nom::Err<(&'a str, ErrorKind)>> {
-    log::trace!("Matching NumberedUnnamed ({})", capture_key);
+    log::trace!("Matching ManyUnnamed ({})", capture_key);
     if let Some(_peaked_next_token) = iter.peek() {
         let delimiter = next_delimiter(iter);
         let (ii, captured) = consume_until(delimiter)(i)?;
         matches.insert2(&capture_key, captured);
         Ok(ii)
     } else if i.is_empty() {
-        matches.insert2(&capture_key, "".to_string()); // TODO Is this a thing I want?
+        // If the route string is empty, return an empty value.
+        matches.insert2(&capture_key, "".to_string());
         Ok(i) // Match even if nothing is left
     } else {
         let (ii, c) = map(valid_many_capture_characters, String::from)(i)?;
@@ -309,8 +308,11 @@ mod integration_test {
 
     #[test]
     fn match_fragment() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("#test", FieldNamingScheme::Unnamed)
-            .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "#test",
+            FieldNamingScheme::Unnamed,
+        )
+        .expect("Should parse");
         matcher_impl::<Captures>(&x, MatcherSettings::default(), "#test").expect("should match");
     }
 
@@ -360,17 +362,22 @@ mod integration_test {
 
     #[test]
     fn capture_as_only_token() {
-        let x = yew_router_route_parser::parse_str_and_optimize_tokens("{any}", FieldNamingScheme::Unnamed)
-            .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "{any}",
+            FieldNamingScheme::Unnamed,
+        )
+        .expect("Should parse");
         matcher_impl::<Captures>(&x, MatcherSettings::default(), "literally_anything")
             .expect("should match");
     }
 
     #[test]
     fn case_insensitive() {
-        let x =
-            yew_router_route_parser::parse_str_and_optimize_tokens("/hello", FieldNamingScheme::Unnamed)
-                .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "/hello",
+            FieldNamingScheme::Unnamed,
+        )
+        .expect("Should parse");
         let settings = MatcherSettings {
             case_insensitive: true,
             ..Default::default()
@@ -380,9 +387,11 @@ mod integration_test {
 
     #[test]
     fn end_token() {
-        let x =
-            yew_router_route_parser::parse_str_and_optimize_tokens("/lorem!", FieldNamingScheme::Unnamed)
-                .expect("Should parse");
+        let x = yew_router_route_parser::parse_str_and_optimize_tokens(
+            "/lorem!",
+            FieldNamingScheme::Unnamed,
+        )
+        .expect("Should parse");
 
         matcher_impl::<Captures>(&x, Default::default(), "/lorem/ipsum")
             .expect_err("should not match");

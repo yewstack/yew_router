@@ -56,4 +56,3 @@ impl Component for Model {
         }
     }
 }
-

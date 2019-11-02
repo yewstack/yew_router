@@ -396,10 +396,7 @@ mod tests {
         }
         let route = Route::from("/escape!");
         let switched = Test::switch(route).expect("should produce item");
-        assert_eq!(
-            switched,
-            Test::Variant
-        )
+        assert_eq!(switched, Test::Variant)
     }
 
     // TODO, the way that the write to buffer function works, the use of write!() uses the {} literals to break stuff.
@@ -413,9 +410,6 @@ mod tests {
         }
         let route = Route::from("/escape{}a");
         let switched = Test::switch(route).expect("should produce item");
-        assert_eq!(
-            switched,
-            Test::Variant
-        )
+        assert_eq!(switched, Test::Variant)
     }
 }

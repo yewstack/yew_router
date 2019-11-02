@@ -1,5 +1,4 @@
-use yew::{prelude::*, Properties};
-use yew::virtual_dom::VNode;
+use yew::{prelude::*, virtual_dom::VNode, Properties};
 
 pub struct CModel;
 

@@ -1,5 +1,4 @@
-use yew::prelude::*;
-use yew::virtual_dom::VNode;
+use yew::{prelude::*, virtual_dom::VNode};
 
 pub struct Page;
 

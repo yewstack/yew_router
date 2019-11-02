@@ -47,7 +47,10 @@ impl RouteMatcher {
     /// Creates a new Matcher with settings.
     pub fn new(i: &str, settings: MatcherSettings) -> Result<Self, PrettyParseError> {
         Ok(RouteMatcher {
-            tokens: parse_str_and_optimize_tokens(i, yew_router_route_parser::FieldNamingScheme::Unnamed)?, /* TODO this field type should be a superset of Named, but it would be better to source this from settings, and make sure that the macro generates settings as such. */
+            tokens: parse_str_and_optimize_tokens(
+                i,
+                yew_router_route_parser::FieldNamingScheme::Unnamed,
+            )?, /* TODO this field type should be a superset of Named, but it would be better to source this from settings, and make sure that the macro generates settings as such. */
             settings,
         })
     }
@@ -68,7 +71,7 @@ impl RouteMatcher {
     pub fn capture_route_into_vec<'a, 'b: 'a>(
         &'b self,
         i: &'a str,
-    ) -> IResult<&'a str, Vec<(&'b str, String)>> {
+    ) -> IResult<&'a str, Vec<String>> {
         // TODO this return type mandates that a key exist, which for the purposes of this function, may not be present.
         if self.settings.complete {
             all_consuming(matcher_impl::match_into_vec(&self.tokens, &self.settings))(i)

@@ -12,8 +12,8 @@ use crate::{
     b_component::{BModel, BRoute},
     c_component::CModel,
 };
-use yew_router::switch::AllowMissing;
 use yew::virtual_dom::VNode;
+use yew_router::switch::AllowMissing;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;

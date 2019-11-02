@@ -274,18 +274,23 @@ fn parse_impl<'a>(
         }),
         ParserState::Path { prev_token } => match prev_token {
             RouteParserToken::Separator => {
-                alt((exact, capture(field_naming_scheme), get_question, get_hash, get_end))(i).map_err(
-                    |mut e: nom::Err<ParseError>| {
-                        // Detect likely failures if the above failed to match.
-                        let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
-                        *reason = get_slash(i)
-                            .map(|_| ParserErrorReason::DoubleSlash)
-                            .or_else(|_| get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion))
-                            .ok()
-                            .or(*reason);
-                        e
-                    },
-                )
+                alt((
+                    exact,
+                    capture(field_naming_scheme),
+                    get_question,
+                    get_hash,
+                    get_end,
+                ))(i)
+                .map_err(|mut e: nom::Err<ParseError>| {
+                    // Detect likely failures if the above failed to match.
+                    let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
+                    *reason = get_slash(i)
+                        .map(|_| ParserErrorReason::DoubleSlash)
+                        .or_else(|_| get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion))
+                        .ok()
+                        .or(*reason);
+                    e
+                })
             }
             RouteParserToken::Exact(_) => {
                 alt((
@@ -385,7 +390,9 @@ fn parse_impl<'a>(
             })),
         },
         ParserState::Fragment { prev_token } => match prev_token {
-            RouteParserToken::FragmentBegin => alt((exact, capture_single(field_naming_scheme), get_end))(i),
+            RouteParserToken::FragmentBegin => {
+                alt((exact, capture_single(field_naming_scheme), get_end))(i)
+            }
             RouteParserToken::Exact(_) => alt((capture_single(field_naming_scheme), get_end))(i),
             RouteParserToken::Capture(_) => alt((exact, get_end))(i),
             _ => Err(nom::Err::Failure(ParseError {
@@ -538,7 +545,6 @@ mod test {
     mod does_not_parse {
         use super::*;
         use crate::error::{ExpectedToken, ParserErrorReason};
-
 
         #[test]
         fn double_slash() {

@@ -24,7 +24,7 @@ pub enum FieldNamingScheme {
     /// for Thing(String)
     Unnamed,
     /// for Thing
-    Unit
+    Unit,
 }
 
 pub fn get_slash(i: &str) -> IResult<&str, RouteParserToken, ParseError> {
@@ -114,7 +114,6 @@ fn rust_ident(i: &str) -> IResult<&str, &str, ParseError> {
     })(i)
 }
 
-
 /// Matches escaped items
 fn escaped_item_impl(i: &str) -> IResult<&str, &str> {
     map(alt((tag("!!"), tag("{{"), tag("}}"))), |s| match s {
@@ -133,8 +132,7 @@ fn exact_impl(i: &str) -> IResult<&str, &str, ParseError> {
     ))(i)
     .map_err(|x: nom::Err<(&str, ErrorKind)>| {
         let s = match x {
-            nom::Err::Error((s, _))
-            | nom::Err::Failure((s, _)) => s,
+            nom::Err::Error((s, _)) | nom::Err::Failure((s, _)) => s,
             nom::Err::Incomplete(_) => panic!(),
         };
         nom::Err::Error(ParseError {
@@ -158,7 +156,10 @@ pub fn capture<'a>(
 pub fn capture_single<'a>(
     field_naming_scheme: FieldNamingScheme,
 ) -> impl Fn(&'a str) -> IResult<&'a str, RouteParserToken<'a>, ParseError> {
-    map(capture_single_impl(field_naming_scheme), RouteParserToken::Capture)
+    map(
+        capture_single_impl(field_naming_scheme),
+        RouteParserToken::Capture,
+    )
 }
 
 fn capture_single_impl<'a>(
@@ -180,7 +181,7 @@ fn capture_single_impl<'a>(
             Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::CapturesInUnit),
                 expected: vec![],
-                offset: 0
+                offset: 0,
             }))
         }
     }
@@ -212,13 +213,11 @@ fn capture_impl<'a>(
             ));
             delimited(get_open_bracket, inner, get_close_bracket)(i)
         }
-        FieldNamingScheme::Unit => {
-            Err(nom::Err::Error(ParseError {
-                reason: Some(ParserErrorReason::CapturesInUnit),
-                expected: vec![],
-                offset: 0
-            }))
-        }
+        FieldNamingScheme::Unit => Err(nom::Err::Error(ParseError {
+            reason: Some(ParserErrorReason::CapturesInUnit),
+            expected: vec![],
+            offset: 0,
+        })),
     }
 }
 
@@ -272,7 +271,10 @@ fn cap_or_exact<'a>(
 ) -> impl Fn(&'a str) -> IResult<&'a str, CaptureOrExact<'a>, ParseError> {
     move |i: &str| {
         alt((
-            map(capture_single_impl(field_naming_scheme), CaptureOrExact::Capture),
+            map(
+                capture_single_impl(field_naming_scheme),
+                CaptureOrExact::Capture,
+            ),
             map(exact_impl, CaptureOrExact::Exact),
         ))(i)
     }
@@ -302,7 +304,6 @@ mod test {
         let x = exact_impl("hello").expect("Should parse");
         assert_eq!(x.1, "hello")
     }
-
 
     #[test]
     fn cap_or_exact_match_lit() {

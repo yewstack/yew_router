@@ -86,7 +86,6 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
         MatcherToken::Exact(segment)
     }
 
-
     for token in tokens.iter() {
         match token {
             RouteParserToken::QueryBegin

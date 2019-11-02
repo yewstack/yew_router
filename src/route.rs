@@ -68,4 +68,3 @@ impl<T> Deref for Route<T> {
         &self.route
     }
 }
-

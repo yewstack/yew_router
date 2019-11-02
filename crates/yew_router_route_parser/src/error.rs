@@ -98,7 +98,6 @@ impl nom::error::ParseError<&str> for ParseError {
 
     fn or(mut self, other: Self) -> Self {
         self.expected.extend(other.expected);
-        //        self.expected.dedup(); // TODO enforce that these are actually sorted
 
         ParseError {
             reason: other.reason.or(self.reason), // Take the right most reason
