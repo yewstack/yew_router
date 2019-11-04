@@ -41,7 +41,7 @@ use std::fmt::Write;
 ///     Some(TestEnum::CaptureUnnamed("lorem".to_string()))
 /// );
 /// ```
-pub trait Switch: Clone + Sized {
+pub trait Switch: Sized {
     /// Based on a route, possibly produce an itself.
     fn switch<T: RouteState>(route: Route<T>) -> Option<Self> {
         Self::from_route_part(route).0

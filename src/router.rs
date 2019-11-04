@@ -62,7 +62,7 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 /// }
 /// ```
 #[derive(Debug)]
-pub struct Router<T: for<'de> RouterState<'de>, SW: Switch + Clone + 'static, M: 'static> {
+pub struct Router<T: for<'de> RouterState<'de>, SW: Switch  + Clone + 'static, M: 'static> {
     switch: Option<SW>,
     props: Props<T, SW, M>,
     router_agent: RouteAgentBridge<T>,
@@ -125,16 +125,16 @@ impl<T, M> From<M> for Msg<T, M> {
 pub trait RenderFn<CTX: Component, SW>: Fn(SW) -> Html<CTX> {}
 impl<T, CTX: Component, SW> RenderFn<CTX, SW> for T where T: Fn(SW) -> Html<CTX> {}
 /// Owned Render function.
-pub struct Render<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static>(
+pub struct Render<T: for<'de> RouterState<'de>, SW: Switch + Clone+ 'static, M: 'static>(
     pub(crate) Rc<dyn RenderFn<Router<T, SW, M>, SW>>,
 );
-impl<T: for<'de> RouterState<'de>, SW: Switch, M> Render<T, SW, M> {
+impl<T: for<'de> RouterState<'de>, SW: Switch + Clone, M> Render<T, SW, M> {
     /// New render function
     fn new<F: RenderFn<Router<T, SW, M>, SW> + 'static>(f: F) -> Self {
         Render(Rc::new(f))
     }
 }
-impl<T: for<'de> RouterState<'de>, SW: Switch, M> Debug for Render<T, SW, M> {
+impl<T: for<'de> RouterState<'de>, SW: Switch + Clone, M> Debug for Render<T, SW, M> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("Render").finish()
     }
@@ -163,7 +163,7 @@ impl<STATE: for<'de> RouterState<'de>, SW: Switch, M> Debug for Redirect<SW, STA
 
 /// Properties for Router.
 #[derive(Properties)]
-pub struct Props<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> {
+pub struct Props<T: for<'de> RouterState<'de>, SW: Switch + Clone + 'static, M: 'static> {
     /// Render function that
     #[props(required)]
     pub render: Render<T, SW, M>,
@@ -175,7 +175,7 @@ pub struct Props<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static>
     pub callback: Option<Callback<M>>,
 }
 
-impl<T: for<'de> RouterState<'de>, SW: Switch, M> Debug for Props<T, SW, M> {
+impl<T: for<'de> RouterState<'de>, SW: Switch + Clone, M> Debug for Props<T, SW, M> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("Props").finish()
     }
@@ -184,7 +184,7 @@ impl<T: for<'de> RouterState<'de>, SW: Switch, M> Debug for Props<T, SW, M> {
 impl<T, SW, M> Component for Router<T, SW, M>
 where
     T: for<'de> RouterState<'de>,
-    SW: Switch + 'static,
+    SW: Switch + Clone + 'static,
     M: 'static,
 {
     type Message = Msg<T, M>;
