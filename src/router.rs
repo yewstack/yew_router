@@ -62,7 +62,7 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 /// }
 /// ```
 #[derive(Debug)]
-pub struct Router<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> {
+pub struct Router<T: for<'de> RouterState<'de>, SW: Switch + Clone + 'static, M: 'static> {
     switch: Option<SW>,
     props: Props<T, SW, M>,
     router_agent: RouteAgentBridge<T>,
@@ -71,7 +71,7 @@ pub struct Router<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static
 impl<T, SW, M> Router<T, SW, M>
 where
     T: for<'de> RouterState<'de>,
-    SW: Switch + 'static,
+    SW: Switch + Clone + 'static,
     M: 'static,
 {
     // TODO render fn name is overloaded now with that of the trait: Renderable<_> this should be changed. Maybe: display, show, switch, inner...
