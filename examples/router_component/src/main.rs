@@ -76,7 +76,7 @@ impl Component for Model {
     }
 }
 
-#[derive(Debug, Switch)]
+#[derive(Debug, Switch, Clone)]
 pub enum AppRoute {
     #[to = "/a{*:inner}"]
     A(AllowMissing<ARoute>),
@@ -90,6 +90,6 @@ pub enum AppRoute {
     PageNotFound(Option<String>),
 }
 
-#[derive(Debug, Switch, PartialEq, Clone)]
+#[derive(Debug, Switch, PartialEq, Clone, Copy)]
 #[to = "/c"]
 pub struct ARoute;

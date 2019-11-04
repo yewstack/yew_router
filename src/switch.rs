@@ -10,7 +10,7 @@ use std::fmt::Write;
 /// # Example
 /// ```
 /// use yew_router::{route::Route, Switch};
-/// #[derive(Debug, Switch, PartialEq)]
+/// #[derive(Debug, Switch, Clone, PartialEq)]
 /// enum TestEnum {
 ///     #[to = "/test/route"]
 ///     TestRoute,
@@ -41,7 +41,7 @@ use std::fmt::Write;
 ///     Some(TestEnum::CaptureUnnamed("lorem".to_string()))
 /// );
 /// ```
-pub trait Switch: Sized {
+pub trait Switch: Clone + Sized {
     /// Based on a route, possibly produce an itself.
     fn switch<T: RouteState>(route: Route<T>) -> Option<Self> {
         Self::from_route_part(route).0

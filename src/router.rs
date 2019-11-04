@@ -55,7 +55,7 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 ///     }
 /// }
 ///
-/// #[derive(Switch)]
+/// #[derive(Switch, Clone)]
 /// enum S {
 ///     #[to = "/v"]
 ///     Variant,
@@ -63,7 +63,7 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 /// ```
 #[derive(Debug)]
 pub struct Router<T: for<'de> RouterState<'de>, SW: Switch + 'static, M: 'static> {
-    route: Route<T>,
+    switch: Option<SW>,
     props: Props<T, SW, M>,
     router_agent: RouteAgentBridge<T>,
 }
@@ -74,13 +74,14 @@ where
     SW: Switch + 'static,
     M: 'static,
 {
+    // TODO render fn name is overloaded now with that of the trait: Renderable<_> this should be changed. Maybe: display, show, switch, inner...
     /// Wrap a render closure so that it can be used by the Router.
     /// # Example
     /// ```
     /// # use yew_router::Switch;
     /// # use yew_router::router::Router;
     /// # use yew::{html, Html};
-    /// # #[derive(Switch)]
+    /// # #[derive(Switch, Clone)]
     /// # enum S {
     /// #     #[to = "/route"]
     /// #     Variant
@@ -194,7 +195,7 @@ where
         let router_agent = RouteAgentBridge::new(callback);
 
         Router {
-            route: Default::default(), /* This must be updated by immediately requesting a route
+            switch: Default::default(), /* This must be updated by immediately requesting a route
                                         * update from the service bridge. */
             props,
             router_agent,
@@ -209,9 +210,21 @@ where
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::UpdateRoute(route) => {
-                let did_change = self.route != route;
-                self.route = route;
-                did_change
+                let mut switch = SW::switch(route.clone());
+
+                if switch.is_none() {
+                    if let Some(redirect) = &self.props.redirect {
+                        let redirected: SW = (&redirect.0)(route);
+
+                        log::trace!("Route failed to match, but redirecting route to a known switch.");
+                        // Replace the route in the browser with the redirected.
+                        self.router_agent.send(RouteRequest::ReplaceRouteNoBroadcast(redirected.clone().into()));
+                        switch = Some(redirected)
+                    }
+                }
+
+                self.switch = switch;
+                true
             }
             Msg::InnerMessage(m) => {
                 if let Some(cb) = &self.props.callback {
@@ -228,16 +241,11 @@ where
     }
 
     fn view(&self) -> VNode<Self> {
-        let switch: Option<SW> = SW::switch(self.route.clone());
-        match switch {
+        match self.switch.clone() {
             Some(switch) => (&self.props.render.0)(switch),
             None => {
-                if let Some(redirect_fn) = &self.props.redirect {
-                    let switch: SW = (redirect_fn.0)(self.route.clone()); // TODO This should be used to set the route in the browser https://github.com/yewstack/yew_router/issues/171
-                    (&self.props.render.0)(switch)
-                } else {
-                    html! {format!{"No route for {}", self.route.route}}
-                }
+                log::warn!("No route matched, provide a redirect prop to the router to handle cases where no route can be matched");
+                html! {"No route matched"}
             }
         }
     }

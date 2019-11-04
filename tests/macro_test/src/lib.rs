@@ -4,7 +4,7 @@ mod tests {
 
     #[test]
     fn single_enum_variant() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant"]
             Variant,
@@ -16,7 +16,7 @@ mod tests {
 
     #[test]
     fn single_enum_variant_unnamed_without_corresponding_capture_group() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant"]
             Variant(String),
@@ -35,7 +35,7 @@ mod tests {
 
     #[test]
     fn single_enum_variant_named_capture() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant/{item}"]
             Variant { item: String },
@@ -52,7 +52,7 @@ mod tests {
 
     #[test]
     fn single_enum_variant_unnamed_capture() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant/{item}"]
             Variant(String),
@@ -64,7 +64,7 @@ mod tests {
 
     #[test]
     fn single_enum_variant_multiple_unnamed_capture() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant/{}/{}"] // For unnamed variants, the names don't matter at all
             Variant(String, String),
@@ -79,7 +79,7 @@ mod tests {
 
     #[test]
     fn single_enum_variant_multiple_named_capture() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant/{item1}/{item2}"]
             Variant { item1: String, item2: String },
@@ -97,7 +97,7 @@ mod tests {
 
     #[test]
     fn single_enum_variant_named_capture_without_leading_separator() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant{item}"]
             Variant { item: String },
@@ -114,7 +114,7 @@ mod tests {
 
     #[test]
     fn single_enum_variant_named_capture_without_any_separator() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant{item}stuff"]
             Variant { item: String },
@@ -131,7 +131,7 @@ mod tests {
 
     #[test]
     fn single_enum_variant_end() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant!"]
             Variant,
@@ -142,7 +142,7 @@ mod tests {
 
     #[test]
     fn multiple_enum_variant_end_precedence() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant!"]
             Variant1,
@@ -160,7 +160,7 @@ mod tests {
 
     #[test]
     fn multiple_enum_variant_eager_matching() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant"]
             Variant1,
@@ -178,7 +178,7 @@ mod tests {
 
     #[test]
     fn single_enum_variant_convert_usize() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant/{item}"]
             Variant(usize),
@@ -190,7 +190,7 @@ mod tests {
 
     #[test]
     fn single_enum_variant_convert_usize_rejects_negative() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant/{item}"]
             Variant(usize),
@@ -201,7 +201,7 @@ mod tests {
 
     #[test]
     fn single_enum_variant_convert_isize() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant/{item}"]
             Variant(isize),
@@ -213,7 +213,7 @@ mod tests {
 
     #[test]
     fn single_enum_variant_missing_cap_produces_option_none() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/variant"]
             Variant(Option<String>),
@@ -239,7 +239,7 @@ mod tests {
 
     #[test]
     fn leading_slash() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/"]
             Variant,
@@ -251,7 +251,7 @@ mod tests {
 
     #[test]
     fn leading_named_capture() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "{cap}"]
             Variant(String),
@@ -263,7 +263,7 @@ mod tests {
 
     #[test]
     fn leading_unnamed_capture() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "{}"]
             Variant(String),
@@ -275,7 +275,7 @@ mod tests {
 
     #[test]
     fn leading_number_capture() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "{2:cap}"]
             Variant(String),
@@ -287,7 +287,7 @@ mod tests {
 
     #[test]
     fn leading_number_capture_unnamed() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "{2}"]
             Variant(String),
@@ -299,7 +299,7 @@ mod tests {
 
     #[test]
     fn leading_many_capture_named() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "{*:cap}"]
             Variant(String),
@@ -311,7 +311,7 @@ mod tests {
 
     #[test]
     fn leading_many_capture_unnamed() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "{*}"]
             Variant(String),
@@ -323,7 +323,7 @@ mod tests {
 
     #[test]
     fn leading_query_named() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "?query={hello}"]
             Variant(String),
@@ -335,7 +335,7 @@ mod tests {
 
     #[test]
     fn leading_query_unnamed() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "?query={}"]
             Variant(String),
@@ -347,7 +347,7 @@ mod tests {
 
     #[test]
     fn leading_fragment() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "#fragment"]
             Variant,
@@ -359,7 +359,7 @@ mod tests {
 
     #[test]
     fn fragment_with_named_captures() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "#{cap}ipsum{cap}"]
             Variant(String, String),
@@ -374,7 +374,7 @@ mod tests {
 
     #[test]
     fn fragment_with_unnamed_captures() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "#{}ipsum{}"]
             Variant(String, String),
@@ -389,7 +389,7 @@ mod tests {
 
     #[test]
     fn escape_exclaim() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, PartialEq, Clone)]
         pub enum Test {
             #[to = "/escape!!"]
             Variant,
@@ -401,7 +401,7 @@ mod tests {
 
     #[test]
     fn escape_bracket() {
-        #[derive(Debug, Switch, PartialEq)]
+        #[derive(Debug, Switch, Clone, PartialEq)]
         pub enum Test {
             #[to = "/escape{{}}a"]
             Variant,
