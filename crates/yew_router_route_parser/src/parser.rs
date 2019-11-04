@@ -100,7 +100,7 @@ impl<'a> ParserState<'a> {
                 | RouteParserToken::Exact(_)
                 | RouteParserToken::Capture(_) => Ok(ParserState::Path { prev_token: token }),
                 RouteParserToken::QueryBegin => Ok(ParserState::FirstQuery { prev_token: token }),
-                RouteParserToken::QuerySeparator // TODO this may be possible in the future.
+                RouteParserToken::QuerySeparator // TODO this may be possible in the future. https://github.com/yewstack/yew_router/issues/168
                 | RouteParserToken::Query { .. } => Err(ParserErrorReason::NotAllowedStateTransition),
                 RouteParserToken::FragmentBegin => Ok(ParserState::Fragment { prev_token: token }),
                 RouteParserToken::End => Ok(ParserState::End)
@@ -267,7 +267,7 @@ fn parse_impl<'a>(
         .map_err(|mut e: nom::Err<ParseError>| {
             // Detect likely failures if the above failed to match.
             let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
-            *reason = get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion) // TODO, technically, a sub-switch may want to start with a &query=something, so enabling this might make sense.
+            *reason = get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion) // TODO, technically, a sub-switch may want to start with a &query=something, so enabling this might make sense. https://github.com/yewstack/yew_router/issues/168
                     .ok()
                     .or(*reason);
             e
@@ -423,12 +423,7 @@ mod test {
     mod does_parse {
         use super::*;
 
-        //        #[test]
-        //        fn empty() {
-        //            let x = parse("").expect("Should not parse");
-        //            assert_eq!(x.len(), 1);
-        //            assert_eq!(x[0], RouteParserToken::Exact("")) // TODO not super sure if this is acceptable
-        //        }
+
 
         #[test]
         fn slash() {
@@ -545,6 +540,12 @@ mod test {
     mod does_not_parse {
         use super::*;
         use crate::error::{ExpectedToken, ParserErrorReason};
+
+        #[test]
+        fn empty() {
+            let _x = parse("").expect_err("Should not parse");
+//            assert_eq!(x.error.reason, None) // TODO this should have a custom error message. https://github.com/yewstack/yew_router/issues/169
+        }
 
         #[test]
         fn double_slash() {

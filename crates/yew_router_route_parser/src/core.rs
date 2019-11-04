@@ -86,16 +86,19 @@ fn get_colon(i: &str) -> IResult<&str, (), ParseError> {
 
 fn rust_ident(i: &str) -> IResult<&str, &str, ParseError> {
     let invalid_ident_chars = r##" \|/{[]()?+=-!@#$%^&*~`'";:"##;
+    // Detect an ident by first reading until a } is found,
+    // then validating the captured section against invalid characters that can't be in rust idents.
     map_parser(take_till1(move |c| c == '}'), move |i: &str| {
         match take_till1::<_, _, ()>(|c| invalid_ident_chars.contains(c))(i) {
             Ok((remain, got)) => {
-                if got.len() > 0 && got.starts_with(|c: char| is_digit(c as u8)) {
+                // Detects if the first character is a digit.
+                if !got.is_empty() && got.starts_with(|c: char| is_digit(c as u8)) {
                     Err(nom::Err::Failure(ParseError {
                         reason: Some(ParserErrorReason::BadRustIdent(got.chars().next().unwrap())),
                         expected: vec![ExpectedToken::Ident],
                         offset: 1,
                     }))
-                } else if remain.len() > 0 {
+                } else if !remain.is_empty() {
                     Err(nom::Err::Failure(ParseError {
                         reason: Some(ParserErrorReason::BadRustIdent(
                             remain.chars().next().unwrap(),
@@ -108,7 +111,7 @@ fn rust_ident(i: &str) -> IResult<&str, &str, ParseError> {
                 }
             }
             Err(_) => {
-                Ok((i, i)) // TODO this might be right?
+                Ok((i, i))
             }
         }
     })(i)
@@ -126,6 +129,9 @@ fn escaped_item_impl(i: &str) -> IResult<&str, &str> {
 
 fn exact_impl(i: &str) -> IResult<&str, &str, ParseError> {
     let special_chars = r##"/?&#={}!"##;
+    // Detect either an exact ident, or an escaped item.
+    // At higher levels, this can be called multiple times in a row,
+    // and that results of those multiple parse attempts will be stitched together into one literal.
     alt((
         take_till1(move |c| special_chars.contains(c)),
         escaped_item_impl,
