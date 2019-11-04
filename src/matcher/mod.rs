@@ -4,7 +4,7 @@
 mod matcher_impl;
 mod util;
 
-use nom::{combinator::all_consuming, IResult};
+use nom::{IResult};
 use std::collections::HashSet;
 use yew_router_route_parser::{parse_str_and_optimize_tokens, PrettyParseError};
 
@@ -22,8 +22,6 @@ pub struct RouteMatcher {
 /// Settings used for the matcher.
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct MatcherSettings {
-    /// A matcher must consume all of the input to succeed.
-    pub complete: bool,
     /// All literal matches do not care about case.
     pub case_insensitive: bool,
 }
@@ -31,7 +29,6 @@ pub struct MatcherSettings {
 impl Default for MatcherSettings {
     fn default() -> Self {
         MatcherSettings {
-            complete: true,
             case_insensitive: false,
         }
     }
@@ -60,11 +57,7 @@ impl RouteMatcher {
         &'b self,
         i: &'a str,
     ) -> IResult<&'a str, Captures<'a>> {
-        if self.settings.complete {
-            all_consuming(matcher_impl::match_into_map(&self.tokens, &self.settings))(i)
-        } else {
-            matcher_impl::match_into_map(&self.tokens, &self.settings)(i)
-        }
+        matcher_impl::match_into_map(&self.tokens, &self.settings)(i)
     }
 
     /// Match a route string, collecting the results into a vector.
@@ -72,12 +65,7 @@ impl RouteMatcher {
         &'b self,
         i: &'a str,
     ) -> IResult<&'a str, Vec<String>> {
-        // TODO this return type mandates that a key exist, which for the purposes of this function, may not be present.
-        if self.settings.complete {
-            all_consuming(matcher_impl::match_into_vec(&self.tokens, &self.settings))(i)
-        } else {
-            matcher_impl::match_into_vec(&self.tokens, &self.settings)(i)
-        }
+        matcher_impl::match_into_vec(&self.tokens, &self.settings)(i)
     }
 
     /// Gets a set of all names that will be captured.
