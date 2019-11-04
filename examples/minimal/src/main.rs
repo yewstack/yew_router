@@ -24,7 +24,7 @@ pub enum Msg {
     ChangeRoute(AppRoute),
 }
 
-#[derive(Debug, Switch)]
+#[derive(Debug, Switch, Clone)]
 pub enum AppRoute {
     #[to = "/a/{anything}"]
     A(String),

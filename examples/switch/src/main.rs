@@ -50,7 +50,7 @@ fn main() {
     println!("{}", buf);
 }
 
-#[derive(Debug, Switch)]
+#[derive(Debug, Switch, Clone)]
 pub enum AppRoute {
     #[to = "/some/route"]
     SomeRoute,
@@ -77,7 +77,7 @@ pub enum AppRoute {
     MissingCapture(Option<String>),
 }
 
-#[derive(Switch, Debug)]
+#[derive(Switch, Debug, Clone)]
 pub enum InnerRoute {
     #[to = "/left"]
     Left,
@@ -85,13 +85,13 @@ pub enum InnerRoute {
     Right,
 }
 
-#[derive(Switch, Debug)]
+#[derive(Switch, Debug, Clone)]
 #[to = "/single/{number}"]
 pub struct Single {
     number: u32,
 }
 
-#[derive(Switch, Debug)]
+#[derive(Switch, Debug, Clone)]
 #[to = "/othersingle/{number}"]
 pub struct OtherSingle(u32);
 

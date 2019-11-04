@@ -15,7 +15,7 @@ pub struct Props {
     pub sub_path: Option<String>,
 }
 
-#[derive(Debug, Switch)]
+#[derive(Debug, Switch, Clone)]
 pub enum BRoute {
     #[to = "/{num}?sup_path={sub_path}"]
     Both(usize, String),
