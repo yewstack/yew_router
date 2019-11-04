@@ -100,8 +100,8 @@ impl<'a> ParserState<'a> {
                 | RouteParserToken::Exact(_)
                 | RouteParserToken::Capture(_) => Ok(ParserState::Path { prev_token: token }),
                 RouteParserToken::QueryBegin => Ok(ParserState::FirstQuery { prev_token: token }),
-                RouteParserToken::QuerySeparator // TODO this may be possible in the future. https://github.com/yewstack/yew_router/issues/168
-                | RouteParserToken::Query { .. } => Err(ParserErrorReason::NotAllowedStateTransition),
+                RouteParserToken::QuerySeparator => Ok(ParserState::NthQuery {prev_token: token}),
+                RouteParserToken::Query { .. } => Err(ParserErrorReason::NotAllowedStateTransition),
                 RouteParserToken::FragmentBegin => Ok(ParserState::Fragment { prev_token: token }),
                 RouteParserToken::End => Ok(ParserState::End)
             },
@@ -259,19 +259,12 @@ fn parse_impl<'a>(
         ParserState::None => alt((
             get_slash,
             get_question,
+            get_and,
             get_hash,
             capture(field_naming_scheme),
             exact,
             get_end,
-        ))(i)
-        .map_err(|mut e: nom::Err<ParseError>| {
-            // Detect likely failures if the above failed to match.
-            let reason: &mut Option<ParserErrorReason> = get_reason(&mut e);
-            *reason = get_and(i).map(|_| ParserErrorReason::AndBeforeQuestion) // TODO, technically, a sub-switch may want to start with a &query=something, so enabling this might make sense. https://github.com/yewstack/yew_router/issues/168
-                    .ok()
-                    .or(*reason);
-            e
-        }),
+        ))(i),
         ParserState::Path { prev_token } => match prev_token {
             RouteParserToken::Separator => {
                 alt((
@@ -461,6 +454,11 @@ mod test {
         }
 
         #[test]
+        fn leading_query_separator() {
+            parse("&lorem=ipsum").expect("Should parse");
+        }
+
+        #[test]
         fn exact_query() {
             parse("?lorem=ipsum").expect("should parse");
         }
@@ -569,11 +567,6 @@ mod test {
             )
         }
 
-        #[test]
-        fn leading_ampersand_query() {
-            let x = parse("&query=thing").expect_err("Should not parse");
-            assert_eq!(x.error.reason, Some(ParserErrorReason::AndBeforeQuestion));
-        }
 
         #[test]
         fn after_end() {

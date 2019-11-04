@@ -165,10 +165,10 @@ where
             }
             el
         }
-        Tag::FootnoteDefinition(ref _footnote_id) => VTag::new("span"), // Footnotes are not
-        // rendered as anything
-        // special
-        Tag::HtmlBlock => VTag::new("yeet"), // TODO, what happens here??
+
+        Tag::FootnoteDefinition(ref _footnote_id) => VTag::new("span"),
+        // This may not be correct
+        Tag::HtmlBlock => VTag::new("div"),
         Tag::Strikethrough => VTag::new("strike"),
     }
 }
