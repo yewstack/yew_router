@@ -114,20 +114,10 @@ pub enum ExpectedToken {
     Separator,
     /// specific string.
     Literal,
-    ///  {name}.
-    CaptureNamed,
-    // {5:name}
-    CaptureNumberedNamed,
-    // {*:name}
-    CaptureManyNamed,
     ///  ?
     QueryBegin,
     ///  &
     QuerySeparator,
-    ///  x={y}
-    QueryCapture,
-    // x=y
-    QueryLiteral,
     /// \#
     FragmentBegin,
     /// !
@@ -151,13 +141,8 @@ impl fmt::Display for ExpectedToken {
         match self {
             ExpectedToken::Separator => f.write_str("/"),
             ExpectedToken::Literal => f.write_str("<literal>"),
-            ExpectedToken::CaptureNamed => f.write_str("{<number>:<ident>}"),
-            ExpectedToken::CaptureNumberedNamed => f.write_str("{<number>:<ident>}"),
-            ExpectedToken::CaptureManyNamed => f.write_str("{*:<ident>}"),
             ExpectedToken::QueryBegin => f.write_str("?"),
             ExpectedToken::QuerySeparator => f.write_str("&"),
-            ExpectedToken::QueryCapture => f.write_str("<literal>={<ident>}"),
-            ExpectedToken::QueryLiteral => f.write_str("<literal>=<literal>"),
             ExpectedToken::FragmentBegin => f.write_str("#"),
             ExpectedToken::End => f.write_str("!"),
             ExpectedToken::Ident => f.write_str("<ident>"),

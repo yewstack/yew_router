@@ -46,7 +46,7 @@ impl RouteMatcher {
         Ok(RouteMatcher {
             tokens: parse_str_and_optimize_tokens(
                 i,
-                yew_router_route_parser::FieldNamingScheme::Unnamed,
+                yew_router_route_parser::FieldNamingScheme::Unnamed, // The most permissive scheme
             )?, /* TODO this field type should be a superset of Named, but it would be better to source this from settings, and make sure that the macro generates settings as such. */
             settings,
         })
@@ -192,7 +192,6 @@ mod tests {
             .expect_err("should not parse");
     }
 
-    // TODO fix this test
     #[test]
     fn match_n() {
         let tokens = vec![
