@@ -127,31 +127,45 @@ fn escaped_item_impl(i: &str) -> IResult<&str, &str> {
     })(i)
 }
 
-fn exact_impl(i: &str) -> IResult<&str, &str, ParseError> {
-    let special_chars = r##"/?&#={}!"##;
+/// The provided string of special characters will be used to terminate this parser.
+///
+/// Due to escaped character parser, the list of special characters MUST contain the characters:
+/// "!{}" within it.
+fn exact_impl(special_chars: &'static str) -> impl Fn(&str) -> IResult<&str, &str, ParseError> {
     // Detect either an exact ident, or an escaped item.
     // At higher levels, this can be called multiple times in a row,
     // and that results of those multiple parse attempts will be stitched together into one literal.
-    alt((
-        take_till1(move |c| special_chars.contains(c)),
-        escaped_item_impl,
-    ))(i)
-    .map_err(|x: nom::Err<(&str, ErrorKind)>| {
-        let s = match x {
-            nom::Err::Error((s, _)) | nom::Err::Failure((s, _)) => s,
-            nom::Err::Incomplete(_) => panic!(),
-        };
-        nom::Err::Error(ParseError {
-            reason: Some(ParserErrorReason::BadLiteral),
-            expected: vec![ExpectedToken::Literal],
-            offset: 1 + i.len() - s.len(),
-        })
-    })
+    move |i: &str| {
+        alt((
+            take_till1(move |c| special_chars.contains(c)),
+            escaped_item_impl,
+        ))(i)
+            .map_err(|x: nom::Err<(&str, ErrorKind)>| {
+                let s = match x {
+                    nom::Err::Error((s, _)) | nom::Err::Failure((s, _)) => s,
+                    nom::Err::Incomplete(_) => panic!(),
+                };
+                nom::Err::Error(ParseError {
+                    reason: Some(ParserErrorReason::BadLiteral),
+                    expected: vec![ExpectedToken::Literal],
+                    offset: 1 + i.len() - s.len(),
+                })
+            })
+    }
 }
 
+const SPECIAL_CHARS: &str = r##"/?&#={}!"##;
+const FRAGMENT_SPECIAL_CHARS: &str = r##"{}!"##;
+
 pub fn exact(i: &str) -> IResult<&str, RouteParserToken, ParseError> {
-    map(exact_impl, RouteParserToken::Exact)(i)
+    map(exact_impl(SPECIAL_CHARS), RouteParserToken::Exact)(i)
 }
+
+/// More permissive exact matchers
+pub fn fragment_exact(i: &str) -> IResult<&str, RouteParserToken, ParseError> {
+    map(exact_impl(FRAGMENT_SPECIAL_CHARS), RouteParserToken::Exact)(i)
+}
+
 
 pub fn capture<'a>(
     field_naming_scheme: FieldNamingScheme,
@@ -281,7 +295,7 @@ fn cap_or_exact<'a>(
                 capture_single_impl(field_naming_scheme),
                 CaptureOrExact::Capture,
             ),
-            map(exact_impl, CaptureOrExact::Exact),
+            map(exact_impl(SPECIAL_CHARS), CaptureOrExact::Exact),
         ))(i)
     }
 }
@@ -292,7 +306,7 @@ pub fn query<'a>(
 ) -> impl Fn(&'a str) -> IResult<&'a str, RouteParserToken<'a>, ParseError> {
     move |i: &str| {
         map(
-            separated_pair(exact_impl, get_eq, cap_or_exact(field_naming_scheme)),
+            separated_pair(exact_impl(SPECIAL_CHARS), get_eq, cap_or_exact(field_naming_scheme)),
             |(ident, capture_or_exact)| RouteParserToken::Query {
                 ident,
                 capture_or_exact,

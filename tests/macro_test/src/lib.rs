@@ -410,4 +410,44 @@ mod tests {
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant)
     }
+
+    mod fragment_routing_tests {
+        use super::*;
+
+        #[test]
+        fn basic_fragment() {
+            #[derive(Debug, Switch, Clone, PartialEq)]
+            pub enum Test {
+                #[to = "#/lorem"]
+                Variant,
+            }
+            let route = Route::from("#/lorem");
+            Test::switch(route).expect("should produce item");
+        }
+
+        #[test]
+        fn query_within_fragment() {
+            #[derive(Debug, Switch, Clone, PartialEq)]
+            pub enum Test {
+                #[to = "#/lorem=ipsum"]
+                Variant,
+            }
+            let route = Route::from("#/lorem=ipsum");
+            Test::switch(route).expect("should produce item");
+        }
+
+        #[test]
+        fn capture_query_within_fragment() {
+            #[derive(Debug, Switch, Clone, PartialEq)]
+            pub enum Test {
+                #[to = "#/lorem={ipsum}"]
+                Variant{ipsum: String},
+            }
+            let route = Route::from("#/lorem=dolor");
+            let switched = Test::switch(route).expect("should produce item");
+            assert_eq!(switched, Test::Variant{ipsum: "dolor".to_string()})
+        }
+    }
 }
+
+
