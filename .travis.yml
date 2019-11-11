@@ -13,7 +13,7 @@ before_cache:
   - ./ci/clear_cache.sh
 
 rust:
-  - 1.37.0 # min supported
+#  - 1.39.0 # min supported
   - stable
   - nightly
 
