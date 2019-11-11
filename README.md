@@ -53,8 +53,8 @@ Look at https://webpack.js.org/configuration/dev-server/#devserverhistoryapifall
 You can use the released version by adding these to your dependencies.
 ```toml
 [dependencies]
-yew-router = "0.6.1"
-yew = "0.9.0"
+yew-router = "0.7.0"
+yew = "0.10.1"
 ```
 
 You can use the in-development version in your project by adding it to your dependencies like so:
@@ -66,9 +66,8 @@ yew = {git = "https://github.com/yewstack/yew", branch = "master"}
 
 
 #### Minimum rustc
-Currently, this library targets rustc 1.37.0, but development is done on the latest stable release.
-Regressions related to minimum rustc versions may continue before automated testing is implemented.
-No guarantees are made about minimum supported versions prior to a 1.0.0 release, although we will attempt to be conservative in how often we remove support for old rustc versions.
+Currently, this library targets rustc 1.39.0, but development is done on the latest stable release.
+This library aims to track Yew`s minimum supported rustc version.
 
 -----
 ### Contributions/Requests
