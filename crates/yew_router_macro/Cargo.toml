@@ -18,4 +18,4 @@ yew-router-route-parser = {path = "../yew_router_route_parser", version = "0.7.0
 proc-macro2 = "1.0.1"
 
 [dev-dependencies]
-#yew-router = {path = "../..", version = "0.7.0"}
+yew-router = {path = "../..", version = "0.7.0"}
