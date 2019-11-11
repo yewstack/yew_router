@@ -40,7 +40,8 @@ impl<'a> RouteParserToken<'a> {
             RouteParserToken::QueryBegin => "?",
             RouteParserToken::QuerySeparator => "&",
             RouteParserToken::FragmentBegin => "#",
-            RouteParserToken::Capture { .. }
+            RouteParserToken::Nothing
+            | RouteParserToken::Capture { .. }
             | RouteParserToken::Query { .. }
             | RouteParserToken::End => unreachable!(),
         }
@@ -115,6 +116,7 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
                 new_tokens.push(empty_run(&mut run));
                 new_tokens.push(MatcherToken::End);
             }
+            RouteParserToken::Nothing => {}
         }
     }
 
@@ -124,4 +126,16 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
     }
 
     new_tokens
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn empty_creates_empty_token_list() {
+        let tokens = parse_str_and_optimize_tokens("", FieldNamingScheme::Unit).unwrap();
+        assert_eq!(tokens, vec![])
+    }
 }

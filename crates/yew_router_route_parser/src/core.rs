@@ -127,6 +127,21 @@ fn escaped_item_impl(i: &str) -> IResult<&str, &str> {
     })(i)
 }
 
+/// Matches "".
+pub fn nothing(i: &str) -> IResult<&str, RouteParserToken, ParseError> {
+    if i.len() == 0 {
+        Ok((i, RouteParserToken::Nothing))
+    } else {
+        Err(
+            nom::Err::Error(ParseError {
+                reason: None, // This should never actually report an error.
+                expected: vec![],
+                offset: 0
+            })
+        )
+    }
+}
+
 /// The provided string of special characters will be used to terminate this parser.
 ///
 /// Due to escaped character parser, the list of special characters MUST contain the characters:
