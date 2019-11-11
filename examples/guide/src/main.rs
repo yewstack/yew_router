@@ -5,7 +5,7 @@ use yew::virtual_dom::VNode;
 
 fn main() {
     yew::initialize();
-    web_logger::init();
+//    web_logger::init();
     App::<Model>::new().mount_to_body();
     yew::run_loop();
 }
