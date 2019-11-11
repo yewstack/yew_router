@@ -30,8 +30,8 @@ serde_derive = "1.0"
 yew = {git = "https://github.com/yewstack/yew", branch = "master"}
 stdweb = "0.4"
 
-yew-router-route-parser = {path = "crates/yew_router_route_parser", version = "0.6.0"}
-yew-router-macro = {path = "crates/yew_router_macro", version = "0.6.0"}
+yew-router-route-parser = {path = "crates/yew_router_route_parser", version = "0.7.0"}
+yew-router-macro = {path = "crates/yew_router_macro", version = "0.7.0"}
 nom = {version = "5.0.0"}
 uuid = "0.8.1"
 
