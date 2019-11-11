@@ -6,9 +6,9 @@ authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 edition="2018"
 
 [dependencies]
-#yew = "0.9.0"
-yew = {git = "https://github.com/yewstack/yew", branch = "master"}
+yew = "0.10.0"
+#yew = {git = "https://github.com/yewstack/yew", branch = "master"}
 yew-router = {path = "../../"}
-web_logger = "0.1"
+web_logger = "0.2"
 log = "0.4.8"
 wee_alloc = "0.4.5"
