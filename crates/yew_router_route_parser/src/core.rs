@@ -321,8 +321,8 @@ mod test {
 
     #[test]
     fn lit() {
-        let x = exact_impl("hello").expect("Should parse");
-        assert_eq!(x.1, "hello")
+        let x = exact("hello").expect("Should parse");
+        assert_eq!(x.1, RouteParserToken::Exact("hello"))
     }
 
     #[test]
