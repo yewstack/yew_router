@@ -43,7 +43,7 @@ impl<T: for<'de> RouterState<'de>> Component for RouterLink<T> {
         true
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
         use stdweb::web::event::IEvent;
         let target: &str = &self.props.link;
 

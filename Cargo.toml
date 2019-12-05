@@ -23,16 +23,17 @@ agent = []
 
 
 [dependencies]
-log = "0.4"
-serde = "1.0"
-serde_derive = "1.0"
+log = "0.4.8"
+serde = "1.0.103"
+serde_derive = "1.0.103"
 #yew = "0.10.0"
-yew = {git = "https://github.com/yewstack/yew", branch = "master"}
+#yew = {git = "https://github.com/yewstack/yew", branch = ""}
+yew = {git = "https://github.com/jstarry/yew", branch = "degenerify"}
 stdweb = "0.4.20"
 
 yew-router-route-parser = {path = "crates/yew_router_route_parser", version = "0.8.0"}
 yew-router-macro = {path = "crates/yew_router_macro", version = "0.8.0"}
-nom = {version = "5.0.0"}
+nom = "5.0.1"
 uuid = "0.8.1"
 
 

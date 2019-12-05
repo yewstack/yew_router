@@ -122,9 +122,10 @@ impl<T, M> From<M> for Msg<T, M> {
 }
 
 /// Render function that takes a switched route and converts it to HTML
-pub trait RenderFn<CTX: Component, SW>: Fn(SW) -> Html<CTX> {}
-impl<T, CTX: Component, SW> RenderFn<CTX, SW> for T where T: Fn(SW) -> Html<CTX> {}
+pub trait RenderFn<CTX: Component, SW>: Fn(SW) -> Html {}
+impl<T, CTX: Component, SW> RenderFn<CTX, SW> for T where T: Fn(SW) -> Html {}
 /// Owned Render function.
+#[derive(Clone)]
 pub struct Render<T: for<'de> RouterState<'de>, SW: Switch + Clone+ 'static, M: 'static>(
     pub(crate) Rc<dyn RenderFn<Router<T, SW, M>, SW>>,
 );
@@ -145,6 +146,7 @@ impl<T: for<'de> RouterState<'de>, SW: Switch + Clone, M> Debug for Render<T, SW
 pub trait RedirectFn<SW, STATE>: Fn(Route<STATE>) -> SW {}
 impl<T, SW, STATE> RedirectFn<SW, STATE> for T where T: Fn(Route<STATE>) -> SW {}
 /// Clonable Redirect function
+#[derive(Clone)]
 pub struct Redirect<SW: Switch + 'static, STATE: for<'de> RouterState<'de>, M>(
     pub(crate) Rc<dyn RedirectFn<SW, STATE>>,
     /// This phantom data is here to allow type inference when using it inside a Router component.
@@ -162,9 +164,9 @@ impl<STATE: for<'de> RouterState<'de>, SW: Switch, M> Debug for Redirect<SW, STA
 }
 
 /// Properties for Router.
-#[derive(Properties)]
+#[derive(Properties, Clone)]
 pub struct Props<T: for<'de> RouterState<'de>, SW: Switch + Clone + 'static, M: 'static> {
-    /// Render function that
+    /// Render function that takes a Switch and produces Html
     #[props(required)]
     pub render: Render<T, SW, M>,
     /// Optional redirect function that will convert the route to a known switch variant if explicit matching fails.
@@ -175,7 +177,7 @@ pub struct Props<T: for<'de> RouterState<'de>, SW: Switch + Clone + 'static, M: 
     pub callback: Option<Callback<M>>,
 }
 
-impl<T: for<'de> RouterState<'de>, SW: Switch + Clone, M> Debug for Props<T, SW, M> {
+impl<T: for<'de> RouterState<'de>, SW: Switch + Clone, M: Clone> Debug for Props<T, SW, M> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("Props").finish()
     }
@@ -240,7 +242,7 @@ where
         true
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
         match self.switch.clone() {
             Some(switch) => (&self.props.render.0)(switch),
             None => {

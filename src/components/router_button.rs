@@ -43,7 +43,7 @@ impl<T: for<'de> RouterState<'de>> Component for RouterButton<T> {
         true
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
         html! {
             <button
                 class=self.props.classes.clone(),
