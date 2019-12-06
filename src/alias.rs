@@ -71,7 +71,7 @@ macro_rules! define_router_state {
             #[doc = "Alias to [Router<"]
             #[doc = $StateName]
             #[doc = ">](router/router/struct.Router.html)."]
-            pub type Router<SW, M> = $crate::router::Router<$StateT, SW, M>;
+            pub type Router<SW> = $crate::router::Router<$StateT, SW>;
 
         }
     }

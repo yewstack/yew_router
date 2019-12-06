@@ -94,7 +94,7 @@ where
     type Reach = Context;
 
     fn create(link: AgentLink<RouteAgent<T>>) -> Self {
-        let callback = link.send_back(Msg::BrowserNavigationRouteChanged);
+        let callback = link.callback(Msg::BrowserNavigationRouteChanged);
         let mut route_service = RouteService::new();
         route_service.register_callback(callback);
 
