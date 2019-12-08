@@ -31,7 +31,7 @@ impl Component for AModel {
         true
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
         html! {
             <div>
                 { "I am the A component"}

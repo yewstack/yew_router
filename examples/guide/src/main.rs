@@ -24,7 +24,7 @@ impl Component for Model {
         false
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
         html! {
             <Guide>
                 <Page

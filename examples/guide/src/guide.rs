@@ -13,7 +13,7 @@ pub struct Guide {
 
 #[derive(Properties)]
 pub struct GuideProps {
-    children: ChildrenWithProps<Page, Guide>,
+    children: ChildrenWithProps<Page>,
 }
 
 pub enum Msg {
@@ -24,8 +24,8 @@ impl Component for Guide {
     type Message = Msg;
     type Properties = GuideProps;
 
-    fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-        let callback = link.send_back(Msg::UpdateRoute);
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let callback = link.callback(Msg::UpdateRoute);
         let router_agent = RouteAgent::bridge(callback);
         Guide {
             router_agent,
@@ -48,7 +48,7 @@ impl Component for Guide {
         true
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
         if let Some(route) = &self.route {
             let active_markdown_uri: Option<String> = self
                 .props
@@ -94,7 +94,7 @@ impl Component for Guide {
     }
 }
 
-fn render_page_list_item(props: PageProps, route: &Route) -> Html<Guide> {
+fn render_page_list_item(props: PageProps, route: &Route) -> Html {
     let pm: RouteMatcher = RouteMatcher::try_from(&props.page_url).unwrap();
     if pm.capture_route_into_map(&route.to_string()).is_ok() {
         log::debug!("Found an active");

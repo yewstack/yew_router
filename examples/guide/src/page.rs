@@ -24,7 +24,7 @@ impl Component for Page {
         false
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
         unimplemented!()
     }
 }
