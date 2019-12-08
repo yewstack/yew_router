@@ -23,7 +23,11 @@ impl<T: for<'de> RouterState<'de>> Component for RouterButton<T> {
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let router = RouteAgentDispatcher::new();
-        RouterButton {link, router, props }
+        RouterButton {
+            link,
+            router,
+            props,
+        }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {

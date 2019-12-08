@@ -88,8 +88,7 @@ pub fn render_markdown(src: &str) -> Html {
     }
 }
 
-fn make_tag(t: Tag) -> VTag
-{
+fn make_tag(t: Tag) -> VTag {
     match t {
         Tag::Paragraph => VTag::new("p"),
         Tag::Rule => VTag::new("hr"),

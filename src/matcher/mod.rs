@@ -4,7 +4,7 @@
 mod matcher_impl;
 mod util;
 
-use nom::{IResult};
+use nom::IResult;
 use std::collections::HashSet;
 use yew_router_route_parser::{parse_str_and_optimize_tokens, PrettyParseError};
 

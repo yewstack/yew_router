@@ -103,7 +103,7 @@ impl nom::error::ParseError<&str> for ParseError {
         ParseError {
             reason: other.reason.or(self.reason), // Take the right most reason
             expected: self.expected,
-            offset: other.offset, // Defer to the "other"'s offset. TODO it might make sense if the offsets are different, only show the other's "expected".
+            offset: other.offset, /* Defer to the "other"'s offset. TODO it might make sense if the offsets are different, only show the other's "expected". */
         }
     }
 }

@@ -17,7 +17,7 @@ fn main() {
 pub struct Model {
     route_service: RouteService<()>,
     route: Route<()>,
-    link: ComponentLink<Self>
+    link: ComponentLink<Self>,
 }
 
 pub enum Msg {
@@ -37,10 +37,10 @@ pub enum AppRoute {
 
 impl Model {
     fn change_route(&self, app_route: AppRoute) -> Callback<ClickEvent> {
-        self.link.callback( move |_| {
+        self.link.callback(move |_| {
             let route = app_route.clone(); // TODO, I don't think I should have to clone here?
             Msg::ChangeRoute(route)
-        } )
+        })
     }
 }
 

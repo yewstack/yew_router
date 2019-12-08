@@ -110,9 +110,7 @@ fn rust_ident(i: &str) -> IResult<&str, &str, ParseError> {
                     Ok((i, i))
                 }
             }
-            Err(_) => {
-                Ok((i, i))
-            }
+            Err(_) => Ok((i, i)),
         }
     })(i)
 }
@@ -132,13 +130,11 @@ pub fn nothing(i: &str) -> IResult<&str, RouteParserToken, ParseError> {
     if i.len() == 0 {
         Ok((i, RouteParserToken::Nothing))
     } else {
-        Err(
-            nom::Err::Error(ParseError {
-                reason: None, // This should never actually report an error.
-                expected: vec![],
-                offset: 0
-            })
-        )
+        Err(nom::Err::Error(ParseError {
+            reason: None, // This should never actually report an error.
+            expected: vec![],
+            offset: 0,
+        }))
     }
 }
 
@@ -155,17 +151,17 @@ fn exact_impl(special_chars: &'static str) -> impl Fn(&str) -> IResult<&str, &st
             take_till1(move |c| special_chars.contains(c)),
             escaped_item_impl,
         ))(i)
-            .map_err(|x: nom::Err<(&str, ErrorKind)>| {
-                let s = match x {
-                    nom::Err::Error((s, _)) | nom::Err::Failure((s, _)) => s,
-                    nom::Err::Incomplete(_) => panic!(),
-                };
-                nom::Err::Error(ParseError {
-                    reason: Some(ParserErrorReason::BadLiteral),
-                    expected: vec![ExpectedToken::Literal],
-                    offset: 1 + i.len() - s.len(),
-                })
+        .map_err(|x: nom::Err<(&str, ErrorKind)>| {
+            let s = match x {
+                nom::Err::Error((s, _)) | nom::Err::Failure((s, _)) => s,
+                nom::Err::Incomplete(_) => panic!(),
+            };
+            nom::Err::Error(ParseError {
+                reason: Some(ParserErrorReason::BadLiteral),
+                expected: vec![ExpectedToken::Literal],
+                offset: 1 + i.len() - s.len(),
             })
+        })
     }
 }
 
@@ -321,7 +317,11 @@ pub fn query<'a>(
 ) -> impl Fn(&'a str) -> IResult<&'a str, RouteParserToken<'a>, ParseError> {
     move |i: &str| {
         map(
-            separated_pair(exact_impl(SPECIAL_CHARS), get_eq, cap_or_exact(field_naming_scheme)),
+            separated_pair(
+                exact_impl(SPECIAL_CHARS),
+                get_eq,
+                cap_or_exact(field_naming_scheme),
+            ),
             |(ident, capture_or_exact)| RouteParserToken::Query {
                 ident,
                 capture_or_exact,

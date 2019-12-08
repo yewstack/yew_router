@@ -9,9 +9,7 @@ use std::{
     fmt::{self, Debug, Error as FmtError, Formatter},
     rc::Rc,
 };
-use yew::{
-    html, virtual_dom::VNode, Component, ComponentLink, Html, Properties, ShouldRender,
-};
+use yew::{html, virtual_dom::VNode, Component, ComponentLink, Html, Properties, ShouldRender};
 
 use crate::agent::AgentState;
 
@@ -61,7 +59,7 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 /// ```
 // TODO, can M just be removed due to not having to explicitly deal with callbacks anymore? - Just get rid of M
 #[derive(Debug)]
-pub struct Router<T: for<'de> RouterState<'de>, SW: Switch  + Clone + 'static> {
+pub struct Router<T: for<'de> RouterState<'de>, SW: Switch + Clone + 'static> {
     switch: Option<SW>,
     props: Props<T, SW>,
     router_agent: RouteAgentBridge<T>,
@@ -116,7 +114,7 @@ pub trait RenderFn<CTX: Component, SW>: Fn(SW) -> Html {}
 impl<T, CTX: Component, SW> RenderFn<CTX, SW> for T where T: Fn(SW) -> Html {}
 /// Owned Render function.
 #[derive(Clone)]
-pub struct Render<T: for<'de> RouterState<'de>, SW: Switch + Clone+ 'static>(
+pub struct Render<T: for<'de> RouterState<'de>, SW: Switch + Clone + 'static>(
     pub(crate) Rc<dyn RenderFn<Router<T, SW>, SW>>,
 );
 impl<T: for<'de> RouterState<'de>, SW: Switch + Clone> Render<T, SW> {
@@ -183,7 +181,7 @@ where
 
         Router {
             switch: Default::default(), /* This must be updated by immediately requesting a route
-                                        * update from the service bridge. */
+                                         * update from the service bridge. */
             props,
             router_agent,
         }
@@ -203,9 +201,14 @@ where
                     if let Some(redirect) = &self.props.redirect {
                         let redirected: SW = (&redirect.0)(route);
 
-                        log::trace!("Route failed to match, but redirecting route to a known switch.");
+                        log::trace!(
+                            "Route failed to match, but redirecting route to a known switch."
+                        );
                         // Replace the route in the browser with the redirected.
-                        self.router_agent.send(RouteRequest::ReplaceRouteNoBroadcast(redirected.clone().into()));
+                        self.router_agent
+                            .send(RouteRequest::ReplaceRouteNoBroadcast(
+                                redirected.clone().into(),
+                            ));
                         switch = Some(redirected)
                     }
                 }

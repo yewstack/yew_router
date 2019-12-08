@@ -7,7 +7,7 @@ pub struct BModel {
     router: Box<dyn Bridge<RouteAgent>>,
     increment: Callback<ClickEvent>,
     decrement: Callback<ClickEvent>,
-    update_subpath: Callback<InputData>
+    update_subpath: Callback<InputData>,
 }
 
 #[derive(PartialEq, Properties)]
@@ -74,7 +74,8 @@ impl Component for BModel {
             router,
             increment: link.callback(|_| Msg::Navigate(vec![Msg::Increment])),
             decrement: link.callback(|_| Msg::Navigate(vec![Msg::Decrement])),
-            update_subpath: link.callback(|e: InputData| Msg::Navigate(vec![Msg::UpdateSubpath(e.value)]))
+            update_subpath: link
+                .callback(|e: InputData| Msg::Navigate(vec![Msg::UpdateSubpath(e.value)])),
         }
     }
 

@@ -130,12 +130,12 @@ impl<U: Switch + std::fmt::Debug> Switch for AllowMissing<U> {
 
         if inner.is_some() {
             (Some(AllowMissing(inner)), inner_state)
-        } else if &route ==
-            ""
+        } else if &route == ""
             || (&route).starts_with('/')
             || (&route).starts_with('?')
             || (&route).starts_with('&')
-            || (&route).starts_with('#') {
+            || (&route).starts_with('#')
+        {
             (Some(AllowMissing(None)), inner_state)
         } else {
             (None, None)
