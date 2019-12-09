@@ -12,6 +12,7 @@ use yew::virtual_dom::VNode;
 /// An anchor tag Component that when clicked, will navigate to the provided route.
 #[derive(Debug)]
 pub struct RouterLink<T: for<'de> RouterState<'de>> {
+    link: ComponentLink<Self>,
     router: RouteAgentDispatcher<T>,
     props: Props<T>,
 }
@@ -20,9 +21,13 @@ impl<T: for<'de> RouterState<'de>> Component for RouterLink<T> {
     type Message = Msg;
     type Properties = Props<T>;
 
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let router = RouteAgentDispatcher::new();
-        RouterLink { router, props }
+        RouterLink {
+            link,
+            router,
+            props,
+        }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
@@ -43,17 +48,18 @@ impl<T: for<'de> RouterState<'de>> Component for RouterLink<T> {
         true
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
         use stdweb::web::event::IEvent;
         let target: &str = &self.props.link;
+        let cb = |x| self.link.callback(x);
 
         html! {
             <a
                 class=self.props.classes.clone(),
-                onclick=|event | {
+                onclick=cb(|event: ClickEvent | {
                     event.prevent_default();
                     Msg::Clicked
-                },
+                }),
                 disabled=self.props.disabled,
                 href=target,
             >

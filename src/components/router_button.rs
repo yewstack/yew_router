@@ -12,6 +12,7 @@ use yew::virtual_dom::VNode;
 /// Changes the route when clicked.
 #[derive(Debug)]
 pub struct RouterButton<T: for<'de> RouterState<'de>> {
+    link: ComponentLink<Self>,
     router: RouteAgentDispatcher<T>,
     props: Props<T>,
 }
@@ -20,9 +21,13 @@ impl<T: for<'de> RouterState<'de>> Component for RouterButton<T> {
     type Message = Msg;
     type Properties = Props<T>;
 
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let router = RouteAgentDispatcher::new();
-        RouterButton { router, props }
+        RouterButton {
+            link,
+            router,
+            props,
+        }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
@@ -43,11 +48,12 @@ impl<T: for<'de> RouterState<'de>> Component for RouterButton<T> {
         true
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
+        let cb = |x| self.link.callback(x);
         html! {
             <button
                 class=self.props.classes.clone(),
-                onclick=|_| Msg::Clicked,
+                onclick=cb(|_| Msg::Clicked),
                 disabled=self.props.disabled,
             >
                 {&self.props.text}

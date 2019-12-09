@@ -39,7 +39,7 @@ impl Component for Model {
         false
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
         html! {
             <div>
                 <nav class="menu",>
@@ -52,7 +52,7 @@ impl Component for Model {
                     <RouterButton: text=String::from("Go to bad path"), link="/a_bad_path", />
                 </nav>
                 <div>
-                    <Router<AppRoute, ()>
+                    <Router<AppRoute>
                         render = Router::render(|switch: AppRoute| {
                             match switch {
                                 AppRoute::A(AllowMissing(route)) => html!{<AModel route = route />},

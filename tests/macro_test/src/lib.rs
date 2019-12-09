@@ -441,13 +441,16 @@ mod tests {
             #[derive(Debug, Switch, Clone, PartialEq)]
             pub enum Test {
                 #[to = "#/lorem={ipsum}"]
-                Variant{ipsum: String},
+                Variant { ipsum: String },
             }
             let route = Route::from("#/lorem=dolor");
             let switched = Test::switch(route).expect("should produce item");
-            assert_eq!(switched, Test::Variant{ipsum: "dolor".to_string()})
+            assert_eq!(
+                switched,
+                Test::Variant {
+                    ipsum: "dolor".to_string()
+                }
+            )
         }
     }
 }
-
-

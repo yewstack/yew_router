@@ -23,7 +23,7 @@ impl Component for CModel {
         true
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
         html! {
             <div>
                 {" I am the C component"}

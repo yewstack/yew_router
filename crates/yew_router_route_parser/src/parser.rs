@@ -1,13 +1,13 @@
 //! Parser that consumes a string and produces the first representation of the matcher.
 use crate::{
     core::{
-        capture, capture_single, exact, get_and, get_end, get_hash, get_question, get_slash, query,
+        capture, capture_single, exact, fragment_exact, get_and, get_end, get_hash, get_question,
+        get_slash, nothing, query,
     },
     error::{get_reason, ParseError, ParserErrorReason, PrettyParseError},
     FieldNamingScheme,
 };
 use nom::{branch::alt, IResult};
-use crate::core::{fragment_exact, nothing};
 // use crate::core::escaped_item;
 
 /// Tokens generated from parsing a route matcher string.
@@ -103,11 +103,10 @@ impl<'a> ParserState<'a> {
                 | RouteParserToken::Exact(_)
                 | RouteParserToken::Capture(_) => Ok(ParserState::Path { prev_token: token }),
                 RouteParserToken::QueryBegin => Ok(ParserState::FirstQuery { prev_token: token }),
-                RouteParserToken::QuerySeparator => Ok(ParserState::NthQuery {prev_token: token}),
+                RouteParserToken::QuerySeparator => Ok(ParserState::NthQuery { prev_token: token }),
                 RouteParserToken::Query { .. } => Err(ParserErrorReason::NotAllowedStateTransition),
                 RouteParserToken::FragmentBegin => Ok(ParserState::Fragment { prev_token: token }),
-                RouteParserToken::Nothing
-                | RouteParserToken::End => Ok(ParserState::End)
+                RouteParserToken::Nothing | RouteParserToken::End => Ok(ParserState::End),
             },
             ParserState::Path { prev_token } => {
                 match prev_token {
@@ -268,7 +267,7 @@ fn parse_impl<'a>(
             capture(field_naming_scheme),
             exact,
             get_end,
-            nothing
+            nothing,
         ))(i),
         ParserState::Path { prev_token } => match prev_token {
             RouteParserToken::Separator => {
@@ -548,7 +547,6 @@ mod test {
     mod does_not_parse {
         use super::*;
         use crate::error::{ExpectedToken, ParserErrorReason};
-
 
 
         #[test]

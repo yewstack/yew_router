@@ -94,7 +94,7 @@ where
     type Reach = Context;
 
     fn create(link: AgentLink<RouteAgent<T>>) -> Self {
-        let callback = link.send_back(Msg::BrowserNavigationRouteChanged);
+        let callback = link.callback(Msg::BrowserNavigationRouteChanged);
         let mut route_service = RouteService::new();
         route_service.register_callback(callback);
 
@@ -112,7 +112,7 @@ where
                 let mut route = Route::current_route(&self.route_service);
                 route.state = Some(state);
                 for sub in &self.subscribers {
-                    self.link.response(*sub, route.clone());
+                    self.link.respond(*sub, route.clone());
                 }
             }
         }
@@ -122,7 +122,7 @@ where
         self.subscribers.insert(id);
     }
 
-    fn handle(&mut self, msg: Self::Input, who: HandlerId) {
+    fn handle_input(&mut self, msg: Self::Input, who: HandlerId) {
         match msg {
             RouteRequest::ReplaceRoute(route) => {
                 let route_string: String = route.to_string();
@@ -130,7 +130,7 @@ where
                     .replace_route(&route_string, route.state.unwrap_or_default());
                 let route = Route::current_route(&self.route_service);
                 for sub in &self.subscribers {
-                    self.link.response(*sub, route.clone());
+                    self.link.respond(*sub, route.clone());
                 }
             }
             RouteRequest::ReplaceRouteNoBroadcast(route) => {
@@ -147,7 +147,7 @@ where
                 let route = Route::current_route(&self.route_service);
                 // broadcast it to all listening components
                 for sub in &self.subscribers {
-                    self.link.response(*sub, route.clone());
+                    self.link.respond(*sub, route.clone());
                 }
             }
             RouteRequest::ChangeRouteNoBroadcast(route) => {
@@ -157,7 +157,7 @@ where
             }
             RouteRequest::GetCurrentRoute => {
                 let route = Route::current_route(&self.route_service);
-                self.link.response(who, route.clone());
+                self.link.respond(who, route.clone());
             }
         }
     }

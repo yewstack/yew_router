@@ -63,7 +63,7 @@ impl Component for MarkdownWindow {
         true
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
         if let Some(md) = &self.markdown {
             html! {
                 render_markdown(md)
@@ -79,7 +79,7 @@ impl MarkdownWindow {
         if let Some(uri) = &self.props.uri {
             log::info!("Getting new markdown");
             let request = Request::get(uri).body(Nothing).unwrap();
-            let callback = self.link.send_back(|response: Response<Text>| {
+            let callback = self.link.callback(|response: Response<Text>| {
                 log::info!("Got response");
                 match response.body() {
                     Ok(text) => Msg::MarkdownArrived(text.clone()),

@@ -17,6 +17,7 @@ fn main() {
 pub struct Model {
     route_service: RouteService<()>,
     route: Route<()>,
+    link: ComponentLink<Self>,
 }
 
 pub enum Msg {
@@ -34,24 +35,35 @@ pub enum AppRoute {
     C,
 }
 
+impl Model {
+    fn change_route(&self, app_route: AppRoute) -> Callback<ClickEvent> {
+        self.link.callback(move |_| {
+            let route = app_route.clone(); // TODO, I don't think I should have to clone here?
+            Msg::ChangeRoute(route)
+        })
+    }
+}
+
 impl Component for Model {
     type Message = Msg;
     type Properties = ();
 
-    fn create(_: Self::Properties, mut link: ComponentLink<Self>) -> Self {
+    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         let mut route_service: RouteService<()> = RouteService::new();
         let route = route_service.get_route();
         let route = Route::from(route);
-        let callback = link.send_back(|(route, state)| -> Msg {
+        let callback = link.callback(|(route, state)| -> Msg {
             Msg::RouteChanged(Route {
                 route,
                 state: Some(state),
             })
         });
         route_service.register_callback(callback);
+
         Model {
             route_service,
             route,
+            link,
         }
     }
 
@@ -75,13 +87,13 @@ impl Component for Model {
         true
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
         html! {
             <div>
                 <nav class="menu",>
-                    <button onclick=|_| Msg::ChangeRoute(AppRoute::A("lorem".to_string())) > {"A"} </button>
-                    <button onclick=|_| Msg::ChangeRoute(AppRoute::B{anything: "hello".to_string(), number: 42}) > {"B"} </button>
-                    <button onclick=|_| Msg::ChangeRoute(AppRoute::C) > {"C"} </button>
+                    <button onclick=&self.change_route(AppRoute::A("lorem".to_string())) > {"A"} </button>
+                    <button onclick=&self.change_route(AppRoute::B{anything: "hello".to_string(), number: 42}) > {"B"} </button>
+                    <button onclick=&self.change_route(AppRoute::C) > {"C"} </button>
                 </nav>
                 <div>
                 {

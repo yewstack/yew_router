@@ -5,6 +5,9 @@ use yew_router::{agent::RouteRequest, prelude::*};
 pub struct BModel {
     props: Props,
     router: Box<dyn Bridge<RouteAgent>>,
+    increment: Callback<ClickEvent>,
+    decrement: Callback<ClickEvent>,
+    update_subpath: Callback<InputData>,
 }
 
 #[derive(PartialEq, Properties)]
@@ -62,11 +65,18 @@ impl Component for BModel {
     type Message = Msg;
     type Properties = Props;
 
-    fn create(props: Self::Properties, mut link: ComponentLink<Self>) -> Self {
-        let callback = link.send_back(|_| Msg::NoOp);
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let callback = link.callback(|_| Msg::NoOp); // TODO use a dispatcher instead.
         let router = RouteAgent::bridge(callback);
 
-        BModel { props, router }
+        BModel {
+            props,
+            router,
+            increment: link.callback(|_| Msg::Navigate(vec![Msg::Increment])),
+            decrement: link.callback(|_| Msg::Navigate(vec![Msg::Decrement])),
+            update_subpath: link
+                .callback(|e: InputData| Msg::Navigate(vec![Msg::UpdateSubpath(e.value)])),
+        }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
@@ -132,13 +142,13 @@ impl Component for BModel {
         true
     }
 
-    fn view(&self) -> VNode<Self> {
+    fn view(&self) -> VNode {
         html! {
             <div>
                 <div>
                     { self.display_number() }
-                    <button onclick=|_| Msg::Navigate(vec![Msg::Increment]),>{ "Increment" }</button>
-                    <button onclick=|_| Msg::Navigate(vec![Msg::Decrement]),>{ "Decrement" }</button>
+                    <button onclick=&self.increment>{ "Increment" }</button>
+                    <button onclick=&self.decrement>{ "Decrement" }</button>
                 </div>
 
                 { self.display_subpath_input() }
@@ -157,13 +167,13 @@ impl BModel {
         }
     }
 
-    fn display_subpath_input(&self) -> Html<BModel> {
+    fn display_subpath_input(&self) -> Html {
         let sub_path = self.props.sub_path.clone();
         html! {
             <input
                 placeholder="subpath",
                 value=sub_path.unwrap_or("".into()),
-                oninput=|e| Msg::Navigate(vec![Msg::UpdateSubpath(e.value)]),
+                oninput=&self.update_subpath
                 />
         }
     }
