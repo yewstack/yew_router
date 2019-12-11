@@ -1,12 +1,11 @@
-use crate::switch::SwitchItem;
+use crate::switch::{SwitchItem, impl_line};
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use syn::{
-    export::{TokenStream, TokenStream2},
-    Field, Fields, Type,
-};
+use syn::{export::{TokenStream, TokenStream2}, Field, Fields, Type, Generics};
 
-pub fn generate_struct_impl(item: SwitchItem) -> TokenStream {
+
+
+pub fn generate_struct_impl(item: SwitchItem, generics: Generics) -> TokenStream {
     let SwitchItem {
         matcher,
         ident,
@@ -18,9 +17,12 @@ pub fn generate_struct_impl(item: SwitchItem) -> TokenStream {
     let match_item = Ident::new("self", Span::call_site());
     let serializer = super::build_serializer_for_struct(&item, &match_item);
 
+    let impl_line = impl_line(ident, &generics);
+
     let token_stream = quote! {
-        impl ::yew_router::Switch for #ident {
-            fn from_route_part<T: ::yew_router::route::RouteState>(route: ::yew_router::route::Route<T>) -> (::std::option::Option<Self>, ::std::option::Option<T>) {
+        #impl_line
+        {
+            fn from_route_part<__T: ::yew_router::route::RouteState>(route: ::yew_router::route::Route<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
 
                 #matcher
                 let mut state = route.state;
@@ -31,7 +33,7 @@ pub fn generate_struct_impl(item: SwitchItem) -> TokenStream {
                 return (::std::option::Option::None, state)
             }
 
-            fn build_route_section<T>(self, mut buf: &mut ::std::string::String) -> ::std::option::Option<T> {
+            fn build_route_section<__T>(self, mut buf: &mut ::std::string::String) -> ::std::option::Option<__T> {
                 #serializer
             }
         }

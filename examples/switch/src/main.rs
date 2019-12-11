@@ -100,3 +100,11 @@ pub struct OtherSingle(u32);
 //    #[to = "/bad_route/{hello}"]
 //    X,
 //}
+
+#[derive(Switch, Debug, Clone)]
+#[to = "#{route}"]
+pub struct FragmentAdapter<W: Switch>{
+//    path: String,
+    route: W
+}
+

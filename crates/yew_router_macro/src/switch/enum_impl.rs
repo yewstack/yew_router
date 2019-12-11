@@ -1,10 +1,10 @@
-use crate::switch::{build_serializer_for_enum, SwitchItem};
+use crate::switch::{build_serializer_for_enum, SwitchItem, impl_line};
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use syn::{export::TokenStream2, Field, Fields, Ident, Type};
+use syn::{export::TokenStream2, Field, Fields, Ident, Type, Generics};
 
-pub fn generate_enum_impl(enum_ident: Ident, switch_variants: Vec<SwitchItem>) -> TokenStream {
+pub fn generate_enum_impl(enum_ident: Ident, switch_variants: Vec<SwitchItem>, generics: Generics) -> TokenStream {
     let variant_matchers = switch_variants.iter().map(|sv| {
         let SwitchItem {
             matcher,
@@ -23,9 +23,13 @@ pub fn generate_enum_impl(enum_ident: Ident, switch_variants: Vec<SwitchItem>) -
     let match_item = Ident::new("self", Span::call_site());
     let serializer = build_serializer_for_enum(&switch_variants, &enum_ident, &match_item);
 
+
+    let impl_line = impl_line(&enum_ident, &generics);
+
     let token_stream = quote! {
-        impl ::yew_router::Switch for #enum_ident {
-            fn from_route_part<T: ::yew_router::route::RouteState>(route: ::yew_router::route::Route<T>) -> (::std::option::Option<Self>, ::std::option::Option<T>) {
+        #impl_line
+        {
+            fn from_route_part<__T: ::yew_router::route::RouteState>(route: ::yew_router::route::Route<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
                 let mut state = route.state;
                 let route_string = route.route;
                 #(#variant_matchers)*
@@ -33,7 +37,7 @@ pub fn generate_enum_impl(enum_ident: Ident, switch_variants: Vec<SwitchItem>) -
                 return (::std::option::Option::None, state)
             }
 
-            fn build_route_section<T>(self, mut buf: &mut ::std::string::String) -> ::std::option::Option<T> {
+            fn build_route_section<__T>(self, mut buf: &mut ::std::string::String) -> ::std::option::Option<__T> {
                 #serializer
             }
         }
