@@ -6,10 +6,10 @@
 mod router_button;
 mod router_link;
 
-use yew::{Properties, Children};
+use yew::{Children, Properties};
 
 #[allow(deprecated)]
-pub use self::{router_button::RouterButton, router_link::RouterLink, router_link::RouterAnchor};
+pub use self::{router_button::RouterButton, router_link::RouterAnchor, router_link::RouterLink};
 use crate::RouterState;
 
 // TODO This should also be PartialEq and Clone. Its blocked on Children not supporting that.

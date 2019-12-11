@@ -1,12 +1,12 @@
-use std::path::{PathBuf};
-use warp::filters::BoxedFilter;
-use warp::{Reply, Filter};
-use warp::path::Peek;
-use warp::fs::File;
-use warp::path;
+use std::path::PathBuf;
+use warp::{
+    filters::BoxedFilter,
+    fs::File,
+    path::{self, Peek},
+    Filter, Reply,
+};
 
 fn main() {
-
     let localhost = [0, 0, 0, 0];
     let port = 8000;
     let addr = (localhost, port);
@@ -16,8 +16,7 @@ fn main() {
     const ASSETS_DIR: &str = "../../../target/deploy";
     let assets_dir: PathBuf = PathBuf::from(ASSETS_DIR);
 
-    let routes = api()
-        .or(static_files_handler(assets_dir));
+    let routes = api().or(static_files_handler(assets_dir));
 
     warp::serve(routes).run(addr);
 }
@@ -36,12 +35,10 @@ pub fn api() -> BoxedFilter<(impl Reply,)> {
 pub fn static_files_handler(assets_dir: PathBuf) -> BoxedFilter<(impl Reply,)> {
     const INDEX_HTML: &str = "index.html";
 
-    let files = assets(assets_dir.clone())
-        .or(index_static_file_redirect(assets_dir.join(INDEX_HTML)));
+    let files =
+        assets(assets_dir.clone()).or(index_static_file_redirect(assets_dir.join(INDEX_HTML)));
 
-    warp::any()
-        .and(files)
-        .boxed()
+    warp::any().and(files).boxed()
 }
 
 /// If the path does not start with /api, return the index.html, so the app will bootstrap itself
@@ -54,7 +51,7 @@ fn index_static_file_redirect(index_file_path: PathBuf) -> BoxedFilter<(impl Rep
             // Reject the request if the path starts with /api/
             if let Some(first_segment) = segments.segments().next() {
                 if first_segment == API_STRING {
-                    return Err(warp::reject::not_found())
+                    return Err(warp::reject::not_found());
                 }
             }
             Ok(file)
