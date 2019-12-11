@@ -6,7 +6,7 @@ use crate::switch::{
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use syn::{export::TokenStream2, parse_macro_input, Data, DeriveInput, Fields, Ident, Variant};
+use syn::{export::TokenStream2, parse_macro_input, Data, DeriveInput, Fields, Ident, Variant, Generics, GenericParam};
 
 mod attribute;
 mod enum_impl;
@@ -15,6 +15,7 @@ mod struct_impl;
 
 use self::attribute::AttrToken;
 use yew_router_route_parser::FieldNamingScheme;
+use syn::punctuated::Punctuated;
 
 /// Holds data that is required to derive Switch for a struct or a single enum variant.
 pub struct SwitchItem {
@@ -27,6 +28,7 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
     let input: DeriveInput = parse_macro_input!(input as DeriveInput);
 
     let ident: Ident = input.ident;
+    let generics = input.generics;
 
     match input.data {
         Data::Struct(ds) => {
@@ -41,12 +43,13 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                 .map(|(index, at)| at.into_shadow_matcher_tokens(index, field_naming_scheme))
                 .flatten()
                 .collect::<Vec<_>>();
+
             let switch_item = SwitchItem {
                 matcher,
                 ident,
                 fields: ds.fields,
             };
-            generate_struct_impl(switch_item)
+            generate_struct_impl(switch_item, generics)
         }
         Data::Enum(de) => {
             let switch_variants = de
@@ -71,7 +74,7 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                     }
                 })
                 .collect::<Vec<SwitchItem>>();
-            generate_enum_impl(ident, switch_variants)
+            generate_enum_impl(ident, switch_variants, generics)
         }
         Data::Union(_du) => panic!("Deriving FromCaptures not supported for Unions."),
     }
@@ -211,7 +214,7 @@ pub fn build_serializer_for_enum(
     });
     quote! {
         use ::std::fmt::Write as __Write;
-        let mut state: Option<T> = None;
+        let mut state: Option<__T> = None;
         match #match_item {
             #(#variants)*,
         }
@@ -272,7 +275,7 @@ pub fn build_serializer_for_struct(switch_item: &SwitchItem, item: &Ident) -> To
     };
     quote! {
         use ::std::fmt::Write as _;
-        let mut state: Option<T> = None;
+        let mut state: Option<__T> = None;
         #destructor_and_writers
         return state;
     }
@@ -283,4 +286,30 @@ pub fn build_serializer_for_struct(switch_item: &SwitchItem, item: &Ident) -> To
 /// There needs to be a unified way to "mangle" the unnamed fields so they can be destructured,
 fn unnamed_field_index_item(index: usize) -> Ident {
     Ident::new(&format!("__field_{}", index), Span::call_site())
+}
+
+/// Creates the "impl <X,Y,Z> ::yew_router::Switch for TypeName<X,Y,Z> where etc.." line.
+pub fn impl_line(ident: &Ident, generics: &Generics) -> TokenStream2 {
+    if generics.params.is_empty() {
+        quote! {
+            impl ::yew_router::Switch for #ident
+        }
+    } else {
+        let params = &generics.params;
+        let param_idents = params
+            .iter()
+            .map(|p: &GenericParam| {
+                match p {
+                    GenericParam::Type(ty) => ty.ident.clone(),
+//                    GenericParam::Lifetime(lt) => lt.lifetime, // TODO different type here, must be handled by collecting into a new enum and defining how to convert _that_ to tokens.
+                    _ => unimplemented!("Not all type parameter variants (lifetimes and consts) are supported in Switch")
+                }
+            })
+            .collect::<Punctuated<_,syn::token::Comma>>();
+
+        let where_clause = &generics.where_clause;
+        quote!{
+            impl <#params> ::yew_router::Switch for #ident <#param_idents> #where_clause
+        }
+    }
 }
