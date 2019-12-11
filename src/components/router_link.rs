@@ -64,6 +64,7 @@ impl<T: for<'de> RouterState<'de>> Component for RouterLink<T> {
                 href=target,
             >
                 {&self.props.text}
+                {self.props.children.iter().collect::<VNode>()}
             </a>
         }
     }

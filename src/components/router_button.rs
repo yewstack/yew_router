@@ -57,6 +57,7 @@ impl<T: for<'de> RouterState<'de>> Component for RouterButton<T> {
                 disabled=self.props.disabled,
             >
                 {&self.props.text}
+                {self.props.children.iter().collect::<VNode>()}
             </button>
         }
     }
