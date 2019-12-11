@@ -63,7 +63,10 @@ impl<T: for<'de> RouterState<'de>> Component for RouterLink<T> {
                 disabled=self.props.disabled,
                 href=target,
             >
-                {&self.props.text}
+                {
+                    #[allow(deprecated)]
+                    &self.props.text
+                }
                 {self.props.children.iter().collect::<VNode>()}
             </a>
         }

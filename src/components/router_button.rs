@@ -56,7 +56,10 @@ impl<T: for<'de> RouterState<'de>> Component for RouterButton<T> {
                 onclick=cb(|_| Msg::Clicked),
                 disabled=self.props.disabled,
             >
-                {&self.props.text}
+                {
+                    #[allow(deprecated)]
+                    &self.props.text
+                }
                 {self.props.children.iter().collect::<VNode>()}
             </button>
         }

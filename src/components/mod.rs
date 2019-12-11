@@ -11,6 +11,7 @@ use yew::{Properties, Children};
 pub use self::{router_button::RouterButton, router_link::RouterLink};
 use crate::RouterState;
 
+// TODO This should also be PartialEq and Clone. Its blocked on Children not supporting that.
 /// Properties for `RouterButton` and `RouterLink`.
 #[derive(Properties, Default, Debug)]
 pub struct Props<T: for<'de> RouterState<'de>> {
@@ -18,7 +19,7 @@ pub struct Props<T: for<'de> RouterState<'de>> {
     pub link: String,
     /// The state to set when changing the route.
     pub state: Option<T>,
-    #[deprecated(note = "Use children field instead to use nested html")]
+    #[deprecated(note = "Use children field instead (nested html)")]
     /// The text to display.
     pub text: String,
     /// Html inside the component.

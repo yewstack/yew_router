@@ -36,14 +36,12 @@ impl Component for AModel {
             <div>
                 { "I am the A component"}
                 <div>
-                    <RouterButton:
-                        text=String::from("Go to a/c"),
-                        link="/a/c",
-                    />
-                    <RouterButton:
-                        text=String::from("Go to a/d (route does not exist)"),
-                        link="/a/d",
-                    />
+                    <RouterButton link="/a/c">
+                        {"Go to a/c"}
+                    </RouterButton>
+                    <RouterButton link="/a/d">
+                        {"Go to a/d (route does not exist)"}
+                    </RouterButton>
                 </div>
                 <div>
                 {
