@@ -102,9 +102,9 @@ pub struct OtherSingle(u32);
 //}
 
 #[derive(Switch, Debug, Clone)]
-#[to = "#{route}"]
+#[to = "{*:path}#{route}"]
 pub struct FragmentAdapter<W: Switch>{
-//    path: String,
+    path: String,
     route: W
 }
 
