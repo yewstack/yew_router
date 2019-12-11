@@ -100,13 +100,13 @@ fn render_page_list_item(props: PageProps, route: &Route) -> Html {
         log::debug!("Found an active");
         return html! {
             <li style="padding-left: 4px; padding-right: 4px; padding-top: 6px; padding-bottom: 6px; background-color: lightgray;">
-                <RouterLink link=props.page_url text={props.title} />
+                <RouterAnchor link=props.page_url.clone()> {&props.title} </RouterLink>
             </li>
         };
     } else {
         return html! {
             <li style="padding-left: 4px; padding-right: 4px; padding-top: 6px; padding-bottom: 6px; background-color: white;">
-                <RouterLink link=props.page_url text={props.title} />
+                <RouterAnchor link=props.page_url.clone()> {&props.title} </RouterLink>
             </li>
         };
     }

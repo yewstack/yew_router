@@ -43,13 +43,13 @@ impl Component for Model {
         html! {
             <div>
                 <nav class="menu",>
-                    <RouterButton: text=String::from("Go to A"), link="/a/", />
-                    <RouterLink: text=String::from("Go to B"), link="/b/#", />
-                    <RouterButton: text=String::from("Go to C"), link="/c", />
-                    <RouterButton: text=String::from("Go to A/C"), link="/a/c", />
-                    <RouterButton: text=String::from("Go to E (hello there)"), link="/e/there", />
-                    <RouterButton: text=String::from("Go to E (hello world)"), link="/e/world", />
-                    <RouterButton: text=String::from("Go to bad path"), link="/a_bad_path", />
+                    <RouterButton link="/a/"> {"Go to A"} </RouterButton>
+                    <RouterAnchor link="/b/#"> {"Go to B"} </RouterAnchor>
+                    <RouterButton link="/c"> {"Go to C"} </RouterButton>
+                    <RouterButton link="/a/c"> {"Go to A/C"} </RouterButton>
+                    <RouterButton link="/e/there"> {"Go to E (hello there)"} </RouterButton>
+                    <RouterButton link="/e/world"> {"Go to E (hello world)"} </RouterButton>
+                    <RouterButton link="/a_bad_path"> {"Go to bad path"} </RouterButton>
                 </nav>
                 <div>
                     <Router<AppRoute>
