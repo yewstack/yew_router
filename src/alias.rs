@@ -55,11 +55,21 @@ macro_rules! define_router_state {
             #[doc = ">](agent/struct.RouteAgentDispatcher.html)`."]
             pub type RouteAgentDispatcher = $crate::agent::RouteAgentDispatcher<$StateT>;
 
+
+            #[allow(deprecated)]
+            #[deprecated(note = "Has been renamed to RouterAnchor")]
             #[cfg(feature="components")]
             #[doc = "Alias to [RouterLink<"]
             #[doc = $StateName]
             #[doc = ">](components/struct.RouterLink.html)`."]
             pub type RouterLink = $crate::components::RouterLink<$StateT>;
+
+
+            #[cfg(feature="components")]
+            #[doc = "Alias to [RouterAnchor<"]
+            #[doc = $StateName]
+            #[doc = ">](components/struct.RouterAnchor.html)`."]
+            pub type RouterAnchor = $crate::components::RouterAnchor<$StateT>;
 
             #[cfg(feature="components")]
             #[doc = "Alias to [RouterButton<"]

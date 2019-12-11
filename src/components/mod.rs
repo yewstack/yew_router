@@ -8,7 +8,8 @@ mod router_link;
 
 use yew::{Properties, Children};
 
-pub use self::{router_button::RouterButton, router_link::RouterLink};
+#[allow(deprecated)]
+pub use self::{router_button::RouterButton, router_link::RouterLink, router_link::RouterAnchor};
 use crate::RouterState;
 
 // TODO This should also be PartialEq and Clone. Its blocked on Children not supporting that.

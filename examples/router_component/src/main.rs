@@ -44,7 +44,7 @@ impl Component for Model {
             <div>
                 <nav class="menu",>
                     <RouterButton link="/a/"> {"Go to A"} </RouterButton>
-                    <RouterLink   link="/b/#"> {"Go to B"} </RouterLink>
+                    <RouterAnchor   link="/b/#"> {"Go to B"} </RouterAnchor>
                     <RouterButton link="/c"> {"Go to C"} </RouterButton>
                     <RouterButton link="/a/c"> {"Go to A/C"} </RouterButton>
                     <RouterButton link="/e/there"> {"Go to E (hello there)"} </RouterButton>
