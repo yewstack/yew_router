@@ -15,7 +15,7 @@ use yew::{
 /// A wrapped bridge to the route agent.
 ///
 /// A component that owns this can send and receive messages from the agent.
-pub struct RouteAgentBridge<T>(Box<dyn Bridge<RouteAgent<T>>>)
+pub struct RouteAgentBridge<T = ()>(Box<dyn Bridge<RouteAgent<T>>>)
 where
     for<'de> T: AgentState<'de>;
 

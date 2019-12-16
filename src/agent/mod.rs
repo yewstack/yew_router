@@ -33,7 +33,7 @@ pub enum Msg<T> {
 
 /// Input message type for interacting with the `RouteAgent'.
 #[derive(Serialize, Deserialize, Debug)]
-pub enum RouteRequest<T> {
+pub enum RouteRequest<T = ()> {
     /// Replaces the most recent Route with a new one and alerts connected components to the route
     /// change.
     ReplaceRoute(Route<T>),
@@ -59,7 +59,7 @@ pub enum RouteRequest<T> {
 ///
 /// If you use multiple agents with different types, then the Agents won't be able to communicate to
 /// each other and associated components may not work as intended.
-pub struct RouteAgent<T>
+pub struct RouteAgent<T = ()>
 where
     for<'de> T: AgentState<'de>,
 {
@@ -88,10 +88,10 @@ impl<T> Agent for RouteAgent<T>
 where
     for<'de> T: AgentState<'de>,
 {
-    type Input = RouteRequest<T>;
-    type Message = Msg<T>;
-    type Output = Route<T>;
     type Reach = Context;
+    type Message = Msg<T>;
+    type Input = RouteRequest<T>;
+    type Output = Route<T>;
 
     fn create(link: AgentLink<RouteAgent<T>>) -> Self {
         let callback = link.callback(Msg::BrowserNavigationRouteChanged);
