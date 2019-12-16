@@ -1,8 +1,5 @@
 //! Bridge to RouteAgent.
-use crate::{
-    agent::{AgentState, RouteAgent},
-    route::Route,
-};
+use crate::{agent::{RouteAgent}, route::Route, RouteState};
 use std::{
     fmt::{Debug, Error as FmtError, Formatter},
     ops::{Deref, DerefMut},
@@ -17,11 +14,11 @@ use yew::{
 /// A component that owns this can send and receive messages from the agent.
 pub struct RouteAgentBridge<T = ()>(Box<dyn Bridge<RouteAgent<T>>>)
 where
-    for<'de> T: AgentState<'de>;
+    T: RouteState;
 
 impl<T> RouteAgentBridge<T>
 where
-    for<'de> T: AgentState<'de>,
+    T: RouteState,
 {
     /// Creates a new bridge.
     pub fn new(callback: Callback<Route<T>>) -> Self {
@@ -39,20 +36,20 @@ where
     }
 }
 
-impl<T: for<'de> AgentState<'de>> Debug for RouteAgentBridge<T> {
+impl<T: RouteState> Debug for RouteAgentBridge<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_tuple("RouteAgentBridge").finish()
     }
 }
 
-impl<T: for<'de> AgentState<'de>> Deref for RouteAgentBridge<T> {
+impl<T: RouteState> Deref for RouteAgentBridge<T> {
     type Target = Box<dyn Bridge<RouteAgent<T>>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-impl<T: for<'de> AgentState<'de>> DerefMut for RouteAgentBridge<T> {
+impl<T: RouteState> DerefMut for RouteAgentBridge<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }

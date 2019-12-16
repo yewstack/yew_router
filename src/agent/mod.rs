@@ -20,9 +20,7 @@ pub use bridge::RouteAgentBridge;
 mod dispatcher;
 pub use dispatcher::RouteAgentDispatcher;
 
-/// Any state that can be used in the router agent must meet the criteria of this trait.
-pub trait AgentState<'de>: RouteState + Serialize + Deserialize<'de> + Debug {}
-impl<'de, T> AgentState<'de> for T where T: RouteState + Serialize + Deserialize<'de> + Debug {}
+
 
 /// Internal Message used for the RouteAgent.
 #[derive(Debug)]
@@ -61,7 +59,7 @@ pub enum RouteRequest<T = ()> {
 /// each other and associated components may not work as intended.
 pub struct RouteAgent<T = ()>
 where
-    for<'de> T: AgentState<'de>,
+    T: RouteState,
 {
     // In order to have the AgentLink<Self> below, apparently T must be constrained like this.
     // Unfortunately, this means that everything related to an agent requires this constraint.
@@ -74,7 +72,7 @@ where
     subscribers: HashSet<HandlerId>,
 }
 
-impl<T: for<'de> AgentState<'de>> Debug for RouteAgent<T> {
+impl<T: RouteState> Debug for RouteAgent<T> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("RouteAgent")
             .field("link", &"-")
@@ -86,7 +84,7 @@ impl<T: for<'de> AgentState<'de>> Debug for RouteAgent<T> {
 
 impl<T> Agent for RouteAgent<T>
 where
-    for<'de> T: AgentState<'de>,
+    T: RouteState,
 {
     type Input = RouteRequest<T>;
     type Message = Msg<T>;

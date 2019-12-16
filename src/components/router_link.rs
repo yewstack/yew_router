@@ -17,13 +17,13 @@ pub type RouterLink<T> = RouterAnchor<T>;
 
 /// An anchor tag Component that when clicked, will navigate to the provided route.
 #[derive(Debug)]
-pub struct RouterAnchor<T: for<'de> RouterState<'de> = ()> {
+pub struct RouterAnchor<T: RouterState = ()> {
     link: ComponentLink<Self>,
     router: RouteAgentDispatcher<T>,
     props: Props<T>,
 }
 
-impl<T: for<'de> RouterState<'de>> Component for RouterAnchor<T> {
+impl<T: RouterState> Component for RouterAnchor<T> {
     type Message = Msg;
     type Properties = Props<T>;
 
