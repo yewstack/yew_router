@@ -8,6 +8,7 @@ use yew::callback::Callback;
 
 use crate::route::RouteState;
 use std::marker::PhantomData;
+use stdweb::unstable::TryFrom;
 
 /// A service that facilitates manipulation of the browser's URL bar and responding to browser events
 /// when users press 'forward' or 'back'.
@@ -83,7 +84,12 @@ where
     pub fn register_callback(&mut self, callback: Callback<(String, T)>) {
         self.event_listener = Some(window().add_event_listener(move |event: PopStateEvent| {
             let state_value: Value = event.state();
-            let state: T = T::try_from(state_value).unwrap_or_default();
+            let state_string: String = String::try_from(state_value).unwrap_or_default();
+            let state: T = serde_json::from_str(&state_string).unwrap_or_else(|_| {
+                log::error!("Could not deserialize state string");
+                T::default()
+            });
+
 
             // Can't use the existing location, because this is a callback, and can't move it in
             // here.
@@ -99,12 +105,20 @@ where
     ///
     /// The route should be a relative path that starts with a `/`.
     pub fn set_route(&mut self, route: &str, state: T) {
-        self.history.push_state(state, "", Some(route));
+        let state_string: String = serde_json::to_string(&state).unwrap_or_else(|_| {
+            log::error!("Could not serialize state string");
+            "".to_string()
+        });
+        self.history.push_state(state_string, "", Some(route));
     }
 
     /// Replaces the route with another one removing the most recent history event and
     /// creating another history event in its place.
     pub fn replace_route(&mut self, route: &str, state: T) {
-        let _ = self.history.replace_state(state, "", Some(route));
+        let state_string: String = serde_json::to_string(&state).unwrap_or_else(|_| {
+            log::error!("Could not serialize state string");
+            "".to_string()
+        });
+        let _ = self.history.replace_state(state_string, "", Some(route));
     }
 }

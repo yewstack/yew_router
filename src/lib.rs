@@ -100,8 +100,6 @@ pub mod prelude {
     pub use crate::switch::Switch;
     pub use yew_router_macro::Switch;
     // State restrictions
-    #[cfg(feature = "agent")]
-    pub use crate::agent::AgentState;
     pub use crate::route::RouteState;
     #[cfg(feature = "router")]
     pub use crate::router::RouterState;
@@ -113,8 +111,6 @@ pub mod matcher;
 
 pub use matcher::Captures;
 
-#[cfg(feature = "agent")]
-pub use crate::agent::AgentState;
 pub use crate::route::RouteState;
 #[cfg(feature = "router")]
 pub use crate::router::RouterState;

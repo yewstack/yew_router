@@ -11,13 +11,13 @@ use yew::virtual_dom::VNode;
 
 /// Changes the route when clicked.
 #[derive(Debug)]
-pub struct RouterButton<T: for<'de> RouterState<'de> = ()> {
+pub struct RouterButton<T: RouterState = ()> {
     link: ComponentLink<Self>,
     router: RouteAgentDispatcher<T>,
     props: Props<T>,
 }
 
-impl<T: for<'de> RouterState<'de>> Component for RouterButton<T> {
+impl<T: RouterState> Component for RouterButton<T> {
     type Message = Msg;
     type Properties = Props<T>;
 

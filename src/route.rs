@@ -2,11 +2,13 @@
 use crate::service::RouteService;
 use serde::{Deserialize, Serialize};
 use std::{fmt, ops::Deref};
-use stdweb::{unstable::TryFrom, JsSerialize, Value};
+use stdweb::{unstable::TryFrom, Value};
+use std::fmt::Debug;
+use serde::de::DeserializeOwned;
 
-/// Any state that can be stored by the History API must meet the criteria of this trait.
-pub trait RouteState: Clone + Default + JsSerialize + TryFrom<Value> + 'static {}
-impl<T> RouteState for T where T: Clone + Default + JsSerialize + TryFrom<Value> + 'static {}
+/// Any state that can be used in the router agent must meet the criteria of this trait.
+pub trait RouteState: Serialize + DeserializeOwned + Debug + Clone + Default + TryFrom<Value> + 'static {}
+impl<T> RouteState for T where T: Serialize + DeserializeOwned + Debug + Clone + Default + TryFrom<Value> + 'static {}
 
 /// The representation of a route, segmented into different sections for easy access.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -48,7 +50,7 @@ impl<T> Route<T> {
 
 impl<T> fmt::Display for Route<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.route.fmt(f)
+        std::fmt::Display::fmt(&self.route, f)
     }
 }
 

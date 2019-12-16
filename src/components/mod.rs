@@ -15,7 +15,7 @@ use crate::RouterState;
 // TODO This should also be PartialEq and Clone. Its blocked on Children not supporting that.
 /// Properties for `RouterButton` and `RouterLink`.
 #[derive(Properties, Default, Debug)]
-pub struct Props<T: for<'de> RouterState<'de>> {
+pub struct Props<T: RouterState> {
     /// The route that will be set when the component is clicked.
     pub link: String,
     /// The state to set when changing the route.

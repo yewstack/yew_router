@@ -1,8 +1,11 @@
 use std::path::PathBuf;
+
+#[rustfmt::skip]
 use warp::{
     filters::BoxedFilter,
     fs::File,
-    path::{self, Peek},
+    path::Peek,
+    path,
     Filter, Reply,
 };
 

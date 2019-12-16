@@ -1,21 +1,16 @@
 //! Router Component.
 
-use crate::{
-    agent::{RouteAgentBridge, RouteRequest},
-    route::Route,
-    Switch,
-};
+use crate::{agent::{RouteAgentBridge, RouteRequest}, route::Route, Switch, RouteState};
 use std::{
     fmt::{self, Debug, Error as FmtError, Formatter},
     rc::Rc,
 };
 use yew::{html, virtual_dom::VNode, Component, ComponentLink, Html, Properties, ShouldRender};
 
-use crate::agent::AgentState;
 
 /// Any state that can be managed by the `Router` must meet the criteria of this trait.
-pub trait RouterState<'de>: AgentState<'de> + PartialEq {}
-impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
+pub trait RouterState: RouteState + PartialEq  {}
+impl<T> RouterState for T where T: RouteState + PartialEq {}
 
 /// Rendering control flow component.
 ///
@@ -59,7 +54,7 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 /// ```
 // TODO, can M just be removed due to not having to explicitly deal with callbacks anymore? - Just get rid of M
 #[derive(Debug)]
-pub struct Router<SW: Switch + Clone + 'static, T: for<'de> RouterState<'de> = ()> {
+pub struct Router<SW: Switch + Clone + 'static, T: RouterState = ()> {
     switch: Option<SW>,
     props: Props<T, SW>,
     router_agent: RouteAgentBridge<T>,
@@ -67,7 +62,7 @@ pub struct Router<SW: Switch + Clone + 'static, T: for<'de> RouterState<'de> = (
 
 impl<SW, T> Router<SW, T>
 where
-    T: for<'de> RouterState<'de>,
+    T: RouterState,
     SW: Switch + Clone + 'static,
 {
     // TODO render fn name is overloaded now with that of the trait: Renderable<_> this should be changed. Maybe: display, show, switch, inner...
@@ -114,16 +109,16 @@ pub trait RenderFn<CTX: Component, SW>: Fn(SW) -> Html {}
 impl<T, CTX: Component, SW> RenderFn<CTX, SW> for T where T: Fn(SW) -> Html {}
 /// Owned Render function.
 #[derive(Clone)]
-pub struct Render<SW: Switch + Clone + 'static, T: for<'de> RouterState<'de> = ()>(
+pub struct Render<SW: Switch + Clone + 'static, T: RouterState = ()>(
     pub(crate) Rc<dyn RenderFn<Router<SW, T>, SW>>,
 );
-impl<T: for<'de> RouterState<'de>, SW: Switch + Clone> Render<SW, T> {
+impl<T: RouterState, SW: Switch + Clone> Render<SW, T> {
     /// New render function
     fn new<F: RenderFn<Router<SW, T>, SW> + 'static>(f: F) -> Self {
         Render(Rc::new(f))
     }
 }
-impl<T: for<'de> RouterState<'de>, SW: Switch + Clone> Debug for Render<SW, T> {
+impl<T: RouterState, SW: Switch + Clone> Debug for Render<SW, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("Render").finish()
     }
@@ -135,15 +130,15 @@ pub trait RedirectFn<SW, STATE>: Fn(Route<STATE>) -> SW {}
 impl<T, SW, STATE> RedirectFn<SW, STATE> for T where T: Fn(Route<STATE>) -> SW {}
 /// Clonable Redirect function
 #[derive(Clone)]
-pub struct Redirect<SW: Switch + 'static, STATE: for<'de> RouterState<'de>>(
+pub struct Redirect<SW: Switch + 'static, STATE:  RouterState>(
     pub(crate) Rc<dyn RedirectFn<SW, STATE>>,
 );
-impl<STATE: for<'de> RouterState<'de>, SW: Switch + 'static> Redirect<SW, STATE> {
+impl<STATE: RouterState, SW: Switch + 'static> Redirect<SW, STATE> {
     fn new<F: RedirectFn<SW, STATE> + 'static>(f: F) -> Self {
         Redirect(Rc::new(f))
     }
 }
-impl<STATE: for<'de> RouterState<'de>, SW: Switch> Debug for Redirect<SW, STATE> {
+impl<STATE: RouterState, SW: Switch> Debug for Redirect<SW, STATE> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("Redirect").finish()
     }
@@ -151,7 +146,7 @@ impl<STATE: for<'de> RouterState<'de>, SW: Switch> Debug for Redirect<SW, STATE>
 
 /// Properties for Router.
 #[derive(Properties, Clone)]
-pub struct Props<T: for<'de> RouterState<'de>, SW: Switch + Clone + 'static> {
+pub struct Props<T: RouterState, SW: Switch + Clone + 'static> {
     /// Render function that takes a Switch and produces Html
     #[props(required)]
     pub render: Render<SW, T>,
@@ -161,7 +156,7 @@ pub struct Props<T: for<'de> RouterState<'de>, SW: Switch + Clone + 'static> {
     pub redirect: Option<Redirect<SW, T>>,
 }
 
-impl<T: for<'de> RouterState<'de>, SW: Switch + Clone> Debug for Props<T, SW> {
+impl<T: RouterState, SW: Switch + Clone> Debug for Props<T, SW> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("Props").finish()
     }
@@ -169,7 +164,7 @@ impl<T: for<'de> RouterState<'de>, SW: Switch + Clone> Debug for Props<T, SW> {
 
 impl<T, SW> Component for Router<SW, T>
 where
-    T: for<'de> RouterState<'de>,
+    T: RouterState,
     SW: Switch + Clone + 'static,
 {
     type Message = Msg<T>;
