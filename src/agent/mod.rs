@@ -33,7 +33,7 @@ pub enum Msg<T> {
 
 /// Input message type for interacting with the `RouteAgent'.
 #[derive(Serialize, Deserialize, Debug)]
-pub enum RouteRequest<T> {
+pub enum RouteRequest<T = ()> {
     /// Replaces the most recent Route with a new one and alerts connected components to the route
     /// change.
     ReplaceRoute(Route<T>),
@@ -59,7 +59,7 @@ pub enum RouteRequest<T> {
 ///
 /// If you use multiple agents with different types, then the Agents won't be able to communicate to
 /// each other and associated components may not work as intended.
-pub struct RouteAgent<T>
+pub struct RouteAgent<T = ()>
 where
     for<'de> T: AgentState<'de>,
 {

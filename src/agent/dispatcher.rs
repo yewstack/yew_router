@@ -9,7 +9,7 @@ use yew::agent::{Dispatched, Dispatcher};
 /// A wrapped dispatcher to the route agent.
 ///
 /// A component that owns and instance of this can send messages to the RouteAgent, but not receive them.
-pub struct RouteAgentDispatcher<T>(Dispatcher<RouteAgent<T>>)
+pub struct RouteAgentDispatcher<T = ()>(Dispatcher<RouteAgent<T>>)
 where
     for<'de> T: AgentState<'de>;
 

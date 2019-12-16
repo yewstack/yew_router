@@ -6,7 +6,10 @@ use crate::switch::{
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use syn::{export::TokenStream2, parse_macro_input, Data, DeriveInput, Fields, Ident, Variant, Generics, GenericParam};
+use syn::{
+    export::TokenStream2, parse_macro_input, Data, DeriveInput, Fields, GenericParam, Generics,
+    Ident, Variant,
+};
 
 mod attribute;
 mod enum_impl;
@@ -14,8 +17,8 @@ mod shadow;
 mod struct_impl;
 
 use self::attribute::AttrToken;
-use yew_router_route_parser::FieldNamingScheme;
 use syn::punctuated::Punctuated;
+use yew_router_route_parser::FieldNamingScheme;
 
 /// Holds data that is required to derive Switch for a struct or a single enum variant.
 pub struct SwitchItem {
@@ -308,7 +311,7 @@ pub fn impl_line(ident: &Ident, generics: &Generics) -> TokenStream2 {
             .collect::<Punctuated<_,syn::token::Comma>>();
 
         let where_clause = &generics.where_clause;
-        quote!{
+        quote! {
             impl <#params> ::yew_router::Switch for #ident <#param_idents> #where_clause
         }
     }

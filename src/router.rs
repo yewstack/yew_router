@@ -40,7 +40,7 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 ///
 ///     fn view(&self) -> VNode {
 ///         html! {
-///         <Router<(), S>
+///         <Router<S>
 ///            render = Router::render(|switch: S| {
 ///                match switch {
 ///                    S::Variant => html!{"variant route was matched"},
@@ -59,13 +59,13 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 /// ```
 // TODO, can M just be removed due to not having to explicitly deal with callbacks anymore? - Just get rid of M
 #[derive(Debug)]
-pub struct Router<T: for<'de> RouterState<'de>, SW: Switch + Clone + 'static> {
+pub struct Router<SW: Switch + Clone + 'static, T: for<'de> RouterState<'de> = ()> {
     switch: Option<SW>,
     props: Props<T, SW>,
     router_agent: RouteAgentBridge<T>,
 }
 
-impl<T, SW> Router<T, SW>
+impl<SW, T> Router<SW, T>
 where
     T: for<'de> RouterState<'de>,
     SW: Switch + Clone + 'static,
@@ -85,14 +85,14 @@ where
     /// # pub enum Msg {}
     ///
     /// # fn dont_execute() {
-    /// let render: Render<(), S> = Router::render(|switch: S| -> Html {
+    /// let render: Render<S> = Router::render(|switch: S| -> Html {
     ///     match switch {
     ///         S::Variant => html! {"Variant"},
     ///     }
     /// });
     /// # }
     /// ```
-    pub fn render<F: RenderFn<Router<T, SW>, SW> + 'static>(f: F) -> Render<T, SW> {
+    pub fn render<F: RenderFn<Router<SW, T>, SW> + 'static>(f: F) -> Render<SW, T> {
         Render::new(f)
     }
 
@@ -114,16 +114,16 @@ pub trait RenderFn<CTX: Component, SW>: Fn(SW) -> Html {}
 impl<T, CTX: Component, SW> RenderFn<CTX, SW> for T where T: Fn(SW) -> Html {}
 /// Owned Render function.
 #[derive(Clone)]
-pub struct Render<T: for<'de> RouterState<'de>, SW: Switch + Clone + 'static>(
-    pub(crate) Rc<dyn RenderFn<Router<T, SW>, SW>>,
+pub struct Render<SW: Switch + Clone + 'static, T: for<'de> RouterState<'de> = ()>(
+    pub(crate) Rc<dyn RenderFn<Router<SW, T>, SW>>,
 );
-impl<T: for<'de> RouterState<'de>, SW: Switch + Clone> Render<T, SW> {
+impl<T: for<'de> RouterState<'de>, SW: Switch + Clone> Render<SW, T> {
     /// New render function
-    fn new<F: RenderFn<Router<T, SW>, SW> + 'static>(f: F) -> Self {
+    fn new<F: RenderFn<Router<SW, T>, SW> + 'static>(f: F) -> Self {
         Render(Rc::new(f))
     }
 }
-impl<T: for<'de> RouterState<'de>, SW: Switch + Clone> Debug for Render<T, SW> {
+impl<T: for<'de> RouterState<'de>, SW: Switch + Clone> Debug for Render<SW, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("Render").finish()
     }
@@ -154,7 +154,7 @@ impl<STATE: for<'de> RouterState<'de>, SW: Switch> Debug for Redirect<SW, STATE>
 pub struct Props<T: for<'de> RouterState<'de>, SW: Switch + Clone + 'static> {
     /// Render function that takes a Switch and produces Html
     #[props(required)]
-    pub render: Render<T, SW>,
+    pub render: Render<SW, T>,
     /// Optional redirect function that will convert the route to a known switch variant if explicit matching fails.
     /// This should mostly be used to handle 404s and redirection.
     /// It is not strictly necessary as your Switch is capable of handling unknown routes using `#[to="/{*:any}"]`.
@@ -167,7 +167,7 @@ impl<T: for<'de> RouterState<'de>, SW: Switch + Clone> Debug for Props<T, SW> {
     }
 }
 
-impl<T, SW> Component for Router<T, SW>
+impl<T, SW> Component for Router<SW, T>
 where
     T: for<'de> RouterState<'de>,
     SW: Switch + Clone + 'static,

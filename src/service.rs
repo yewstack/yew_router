@@ -14,11 +14,10 @@ use std::marker::PhantomData;
 ///
 /// The `T` determines what route state can be stored in the route service.
 #[derive(Debug)]
-pub struct RouteService<T> {
+pub struct RouteService<T = ()> {
     history: History,
     location: Location,
     event_listener: Option<EventListenerHandle>,
-
     phantom_data: PhantomData<T>,
 }
 
