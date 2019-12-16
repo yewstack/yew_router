@@ -9,7 +9,7 @@ mod tests {
             #[to = "/variant"]
             Variant,
         }
-        let route = Route::from("/variant");
+        let route: Route = Route::from("/variant");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant)
     }
@@ -21,12 +21,12 @@ mod tests {
             #[to = "/variant"]
             Variant(String),
         }
-        let route = Route::from("/variant");
+        let route: Route = Route::from("/variant");
         assert!(
             Test::switch(route).is_none(),
             "there should not be a way to ever create this variant."
         );
-        let route = Route::from("/variant/some/stuff");
+        let route: Route = Route::from("/variant/some/stuff");
         assert!(
             Test::switch(route).is_none(),
             "there should not be a way to ever create this variant."
@@ -40,7 +40,7 @@ mod tests {
             #[to = "/variant/{item}"]
             Variant { item: String },
         }
-        let route = Route::from("/variant/thing");
+        let route: Route = Route::from("/variant/thing");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(
             switched,
@@ -57,7 +57,7 @@ mod tests {
             #[to = "/variant/{item}"]
             Variant(String),
         }
-        let route = Route::from("/variant/thing");
+        let route: Route = Route::from("/variant/thing");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant("thing".to_string()))
     }
@@ -69,7 +69,7 @@ mod tests {
             #[to = "/variant/{}/{}"] // For unnamed variants, the names don't matter at all
             Variant(String, String),
         }
-        let route = Route::from("/variant/thing/other");
+        let route: Route = Route::from("/variant/thing/other");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(
             switched,
@@ -84,7 +84,7 @@ mod tests {
             #[to = "/variant/{item1}/{item2}"]
             Variant { item1: String, item2: String },
         }
-        let route = Route::from("/variant/thing/other");
+        let route: Route = Route::from("/variant/thing/other");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(
             switched,
@@ -102,7 +102,7 @@ mod tests {
             #[to = "/variant{item}"]
             Variant { item: String },
         }
-        let route = Route::from("/variantthing");
+        let route: Route = Route::from("/variantthing");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(
             switched,
@@ -119,7 +119,7 @@ mod tests {
             #[to = "/variant{item}stuff"]
             Variant { item: String },
         }
-        let route = Route::from("/variantthingstuff");
+        let route: Route = Route::from("/variantthingstuff");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(
             switched,
@@ -136,7 +136,7 @@ mod tests {
             #[to = "/variant!"]
             Variant,
         }
-        let route = Route::from("/variant/");
+        let route: Route = Route::from("/variant/");
         assert!(Test::switch(route).is_none());
     }
 
@@ -149,7 +149,7 @@ mod tests {
             #[to = "/variant/stuff"]
             Variant2,
         }
-        let route = Route::from("/variant/stuff");
+        let route: Route = Route::from("/variant/stuff");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(
             switched,
@@ -167,7 +167,7 @@ mod tests {
             #[to = "/variant/stuff"]
             Variant2,
         }
-        let route = Route::from("/variant/stuff");
+        let route: Route = Route::from("/variant/stuff");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(
             switched,
@@ -183,7 +183,7 @@ mod tests {
             #[to = "/variant/{item}"]
             Variant(usize),
         }
-        let route = Route::from("/variant/42");
+        let route: Route = Route::from("/variant/42");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant(42))
     }
@@ -195,7 +195,7 @@ mod tests {
             #[to = "/variant/{item}"]
             Variant(usize),
         }
-        let route = Route::from("/variant/-42");
+        let route: Route = Route::from("/variant/-42");
         assert!(Test::switch(route).is_none());
     }
 
@@ -206,7 +206,7 @@ mod tests {
             #[to = "/variant/{item}"]
             Variant(isize),
         }
-        let route = Route::from("/variant/-42");
+        let route: Route = Route::from("/variant/-42");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant(-42))
     }
@@ -218,7 +218,7 @@ mod tests {
             #[to = "/variant"]
             Variant(Option<String>),
         }
-        let route = Route::from("/variant");
+        let route: Route = Route::from("/variant");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant(None))
     }
@@ -244,7 +244,7 @@ mod tests {
             #[to = "/"]
             Variant,
         }
-        let route = Route::from("/");
+        let route: Route = Route::from("/");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant)
     }
@@ -256,7 +256,7 @@ mod tests {
             #[to = "{cap}"]
             Variant(String),
         }
-        let route = Route::from("hello");
+        let route: Route = Route::from("hello");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant("hello".to_string()))
     }
@@ -268,7 +268,7 @@ mod tests {
             #[to = "{}"]
             Variant(String),
         }
-        let route = Route::from("hello");
+        let route: Route = Route::from("hello");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant("hello".to_string()))
     }
@@ -280,7 +280,7 @@ mod tests {
             #[to = "{2:cap}"]
             Variant(String),
         }
-        let route = Route::from("hello/there");
+        let route: Route = Route::from("hello/there");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant("hello/there".to_string()))
     }
@@ -292,7 +292,7 @@ mod tests {
             #[to = "{2}"]
             Variant(String),
         }
-        let route = Route::from("hello/there");
+        let route: Route = Route::from("hello/there");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant("hello/there".to_string()))
     }
@@ -304,7 +304,7 @@ mod tests {
             #[to = "{*:cap}"]
             Variant(String),
         }
-        let route = Route::from("hello/there");
+        let route: Route = Route::from("hello/there");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant("hello/there".to_string()))
     }
@@ -316,7 +316,7 @@ mod tests {
             #[to = "{*}"]
             Variant(String),
         }
-        let route = Route::from("hello/there");
+        let route: Route = Route::from("hello/there");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant("hello/there".to_string()))
     }
@@ -328,7 +328,7 @@ mod tests {
             #[to = "?query={hello}"]
             Variant(String),
         }
-        let route = Route::from("?query=lorem");
+        let route: Route = Route::from("?query=lorem");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant("lorem".to_string()))
     }
@@ -340,7 +340,7 @@ mod tests {
             #[to = "?query={}"]
             Variant(String),
         }
-        let route = Route::from("?query=lorem");
+        let route: Route = Route::from("?query=lorem");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant("lorem".to_string()))
     }
@@ -352,7 +352,7 @@ mod tests {
             #[to = "#fragment"]
             Variant,
         }
-        let route = Route::from("#fragment");
+        let route: Route = Route::from("#fragment");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant)
     }
@@ -364,7 +364,7 @@ mod tests {
             #[to = "#{cap}ipsum{cap}"]
             Variant(String, String),
         }
-        let route = Route::from("#loremipsumdolor");
+        let route: Route = Route::from("#loremipsumdolor");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(
             switched,
@@ -379,7 +379,7 @@ mod tests {
             #[to = "#{}ipsum{}"]
             Variant(String, String),
         }
-        let route = Route::from("#loremipsumdolor");
+        let route: Route = Route::from("#loremipsumdolor");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(
             switched,
@@ -394,7 +394,7 @@ mod tests {
             #[to = "/escape!!"]
             Variant,
         }
-        let route = Route::from("/escape!");
+        let route: Route = Route::from("/escape!");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant)
     }
@@ -406,7 +406,7 @@ mod tests {
             #[to = "/escape{{}}a"]
             Variant,
         }
-        let route = Route::from("/escape{}a");
+        let route: Route = Route::from("/escape{}a");
         let switched = Test::switch(route).expect("should produce item");
         assert_eq!(switched, Test::Variant)
     }
@@ -421,7 +421,7 @@ mod tests {
                 #[to = "#/lorem"]
                 Variant,
             }
-            let route = Route::from("#/lorem");
+            let route: Route = Route::from("#/lorem");
             Test::switch(route).expect("should produce item");
         }
 
@@ -432,7 +432,7 @@ mod tests {
                 #[to = "#/lorem=ipsum"]
                 Variant,
             }
-            let route = Route::from("#/lorem=ipsum");
+            let route: Route = Route::from("#/lorem=ipsum");
             Test::switch(route).expect("should produce item");
         }
 
@@ -443,7 +443,7 @@ mod tests {
                 #[to = "#/lorem={ipsum}"]
                 Variant { ipsum: String },
             }
-            let route = Route::from("#/lorem=dolor");
+            let route: Route = Route::from("#/lorem=dolor");
             let switched = Test::switch(route).expect("should produce item");
             assert_eq!(
                 switched,
