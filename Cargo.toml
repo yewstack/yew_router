@@ -34,6 +34,7 @@ yew-router-route-parser = {path = "crates/yew_router_route_parser", version = "0
 yew-router-macro = {path = "crates/yew_router_macro", version = "0.8.0"}
 nom = "5.0.1"
 uuid = "0.8.1"
+serde_json = "1.0.44"
 
 
 
