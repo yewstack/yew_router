@@ -2,8 +2,7 @@ use std::path::PathBuf;
 use warp::{
     filters::BoxedFilter,
     fs::File,
-    path::{Peek},
-    path,
+    path::{self, Peek},
     Filter, Reply,
 };
 

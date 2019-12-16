@@ -88,10 +88,10 @@ impl<T> Agent for RouteAgent<T>
 where
     for<'de> T: AgentState<'de>,
 {
-    type Reach = Context;
-    type Message = Msg<T>;
     type Input = RouteRequest<T>;
+    type Message = Msg<T>;
     type Output = Route<T>;
+    type Reach = Context;
 
     fn create(link: AgentLink<RouteAgent<T>>) -> Self {
         let callback = link.callback(Msg::BrowserNavigationRouteChanged);

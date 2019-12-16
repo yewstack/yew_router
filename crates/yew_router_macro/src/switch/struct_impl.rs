@@ -1,8 +1,10 @@
-use crate::switch::{SwitchItem, impl_line};
+use crate::switch::{impl_line, SwitchItem};
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use syn::{export::{TokenStream, TokenStream2}, Field, Fields, Type, Generics};
-
+use syn::{
+    export::{TokenStream, TokenStream2},
+    Field, Fields, Generics, Type,
+};
 
 
 pub fn generate_struct_impl(item: SwitchItem, generics: Generics) -> TokenStream {
