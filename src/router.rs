@@ -40,7 +40,7 @@ impl<'de, T> RouterState<'de> for T where T: AgentState<'de> + PartialEq {}
 ///
 ///     fn view(&self) -> VNode {
 ///         html! {
-///         <Router<(), S>
+///         <Router<S>
 ///            render = Router::render(|switch: S| {
 ///                match switch {
 ///                    S::Variant => html!{"variant route was matched"},
@@ -85,7 +85,7 @@ where
     /// # pub enum Msg {}
     ///
     /// # fn dont_execute() {
-    /// let render: Render<(), S> = Router::render(|switch: S| -> Html {
+    /// let render: Render<S> = Router::render(|switch: S| -> Html {
     ///     match switch {
     ///         S::Variant => html! {"Variant"},
     ///     }
