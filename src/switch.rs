@@ -2,6 +2,12 @@
 use crate::{route::Route, RouteState};
 use std::fmt::Write;
 
+/// Alias to Switch.
+///
+/// Eventually Switch will be renamed to Routable and this alias will be removed.
+#[allow(bare_trait_objects)]
+pub type Routable = Switch;
+
 /// Derivable routing trait that allows instances of implementors to be constructed from Routes.
 ///
 /// # Note
