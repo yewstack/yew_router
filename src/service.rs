@@ -49,7 +49,7 @@ impl<T> RouteService<T> {
         let path = location.pathname().unwrap();
         let query = location.search().unwrap();
         let fragment = location.hash().unwrap();
-        crate::route::format_route_string(&path, &query, &fragment)
+        format_route_string(&path, &query, &fragment)
     }
 
 
@@ -143,6 +143,21 @@ where
         }
     }
 }
+
+
+/// Formats a path, query, and fragment into a string.
+///
+/// # Note
+/// This expects that all three already have their expected separators (?, #, etc)
+pub(crate) fn format_route_string(path: &str, query: &str, fragment: &str) -> String {
+    format!(
+        "{path}{query}{fragment}",
+        path = path,
+        query = query,
+        fragment = fragment
+    )
+}
+
 
 fn get_state(history: &History) -> Value {
     js!(

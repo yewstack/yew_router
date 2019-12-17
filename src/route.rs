@@ -1,7 +1,5 @@
 //! Wrapper around route url string, and associated history state.
 #[cfg(feature = "service")]
-use crate::service::RouteService;
-#[cfg(feature = "service")]
 use stdweb::{unstable::TryFrom, Value};
 #[cfg(feature = "service")]
 use serde::de::DeserializeOwned;
@@ -25,20 +23,6 @@ pub struct Route<T = ()> {
     pub state: T,
 }
 
-
-#[cfg(feature = "service")]
-/// Formats a path, query, and fragment into a string.
-///
-/// # Note
-/// This expects that all three already have their expected separators (?, #, etc)
-pub(crate) fn format_route_string(path: &str, query: &str, fragment: &str) -> String {
-    format!(
-        "{path}{query}{fragment}",
-        path = path,
-        query = query,
-        fragment = fragment
-    )
-}
 
 impl Route<()> {
     /// Creates a new route with no state out of a string.
@@ -67,16 +51,6 @@ impl<T> fmt::Display for Route<T> {
         std::fmt::Display::fmt(&self.route, f)
     }
 }
-
-//// This is getting removed anyway
-//impl<T: Default> From<&str> for Route<T> {
-//    fn from(string: &str) -> Route<T> {
-//        Route {
-//            route: string.to_string(),
-//            state: T::default(),
-//        }
-//    }
-//}
 
 impl<T> Deref for Route<T> {
     type Target = String;
