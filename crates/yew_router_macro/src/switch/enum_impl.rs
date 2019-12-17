@@ -33,7 +33,7 @@ pub fn generate_enum_impl(
     let token_stream = quote! {
         #impl_line
         {
-            fn from_route_part<__T: ::yew_router::route::RouteState>(route: ::yew_router::route::Route<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
+            fn from_route_part<__T>(route: ::yew_router::route::Route<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
                 let mut state = route.state;
                 let route_string = route.route;
                 #(#variant_matchers)*

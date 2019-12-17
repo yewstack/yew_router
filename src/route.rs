@@ -1,13 +1,19 @@
 //! Wrapper around route url string, and associated history state.
+#[cfg(feature = "service")]
 use crate::service::RouteService;
-use serde::{Deserialize, Serialize};
-use std::{fmt, ops::Deref};
+#[cfg(feature = "service")]
 use stdweb::{unstable::TryFrom, Value};
-use std::fmt::Debug;
+#[cfg(feature = "service")]
 use serde::de::DeserializeOwned;
 
+use serde::{Deserialize, Serialize};
+use std::{fmt, ops::Deref};
+use std::fmt::Debug;
+
 /// Any state that can be used in the router agent must meet the criteria of this trait.
+#[cfg(feature = "service")]
 pub trait RouteState: Serialize + DeserializeOwned + Debug + Clone + Default + TryFrom<Value> + 'static {}
+#[cfg(feature = "service")]
 impl<T> RouteState for T where T: Serialize + DeserializeOwned + Debug + Clone + Default + TryFrom<Value> + 'static {}
 
 /// The representation of a route, segmented into different sections for easy access.
@@ -19,6 +25,8 @@ pub struct Route<T = ()> {
     pub state: Option<T>,
 }
 
+
+#[cfg(feature = "service")]
 /// Formats a path, query, and fragment into a string.
 ///
 /// # Note
@@ -32,6 +40,7 @@ pub(crate) fn format_route_string(path: &str, query: &str, fragment: &str) -> St
     )
 }
 
+#[cfg(feature = "service")]
 impl<T> Route<T> {
     /// Gets the current route from the route service.
     ///

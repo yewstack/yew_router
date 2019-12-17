@@ -24,7 +24,7 @@ pub fn generate_struct_impl(item: SwitchItem, generics: Generics) -> TokenStream
     let token_stream = quote! {
         #impl_line
         {
-            fn from_route_part<__T: ::yew_router::route::RouteState>(route: ::yew_router::route::Route<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
+            fn from_route_part<__T>(route: ::yew_router::route::Route<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
 
                 #matcher
                 let mut state = route.state;

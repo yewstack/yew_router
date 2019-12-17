@@ -1,5 +1,5 @@
 //! Parses routes into enums or structs.
-use crate::{route::Route, RouteState};
+use crate::{route::Route};
 use std::fmt::Write;
 
 /// Alias to Switch.
@@ -49,12 +49,12 @@ pub type Routable = Switch;
 /// ```
 pub trait Switch: Sized {
     /// Based on a route, possibly produce an itself.
-    fn switch<T: RouteState>(route: Route<T>) -> Option<Self> {
+    fn switch<T>(route: Route<T>) -> Option<Self> {
         Self::from_route_part(route).0
     }
 
     /// Get self from a part of the state
-    fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>);
+    fn from_route_part<T>(part: Route<T>) -> (Option<Self>, Option<T>);
 
     /// Build part of a route from itself.
     fn build_route_section<T>(self, route: &mut String) -> Option<T>;
@@ -81,7 +81,7 @@ pub trait Switch: Sized {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct LeadingSlash<T>(pub T);
 impl<U: Switch> Switch for LeadingSlash<U> {
-    fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>) {
+    fn from_route_part<T>(part: Route<T>) -> (Option<Self>, Option<T>) {
         if part.route.starts_with('/') {
             let route = Route {
                 route: part.route[1..].to_string(),
@@ -102,7 +102,7 @@ impl<U: Switch> Switch for LeadingSlash<U> {
 
 impl<U: Switch> Switch for Option<U> {
     /// Option is very permissive in what is allowed.
-    fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>) {
+    fn from_route_part<T>(part: Route<T>) -> (Option<Self>, Option<T>) {
         let (inner, inner_state) = U::from_route_part(part);
         if inner.is_some() {
             (Some(inner), inner_state)
@@ -130,7 +130,7 @@ impl<U: Switch> Switch for Option<U> {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct AllowMissing<T: std::fmt::Debug>(pub Option<T>);
 impl<U: Switch + std::fmt::Debug> Switch for AllowMissing<U> {
-    fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>) {
+    fn from_route_part<T>(part: Route<T>) -> (Option<Self>, Option<T>) {
         let route = part.route.clone();
         let (inner, inner_state) = U::from_route_part(part);
 
@@ -161,7 +161,7 @@ macro_rules! impl_switch_for_from_to_str {
     ($($SelfT: ty),*) => {
         $(
         impl Switch for $SelfT {
-            fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>) {
+            fn from_route_part<T>(part: Route<T>) -> (Option<Self>, Option<T>) {
                 (
                     ::std::str::FromStr::from_str(&part.route).ok(),
                     part.state

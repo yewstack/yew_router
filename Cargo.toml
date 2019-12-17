@@ -19,7 +19,8 @@ unit_alias = []
 
 router = ["agent"]
 components = ["agent" ]
-agent = []
+agent = ["service"]
+service = ["stdweb"]
 
 
 [dependencies]
@@ -28,7 +29,7 @@ serde = "1.0.103"
 serde_derive = "1.0.103"
 #yew = "0.10.0"
 yew = {git = "https://github.com/yewstack/yew", branch = "master"}
-stdweb = "0.4.20"
+stdweb = {version = "0.4.20", optional = true}
 
 yew-router-route-parser = {path = "crates/yew_router_route_parser", version = "0.8.0"}
 yew-router-macro = {path = "crates/yew_router_macro", version = "0.8.0"}

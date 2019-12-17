@@ -59,6 +59,8 @@ pub use yew_router_route_parser;
 
 #[macro_use]
 mod alias;
+
+#[cfg(feature = "service")]
 pub mod service;
 
 #[cfg(feature = "agent")]
@@ -83,26 +85,32 @@ pub mod unit_state {
 pub mod prelude {
     pub use super::matcher::Captures;
 
+    #[cfg(feature = "service")]
+    pub use crate::service::RouteService;
+    #[cfg(feature = "service")]
+    pub use crate::route::RouteState;
+
     #[cfg(feature = "agent")]
     pub use crate::agent::RouteAgent;
     #[cfg(feature = "agent")]
     pub use crate::agent::RouteAgentBridge;
     #[cfg(feature = "agent")]
     pub use crate::agent::RouteAgentDispatcher;
+
     #[cfg(feature = "components")]
     pub use crate::components::RouterAnchor;
     #[cfg(feature = "components")]
     pub use crate::components::RouterButton;
+
     #[cfg(feature = "router")]
     pub use crate::router::Router;
-    pub use crate::{route::Route, service::RouteService};
 
-    pub use crate::switch::{Switch, Routable};
-    pub use yew_router_macro::Switch;
-    // State restrictions
-    pub use crate::route::RouteState;
     #[cfg(feature = "router")]
     pub use crate::router::RouterState;
+
+    pub use crate::route::Route;
+    pub use crate::switch::{Switch, Routable};
+    pub use yew_router_macro::Switch;
 }
 
 pub use alias::*;
@@ -111,6 +119,7 @@ pub mod matcher;
 
 pub use matcher::Captures;
 
+#[cfg(feature = "service")]
 pub use crate::route::RouteState;
 #[cfg(feature = "router")]
 pub use crate::router::RouterState;
