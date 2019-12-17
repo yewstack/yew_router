@@ -14,21 +14,23 @@ repository = "https://github.com/yewstack/yew_router"
 [features]
 default = ["core", "unit_alias"]
 
-core = ["router", "components"]
+core = ["router", "components"] # Most everything
+
+# TODO remove this
 unit_alias = []
 
-router = ["agent"]
-components = ["agent" ]
-agent = []
+router = ["agent"] # The Router component
+components = ["agent" ] # The button and anchor
+agent = ["service"] # The RouteAgent
+service = ["stdweb", "yew"] # The RouteService
 
 
 [dependencies]
 log = "0.4.8"
-serde = "1.0.103"
-serde_derive = "1.0.103"
+serde = {version = "1.0.103", features = ["derive"]}
 #yew = "0.10.0"
-yew = {git = "https://github.com/yewstack/yew", branch = "master"}
-stdweb = "0.4.20"
+yew = {git = "https://github.com/yewstack/yew", branch = "master", optional = true}
+stdweb = {version = "0.4.20", optional = true}
 
 yew-router-route-parser = {path = "crates/yew_router_route_parser", version = "0.8.0"}
 yew-router-macro = {path = "crates/yew_router_macro", version = "0.8.0"}

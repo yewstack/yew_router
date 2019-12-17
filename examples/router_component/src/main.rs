@@ -13,7 +13,7 @@ use crate::{
     c_component::CModel,
 };
 use yew::virtual_dom::VNode;
-use yew_router::switch::AllowMissing;
+use yew_router::switch::{AllowMissing, Permissive};
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -62,12 +62,12 @@ impl Component for Model {
                                 },
                                 AppRoute::C => html!{<CModel />},
                                 AppRoute::E(string) => html!{format!("hello {}", string)},
-                                AppRoute::PageNotFound(None) => html!{"Page not found"},
-                                AppRoute::PageNotFound(Some(missed_route)) => html!{format!("Page '{}' not found", missed_route)}
+                                AppRoute::PageNotFound(Permissive(None)) => html!{"Page not found"},
+                                AppRoute::PageNotFound(Permissive(Some(missed_route))) => html!{format!("Page '{}' not found", missed_route)}
                             }
                         })
                         redirect = Router::redirect(|route: Route| {
-                            AppRoute::PageNotFound(Some(route.route))
+                            AppRoute::PageNotFound(Permissive(Some(route.route)))
                         })
                     />
                 </div>
@@ -87,7 +87,7 @@ pub enum AppRoute {
     #[to = "/e/{string}"]
     E(String),
     #[to = "/page-not-found"]
-    PageNotFound(Option<String>),
+    PageNotFound(Permissive<String>),
 }
 
 #[derive(Debug, Switch, PartialEq, Clone, Copy)]

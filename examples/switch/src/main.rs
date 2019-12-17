@@ -1,35 +1,36 @@
 use yew_router::{route::Route, Switch};
+use yew_router::switch::Permissive;
 
 fn main() {
-    let route = Route::<()>::from("/some/route");
+    let route = Route::new_no_state("/some/route");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-    let route = Route::<()>::from("/some/thing/other");
+    let route = Route::new_no_state("/some/thing/other");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-    let route = Route::<()>::from("/another/other");
+    let route = Route::new_no_state("/another/other");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-    let route = Route::<()>::from("/inner/left");
+    let route = Route::new_no_state("/inner/left");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-    let route = Route::<()>::from("/yeet"); // should not match
+    let route = Route::new_no_state("/yeet"); // should not match
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-    let route = Route::<()>::from("/single/32");
+    let route = Route::new_no_state("/single/32");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-    let route = Route::<()>::from("/othersingle/472");
+    let route = Route::new_no_state("/othersingle/472");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
-    let route = Route::<()>::from("/option/test");
+    let route = Route::new_no_state("/option/test");
     let app_route = AppRoute::switch(route);
     dbg!(app_route);
 
@@ -69,12 +70,12 @@ pub enum AppRoute {
     Single(Single),
     #[rest]
     OtherSingle(OtherSingle),
-    /// Because this is an option, the inner item doesn't have to match.
+    /// Because this is permissive, the inner item doesn't have to match.
     #[to = "/option/{}"]
-    Optional(Option<String>),
-    /// Because this is an option, a corresponding capture group doesn't need to exist
+    Optional(Permissive<String>),
+    /// Because this is permissive, a corresponding capture group doesn't need to exist
     #[to = "/missing/capture"]
-    MissingCapture(Option<String>),
+    MissingCapture(Permissive<String>),
 }
 
 #[derive(Switch, Debug, Clone)]

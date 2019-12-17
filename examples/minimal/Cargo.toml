@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 #yew = "0.10.0"
 yew = {git = "https://github.com/yewstack/yew", branch = "master"}
-yew-router = {path = "../../", default-features=false}
+yew-router = {path = "../../", default-features=false, features = ["service"]}
 web_logger = "0.1"
 log = "0.4.8"
 wee_alloc = "0.4.5"
