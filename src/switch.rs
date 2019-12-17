@@ -164,6 +164,7 @@ impl<U: Switch + std::fmt::Debug> Switch for AllowMissing<U> {
     }
 }
 
+// TODO explore if adding a crate-defined trait here would satisfy coherence rules for option. Then add that trait to all items previously in the macro.
 impl<T: std::str::FromStr + std::fmt::Display> Switch for T {
     fn from_route_part<U>(part: Route<U>) -> (Option<Self>, Option<U>) {
         (
