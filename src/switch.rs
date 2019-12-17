@@ -29,21 +29,21 @@ pub type Routable = Switch;
 /// }
 ///
 /// assert_eq!(
-///     TestEnum::switch(Route::<()>::from("/test/route")),
+///     TestEnum::switch(Route::new_no_state("/test/route")),
 ///     Some(TestEnum::TestRoute)
 /// );
 /// assert_eq!(
-///     TestEnum::switch(Route::<()>::from("/capture/string/lorem")),
+///     TestEnum::switch(Route::new_no_state("/capture/string/lorem")),
 ///     Some(TestEnum::CaptureString {
 ///         path: "lorem".to_string()
 ///     })
 /// );
 /// assert_eq!(
-///     TestEnum::switch(Route::<()>::from("/capture/number/22")),
+///     TestEnum::switch(Route::new_no_state("/capture/number/22")),
 ///     Some(TestEnum::CaptureNumber { num: 22 })
 /// );
 /// assert_eq!(
-///     TestEnum::switch(Route::<()>::from("/capture/unnamed/lorem")),
+///     TestEnum::switch(Route::new_no_state("/capture/unnamed/lorem")),
 ///     Some(TestEnum::CaptureUnnamed("lorem".to_string()))
 /// );
 /// ```
@@ -238,10 +238,10 @@ mod test {
 
     #[test]
     fn can_get_option_string_from_empty_str() {
-        let (s, _state): (Option<Option<String>>, Option<()>) = Option::from_route_part(Route {
+        let (s, _state): (Option<Permissive<String>>, Option<()>) = Permissive::from_route_part(Route {
             route: "".to_string(),
             state: None,
         });
-        assert_eq!(s, Some(Some("".to_string())))
+        assert_eq!(s, Some(Permissive(Some("".to_string()))))
     }
 }
