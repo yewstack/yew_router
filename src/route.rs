@@ -47,7 +47,7 @@ impl Route<()> {
     pub fn new_no_state<T: AsRef<str>>(route: T) -> Self {
         Route {
             route: route.as_ref().to_string(),
-            state: None,
+            state: (),
         }
     }
 }
@@ -57,7 +57,7 @@ impl <T: Default> Route<T> {
     pub fn new_default_state<U: AsRef<str>>(route: U) -> Self {
         Route {
             route: route.as_ref().to_string(),
-            state: Some(T::default()),
+            state: T::default(),
         }
     }
 }
@@ -68,15 +68,15 @@ impl<T> fmt::Display for Route<T> {
     }
 }
 
-// This is getting removed anyway
-impl<T: Default> From<&str> for Route<T> {
-    fn from(string: &str) -> Route<T> {
-        Route {
-            route: string.to_string(),
-            state: T::default(),
-        }
-    }
-}
+//// This is getting removed anyway
+//impl<T: Default> From<&str> for Route<T> {
+//    fn from(string: &str) -> Route<T> {
+//        Route {
+//            route: string.to_string(),
+//            state: T::default(),
+//        }
+//    }
+//}
 
 impl<T> Deref for Route<T> {
     type Target = String;

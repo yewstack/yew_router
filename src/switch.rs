@@ -180,6 +180,21 @@ impl<SW: Switch, T: Default> From<SW> for Route<T> {
     }
 }
 
+
+impl<T: std::str::FromStr + std::fmt::Display> Switch for T {
+    fn from_route_part<U>(part: String, state: Option<U>) -> (Option<Self>, Option<U>) {
+        (
+            ::std::str::FromStr::from_str(&part).ok(),
+            state
+        )
+    }
+
+    fn build_route_section<U>(self, route: &mut String) -> Option<U> {
+        write!(route, "{}", self).expect("Writing to string should never fail.");
+        None
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -224,6 +239,6 @@ mod test {
             "".to_string(),
             Some(()),
         );
-        assert_eq!(s, Some(Some("".to_string())))
+        assert_eq!(s, Some(Permissive(Some("".to_string()))))
     }
 }
