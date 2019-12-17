@@ -58,13 +58,23 @@ impl<T> Route<T> {
 }
 
 impl Route<()> {
-    /// Creates a new route out of a string.
+    /// Creates a new route with no state out of a string.
     ///
     /// This Route will have `()` for its state.
     pub fn new_no_state<T: AsRef<str>>(route: T) -> Self {
         Route {
             route: route.as_ref().to_string(),
             state: None,
+        }
+    }
+}
+
+impl <T: Default> Route<T> {
+    /// Creates a new route out of a string, setting the state to its default value.
+    pub fn new_default_state<U: AsRef<str>>(route: U) -> Self {
+        Route {
+            route: route.as_ref().to_string(),
+            state: Some(T::default()),
         }
     }
 }
