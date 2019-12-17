@@ -100,20 +100,24 @@ impl<U: Switch> Switch for LeadingSlash<U> {
     }
 }
 
-impl<U: Switch> Switch for Option<U> {
+/// Successfully match even when the captured section can't be found.
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct Permissive<U>(pub Option<U>);
+
+impl<U: Switch> Switch for Permissive<U> {
     /// Option is very permissive in what is allowed.
     fn from_route_part<T>(part: Route<T>) -> (Option<Self>, Option<T>) {
         let (inner, inner_state) = U::from_route_part(part);
         if inner.is_some() {
-            (Some(inner), inner_state)
+            (Some(Permissive(inner)), inner_state)
         } else {
             // The Some(None) here indicates that this will produce a None, if the wrapped value can't be parsed
-            (Some(None), None)
+            (Some(Permissive(None)), None)
         }
     }
 
     fn build_route_section<T>(self, route: &mut String) -> Option<T> {
-        if let Some(inner) = self {
+        if let Some(inner) = self.0 {
             inner.build_route_section(route)
         } else {
             None
@@ -121,14 +125,17 @@ impl<U: Switch> Switch for Option<U> {
     }
 
     fn key_not_available() -> Option<Self> {
-        Some(None)
+        Some(Permissive(None))
     }
 }
+
+// TODO the AllowMissing shim doesn't appear to offer much over Permissive.
+// Documentation should improve (need examples - to show the difference) or it should be removed.
 
 /// Allows a section to match, providing a None value,
 /// if its contents are entirely missing, or starts with a '/'.
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub struct AllowMissing<T: std::fmt::Debug>(pub Option<T>);
+pub struct AllowMissing<U: std::fmt::Debug>(pub Option<U>);
 impl<U: Switch + std::fmt::Debug> Switch for AllowMissing<U> {
     fn from_route_part<T>(part: Route<T>) -> (Option<Self>, Option<T>) {
         let route = part.route.clone();
@@ -157,54 +164,18 @@ impl<U: Switch + std::fmt::Debug> Switch for AllowMissing<U> {
     }
 }
 
-macro_rules! impl_switch_for_from_to_str {
-    ($($SelfT: ty),*) => {
-        $(
-        impl Switch for $SelfT {
-            fn from_route_part<T>(part: Route<T>) -> (Option<Self>, Option<T>) {
-                (
-                    ::std::str::FromStr::from_str(&part.route).ok(),
-                    part.state
-                )
-            }
+impl<T: std::str::FromStr + std::fmt::Display> Switch for T {
+    fn from_route_part<U>(part: Route<U>) -> (Option<Self>, Option<U>) {
+        (
+            ::std::str::FromStr::from_str(&part.route).ok(),
+            part.state
+        )
+    }
 
-            fn build_route_section<T>(self, f: &mut String) -> Option<T> {
-                write!(f, "{}", self).expect("Writing to string should never fail.");
-                None
-            }
-        }
-        )*
-    };
-}
-
-impl_switch_for_from_to_str! {
-    String,
-    uuid::Uuid,
-    bool,
-    f64,
-    f32,
-    usize,
-    u128,
-    u64,
-    u32,
-    u16,
-    u8,
-    isize,
-    i128,
-    i64,
-    i32,
-    i16,
-    i8,
-    std::num::NonZeroU128,
-    std::num::NonZeroU64,
-    std::num::NonZeroU32,
-    std::num::NonZeroU16,
-    std::num::NonZeroU8,
-    std::num::NonZeroI128,
-    std::num::NonZeroI64,
-    std::num::NonZeroI32,
-    std::num::NonZeroI16,
-    std::num::NonZeroI8
+    fn build_route_section<U>(self, route: &mut String) -> Option<U> {
+        write!(route, "{}", self).expect("Writing to string should never fail.");
+        None
+    }
 }
 
 /// Builds a route from a switch.

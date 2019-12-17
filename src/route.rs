@@ -22,7 +22,7 @@ pub struct Route<T = ()> {
     /// The route string
     pub route: String,
     /// The state stored in the history api
-    pub state: Option<T>,
+    pub state: Option<T>, // TODO eventually make this just `T`
 }
 
 
@@ -57,18 +57,21 @@ impl<T> Route<T> {
     }
 }
 
-impl<T> fmt::Display for Route<T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        std::fmt::Display::fmt(&self.route, f)
+impl Route<()> {
+    /// Creates a new route out of a string.
+    ///
+    /// This Route will have `()` for its state.
+    pub fn new_no_state<T: AsRef<str>>(route: T) -> Self {
+        Route {
+            route: route.as_ref().to_string(),
+            state: None,
+        }
     }
 }
 
-impl<T> From<&str> for Route<T> {
-    fn from(string: &str) -> Route<T> {
-        Route {
-            route: string.to_string(),
-            state: None,
-        }
+impl<T> fmt::Display for Route<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        std::fmt::Display::fmt(&self.route, f)
     }
 }
 
