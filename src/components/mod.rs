@@ -13,6 +13,7 @@ pub use self::{router_button::RouterButton, router_link::RouterAnchor, router_li
 use crate::RouterState;
 
 // TODO This should also be PartialEq and Clone. Its blocked on Children not supporting that.
+// TODO This should no longer take link & String, and instead take a route: T implementing Switch
 /// Properties for `RouterButton` and `RouterLink`.
 #[derive(Properties, Default, Debug)]
 pub struct Props<T: RouterState> {
