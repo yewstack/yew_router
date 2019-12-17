@@ -164,7 +164,7 @@ macro_rules! impl_switch_for_from_to_str {
             fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>) {
                 (
                     ::std::str::FromStr::from_str(&part.route).ok(),
-                    part.state
+                    Some(part.state)
                 )
             }
 
@@ -208,19 +208,19 @@ impl_switch_for_from_to_str! {
 }
 
 /// Builds a route from a switch.
-fn build_route_from_switch<T: Switch, U>(switch: T) -> Route<U> {
+fn build_route_from_switch<T: Switch, U: Default>(switch: T) -> Route<U> {
     // URLs are recommended to not be over 255 characters,
     // although browsers frequently support up to about 2000.
     // Routes, being a subset of URLs should probably be smaller than 255 characters for the vast
     // majority of circumstances, preventing reallocation under most conditions.
     let mut buf = String::with_capacity(255);
-    let state = switch.build_route_section(&mut buf);
+    let state = switch.build_route_section(&mut buf).unwrap_or_default();
     buf.shrink_to_fit();
 
     Route { route: buf, state }
 }
 
-impl<SW: Switch, T> From<SW> for Route<T> {
+impl<SW: Switch, T: Default> From<SW> for Route<T> {
     fn from(switch: SW) -> Self {
         build_route_from_switch(switch)
     }

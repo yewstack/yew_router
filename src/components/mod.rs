@@ -19,7 +19,7 @@ pub struct Props<T: RouterState> {
     /// The route that will be set when the component is clicked.
     pub link: String,
     /// The state to set when changing the route.
-    pub state: Option<T>,
+    pub state: T,
     #[deprecated(note = "Use children field instead (nested html)")]
     /// The text to display.
     pub text: String,
