@@ -97,7 +97,7 @@ pub mod prelude {
     pub use crate::router::Router;
     pub use crate::{route::Route, service::RouteService};
 
-    pub use crate::switch::Switch;
+    pub use crate::switch::{Switch, Routable};
     pub use yew_router_macro::Switch;
     // State restrictions
     pub use crate::route::RouteState;
