@@ -1,14 +1,13 @@
 //! Service that interfaces with the browser to handle routing.
 
-use stdweb::{
-    web::{event::PopStateEvent, window, EventListenerHandle, History, IEventTarget, Location},
-    Value,
-};
+use stdweb::{web::{event::PopStateEvent, window, EventListenerHandle, History, IEventTarget, Location}, Value};
 use yew::callback::Callback;
 
-use crate::route::RouteState;
+use crate::route::{RouteState, Route};
 use std::marker::PhantomData;
 use stdweb::unstable::TryFrom;
+use stdweb::unstable::TryInto;
+use stdweb::js;
 
 /// A service that facilitates manipulation of the browser's URL bar and responding to browser events
 /// when users press 'forward' or 'back'.
@@ -53,10 +52,7 @@ impl<T> RouteService<T> {
         crate::route::format_route_string(&path, &query, &fragment)
     }
 
-    /// Gets the concatenated path, query, and fragment.
-    pub fn get_route(&self) -> String {
-        Self::get_route_from_location(&self.location)
-    }
+
 
     /// Gets the path name of the current url.
     pub fn get_path(&self) -> String {
@@ -81,7 +77,7 @@ where
     /// Registers a callback to the route service.
     /// Callbacks will be called when the History API experiences a change such as
     /// popping a state off of its stack when the forward or back buttons are pressed.
-    pub fn register_callback(&mut self, callback: Callback<(String, T)>) {
+    pub fn register_callback(&mut self, callback: Callback<Route<T>>) {
         self.event_listener = Some(window().add_event_listener(move |event: PopStateEvent| {
             let state_value: Value = event.state();
             let state_string: String = String::try_from(state_value).unwrap_or_default();
@@ -96,7 +92,8 @@ where
             let location: Location = window().location().unwrap();
             let route: String = Self::get_route_from_location(&location);
 
-            callback.emit((route.clone(), state))
+
+            callback.emit(Route{route, state})
         }));
     }
 
@@ -121,4 +118,39 @@ where
         });
         let _ = self.history.replace_state(state_string, "", Some(route));
     }
+
+    /// Gets the concatenated path, query, and fragment.
+    pub fn get_route(&self) -> Route<T> {
+        let route_string = Self::get_route_from_location(&self.location);
+        let state: T = get_state_string(&self.history)
+            .or_else(|| {
+                log::trace!("History state is empty");
+                None
+            })
+            .and_then(|state_string| -> Option<Option<T>>{
+                serde_json::from_str(&state_string)
+                    .ok()
+                    .or_else(|| {
+                        log::error!("Could not deserialize state string");
+                        None
+                    })
+            })
+            .and_then(std::convert::identity) // flatten
+            .unwrap_or_default();
+        Route {
+            route: route_string,
+            state
+        }
+    }
 }
+
+fn get_state(history: &History) -> Value {
+    js!(
+        return @{history}.state;
+    )
+}
+
+fn get_state_string(history: &History) -> Option<String> {
+    get_state(history).try_into().ok()
+}
+

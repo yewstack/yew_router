@@ -26,7 +26,7 @@ pub use dispatcher::RouteAgentDispatcher;
 #[derive(Debug)]
 pub enum Msg<T> {
     /// Message for when the route is changed.
-    BrowserNavigationRouteChanged((String, T)),
+    BrowserNavigationRouteChanged(Route<T>), // TODO make this a route?
 }
 
 /// Input message type for interacting with the `RouteAgent'.
@@ -105,10 +105,8 @@ where
 
     fn update(&mut self, msg: Self::Message) {
         match msg {
-            Msg::BrowserNavigationRouteChanged((_route_string, state)) => {
+            Msg::BrowserNavigationRouteChanged(route) => {
                 trace!("Browser navigated");
-                let mut route = Route::current_route(&self.route_service);
-                route.state = Some(state);
                 for sub in &self.subscribers {
                     self.link.respond(*sub, route.clone());
                 }
@@ -125,8 +123,8 @@ where
             RouteRequest::ReplaceRoute(route) => {
                 let route_string: String = route.to_string();
                 self.route_service
-                    .replace_route(&route_string, route.state.unwrap_or_default());
-                let route = Route::current_route(&self.route_service);
+                    .replace_route(&route_string, route.state);
+                let route = self.route_service.get_route();
                 for sub in &self.subscribers {
                     self.link.respond(*sub, route.clone());
                 }
@@ -134,15 +132,15 @@ where
             RouteRequest::ReplaceRouteNoBroadcast(route) => {
                 let route_string: String = route.to_string();
                 self.route_service
-                    .replace_route(&route_string, route.state.unwrap_or_default());
+                    .replace_route(&route_string, route.state);
             }
             RouteRequest::ChangeRoute(route) => {
                 let route_string: String = route.to_string();
                 // set the route
                 self.route_service
-                    .set_route(&route_string, route.state.unwrap_or_default());
-                // get the new route. This will contain a default state object
-                let route = Route::current_route(&self.route_service);
+                    .set_route(&route_string, route.state);
+                // get the new route.
+                let route = self.route_service.get_route();
                 // broadcast it to all listening components
                 for sub in &self.subscribers {
                     self.link.respond(*sub, route.clone());
@@ -151,10 +149,10 @@ where
             RouteRequest::ChangeRouteNoBroadcast(route) => {
                 let route_string: String = route.to_string();
                 self.route_service
-                    .set_route(&route_string, route.state.unwrap_or_default());
+                    .set_route(&route_string, route.state);
             }
             RouteRequest::GetCurrentRoute => {
-                let route = Route::current_route(&self.route_service);
+                let route = self.route_service.get_route();
                 self.link.respond(who, route.clone());
             }
         }
