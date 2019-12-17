@@ -52,12 +52,7 @@ impl Component for Model {
         let mut route_service: RouteService<()> = RouteService::new();
         let route = route_service.get_route();
         let route = Route::from(route);
-        let callback = link.callback(|(route, state)| -> Msg {
-            Msg::RouteChanged(Route {
-                route,
-                state: Some(state),
-            })
-        });
+        let callback = link.callback(Msg::RouteChanged);
         route_service.register_callback(callback);
 
         Model {
@@ -78,9 +73,9 @@ impl Component for Model {
                     AppRoute::C => format!("/c"),
                 };
                 self.route_service.set_route(&route_string, ());
-                self.route = Route {
+                self.route = Route{
                     route: route_string,
-                    state: None,
+                    state: (),
                 };
             }
         }

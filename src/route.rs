@@ -22,7 +22,7 @@ pub struct Route<T = ()> {
     /// The route string
     pub route: String,
     /// The state stored in the history api
-    pub state: Option<T>, // TODO eventually make this just `T`
+    pub state: T,
 }
 
 
@@ -38,23 +38,6 @@ pub(crate) fn format_route_string(path: &str, query: &str, fragment: &str) -> St
         query = query,
         fragment = fragment
     )
-}
-
-#[cfg(feature = "service")]
-impl<T> Route<T> {
-    /// Gets the current route from the route service.
-    ///
-    /// # Note
-    /// It does not get the current state.
-    /// That is only provided via events.
-    /// See [RouteService.register_callback](struct.RouteService.html#method.register_callback) to
-    /// acquire state.
-    pub fn current_route(route_service: &RouteService<T>) -> Self {
-        let route = route_service.get_route();
-        // TODO, should try to get the state using the history api once that is exposed through
-        // stdweb. https://github.com/koute/stdweb/issues/371
-        Route { route, state: None }
-    }
 }
 
 impl Route<()> {
@@ -82,6 +65,16 @@ impl <T: Default> Route<T> {
 impl<T> fmt::Display for Route<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         std::fmt::Display::fmt(&self.route, f)
+    }
+}
+
+// This is getting removed anyway
+impl<T: Default> From<&str> for Route<T> {
+    fn from(string: &str) -> Route<T> {
+        Route {
+            route: string.to_string(),
+            state: T::default(),
+        }
     }
 }
 

@@ -13,13 +13,14 @@ pub use self::{router_button::RouterButton, router_link::RouterAnchor, router_li
 use crate::RouterState;
 
 // TODO This should also be PartialEq and Clone. Its blocked on Children not supporting that.
+// TODO This should no longer take link & String, and instead take a route: T implementing Switch
 /// Properties for `RouterButton` and `RouterLink`.
 #[derive(Properties, Default, Debug)]
 pub struct Props<T: RouterState> {
     /// The route that will be set when the component is clicked.
     pub link: String,
     /// The state to set when changing the route.
-    pub state: Option<T>,
+    pub state: T,
     #[deprecated(note = "Use children field instead (nested html)")]
     /// The text to display.
     pub text: String,

@@ -33,9 +33,8 @@ pub fn generate_enum_impl(
     let token_stream = quote! {
         #impl_line
         {
-            fn from_route_part<__T>(route: ::yew_router::route::Route<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
-                let mut state = route.state;
-                let route_string = route.route;
+            fn from_route_part<__T>(route: String, mut state: Option<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
+                let route_string = route;
                 #(#variant_matchers)*
 
                 return (::std::option::Option::None, state)
@@ -73,10 +72,8 @@ fn build_variant_from_captures(
                             let (v, s) = match captures.remove(#key) {
                                 ::std::option::Option::Some(value) => {
                                     <#field_ty as ::yew_router::Switch>::from_route_part(
-                                        ::yew_router::route::Route {
-                                            route: value,
-                                            state,
-                                        }
+                                        value,
+                                        state,
                                     )
                                 }
                                 ::std::option::Option::None => {
@@ -129,10 +126,8 @@ fn build_variant_from_captures(
                         let (v, s) = match drain.next() {
                             ::std::option::Option::Some(value) => {
                                 <#field_ty as ::yew_router::Switch>::from_route_part(
-                                    ::yew_router::route::Route {
-                                        route: value,
-                                        state,
-                                    }
+                                    value,
+                                    state,
                                 )
                             },
                             ::std::option::Option::None => {
