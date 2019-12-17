@@ -74,6 +74,7 @@ pub mod components;
 #[cfg(feature = "router")]
 pub mod router;
 
+/// TODO remove this
 /// Contains aliases and functions for working with this library using a state of type  `()`.
 #[cfg(feature = "unit_alias")]
 pub mod unit_state {

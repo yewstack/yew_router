@@ -14,13 +14,15 @@ repository = "https://github.com/yewstack/yew_router"
 [features]
 default = ["core", "unit_alias"]
 
-core = ["router", "components"]
+core = ["router", "components"] # Most everything
+
+# TODO remove this
 unit_alias = []
 
-router = ["agent"]
-components = ["agent" ]
-agent = ["service"]
-service = ["stdweb", "yew"]
+router = ["agent"] # The Router component
+components = ["agent" ] # The button and anchor
+agent = ["service"] # The RouteAgent
+service = ["stdweb", "yew"] # The RouteService
 
 
 [dependencies]
