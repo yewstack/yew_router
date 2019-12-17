@@ -50,11 +50,11 @@ pub type Routable = Switch;
 pub trait Switch: Sized {
     /// Based on a route, possibly produce an itself.
     fn switch<T: RouteState>(route: Route<T>) -> Option<Self> {
-        Self::from_route_part(route).0
+        Self::from_route_part(route.route, Some(route.state)).0
     }
 
     /// Get self from a part of the state
-    fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>);
+    fn from_route_part<T: RouteState>(part: String, state: Option<T>) -> (Option<Self>, Option<T>);
 
     /// Build part of a route from itself.
     fn build_route_section<T>(self, route: &mut String) -> Option<T>;
@@ -81,13 +81,10 @@ pub trait Switch: Sized {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct LeadingSlash<T>(pub T);
 impl<U: Switch> Switch for LeadingSlash<U> {
-    fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>) {
-        if part.route.starts_with('/') {
-            let route = Route {
-                route: part.route[1..].to_string(),
-                state: part.state,
-            };
-            let (inner, state) = U::from_route_part(route);
+    fn from_route_part<T: RouteState>(part: String, state: Option<T>) -> (Option<Self>, Option<T>) {
+        if part.starts_with('/') {
+            let part =  part[1..].to_string();
+            let (inner, state) = U::from_route_part(part, state);
             (inner.map(LeadingSlash), state)
         } else {
             (None, None)
@@ -102,8 +99,8 @@ impl<U: Switch> Switch for LeadingSlash<U> {
 
 impl<U: Switch> Switch for Option<U> {
     /// Option is very permissive in what is allowed.
-    fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>) {
-        let (inner, inner_state) = U::from_route_part(part);
+    fn from_route_part<T: RouteState>(part: String, state: Option<T>) -> (Option<Self>, Option<T>) {
+        let (inner, inner_state) = U::from_route_part(part, state);
         if inner.is_some() {
             (Some(inner), inner_state)
         } else {
@@ -130,9 +127,9 @@ impl<U: Switch> Switch for Option<U> {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct AllowMissing<T: std::fmt::Debug>(pub Option<T>);
 impl<U: Switch + std::fmt::Debug> Switch for AllowMissing<U> {
-    fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>) {
-        let route = part.route.clone();
-        let (inner, inner_state) = U::from_route_part(part);
+    fn from_route_part<T: RouteState>(part: String, state: Option<T>) -> (Option<Self>, Option<T>) {
+        let route = part.clone();
+        let (inner, inner_state) = U::from_route_part(part, state);
 
         if inner.is_some() {
             (Some(AllowMissing(inner)), inner_state)
@@ -161,10 +158,10 @@ macro_rules! impl_switch_for_from_to_str {
     ($($SelfT: ty),*) => {
         $(
         impl Switch for $SelfT {
-            fn from_route_part<T: RouteState>(part: Route<T>) -> (Option<Self>, Option<T>) {
+            fn from_route_part<T: RouteState>(part: String, state: Option<T>) -> (Option<Self>, Option<T>) {
                 (
-                    ::std::str::FromStr::from_str(&part.route).ok(),
-                    Some(part.state)
+                    ::std::str::FromStr::from_str(&part).ok(),
+                    state
                 )
             }
 
@@ -239,10 +236,10 @@ mod test {
 
     #[test]
     fn can_get_string_from_empty_str() {
-        let (s, _state) = String::from_route_part::<()>(Route {
-            route: "".to_string(),
-            state: None,
-        });
+        let (s, _state) = String::from_route_part::<()>(
+            "".to_string(),
+            Some(()),
+        );
         assert_eq!(s, Some("".to_string()))
     }
 
@@ -250,7 +247,7 @@ mod test {
     fn uuid_from_route() {
         let x = uuid::Uuid::switch::<()>(Route {
             route: "5dc48134-35b5-4b8c-aa93-767bf00ae1d8".to_string(),
-            state: None,
+            state: (),
         });
         assert!(x.is_some())
     }
@@ -266,10 +263,10 @@ mod test {
 
     #[test]
     fn can_get_option_string_from_empty_str() {
-        let (s, _state): (Option<Option<String>>, Option<()>) = Option::from_route_part(Route {
-            route: "".to_string(),
-            state: None,
-        });
+        let (s, _state): (Option<Option<String>>, Option<()>) = Option::from_route_part(
+            "".to_string(),
+            Some(()),
+        );
         assert_eq!(s, Some(Some("".to_string())))
     }
 }

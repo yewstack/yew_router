@@ -24,11 +24,10 @@ pub fn generate_struct_impl(item: SwitchItem, generics: Generics) -> TokenStream
     let token_stream = quote! {
         #impl_line
         {
-            fn from_route_part<__T: ::yew_router::route::RouteState>(route: ::yew_router::route::Route<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
+            fn from_route_part<__T: ::yew_router::route::RouteState>(route: String, mut state: Option<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
 
                 #matcher
-                let mut state = route.state;
-                let route_string = route.route;
+                let route_string = route;
 
                 #build_from_captures
 
@@ -62,10 +61,8 @@ fn build_struct_from_captures(ident: &Ident, fields: &Fields) -> TokenStream2 {
                             let (v, s) = match captures.remove(#key) {
                                 ::std::option::Option::Some(value) => {
                                     <#field_ty as ::yew_router::Switch>::from_route_part(
-                                        ::yew_router::route::Route {
-                                            route: value,
-                                            state,
-                                        }
+                                        value,
+                                        state,
                                     )
                                 }
                                 ::std::option::Option::None => {
@@ -108,10 +105,8 @@ fn build_struct_from_captures(ident: &Ident, fields: &Fields) -> TokenStream2 {
                         let (v, s) = match drain.next() {
                             ::std::option::Option::Some(value) => {
                                 <#field_ty as ::yew_router::Switch>::from_route_part(
-                                    ::yew_router::route::Route {
-                                        route: value,
-                                        state,
-                                    }
+                                    value,
+                                    state,
                                 )
                             },
                             ::std::option::Option::None => {
