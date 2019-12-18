@@ -16,11 +16,11 @@ impl<T> RouteState for T where T: Serialize + DeserializeOwned + Debug + Clone +
 
 /// The representation of a route, segmented into different sections for easy access.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
-pub struct Route<T = ()> {
+pub struct Route<STATE = ()> {
     /// The route string
     pub route: String,
     /// The state stored in the history api
-    pub state: T,
+    pub state: STATE,
 }
 
 
@@ -36,23 +36,23 @@ impl Route<()> {
     }
 }
 
-impl <T: Default> Route<T> {
+impl <STATE: Default> Route<STATE> {
     /// Creates a new route out of a string, setting the state to its default value.
-    pub fn new_default_state<U: AsRef<str>>(route: U) -> Self {
+    pub fn new_default_state<T: AsRef<str>>(route: T) -> Self {
         Route {
             route: route.as_ref().to_string(),
-            state: T::default(),
+            state: STATE::default(),
         }
     }
 }
 
-impl<T> fmt::Display for Route<T> {
+impl<STATE> fmt::Display for Route<STATE> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         std::fmt::Display::fmt(&self.route, f)
     }
 }
 
-impl<T> Deref for Route<T> {
+impl<STATE> Deref for Route<STATE> {
     type Target = String;
 
     fn deref(&self) -> &Self::Target {

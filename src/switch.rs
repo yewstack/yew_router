@@ -49,15 +49,15 @@ pub type Routable = Switch;
 /// ```
 pub trait Switch: Sized {
     /// Based on a route, possibly produce an itself.
-    fn switch<T>(route: Route<T>) -> Option<Self> {
+    fn switch<STATE>(route: Route<STATE>) -> Option<Self> {
         Self::from_route_part(route.route, Some(route.state)).0
     }
 
     /// Get self from a part of the state
-    fn from_route_part<T>(part: String, state: Option<T>) -> (Option<Self>, Option<T>);
+    fn from_route_part<STATE>(part: String, state: Option<STATE>) -> (Option<Self>, Option<STATE>);
 
     /// Build part of a route from itself.
-    fn build_route_section<T>(self, route: &mut String) -> Option<T>;
+    fn build_route_section<STATE>(self, route: &mut String) -> Option<STATE>;
 
     /// Called when the key (the named capture group) can't be located. Instead of failing outright,
     /// a default item can be provided instead.
@@ -81,7 +81,7 @@ pub trait Switch: Sized {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct LeadingSlash<T>(pub T);
 impl<U: Switch> Switch for LeadingSlash<U> {
-    fn from_route_part<T>(part: String, state: Option<T>) -> (Option<Self>, Option<T>) {
+    fn from_route_part<STATE>(part: String, state: Option<STATE>) -> (Option<Self>, Option<STATE>) {
         if part.starts_with('/') {
             let part =  part[1..].to_string();
             let (inner, state) = U::from_route_part(part, state);
@@ -103,7 +103,7 @@ pub struct Permissive<U>(pub Option<U>);
 
 impl<U: Switch> Switch for Permissive<U> {
     /// Option is very permissive in what is allowed.
-    fn from_route_part<T>(part: String, state: Option<T>) -> (Option<Self>, Option<T>) {
+    fn from_route_part<STATE>(part: String, state: Option<STATE>) -> (Option<Self>, Option<STATE>) {
         let (inner, inner_state) = U::from_route_part(part, state);
         if inner.is_some() {
             (Some(Permissive(inner)), inner_state)
@@ -113,7 +113,7 @@ impl<U: Switch> Switch for Permissive<U> {
         }
     }
 
-    fn build_route_section<T>(self, route: &mut String) -> Option<T> {
+    fn build_route_section<STATE>(self, route: &mut String) -> Option<STATE> {
         if let Some(inner) = self.0 {
             inner.build_route_section(route)
         } else {
@@ -134,7 +134,7 @@ impl<U: Switch> Switch for Permissive<U> {
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct AllowMissing<U: std::fmt::Debug>(pub Option<U>);
 impl<U: Switch + std::fmt::Debug> Switch for AllowMissing<U> {
-    fn from_route_part<T>(part: String, state: Option<T>) -> (Option<Self>, Option<T>) {
+    fn from_route_part<STATE>(part: String, state: Option<STATE>) -> (Option<Self>, Option<STATE>) {
         let route = part.clone();
         let (inner, inner_state) = U::from_route_part(part, state);
 
@@ -152,7 +152,7 @@ impl<U: Switch + std::fmt::Debug> Switch for AllowMissing<U> {
         }
     }
 
-    fn build_route_section<T>(self, route: &mut String) -> Option<T> {
+    fn build_route_section<STATE>(self, route: &mut String) -> Option<STATE> {
         if let AllowMissing(Some(inner)) = self {
             inner.build_route_section(route)
         } else {
@@ -162,19 +162,19 @@ impl<U: Switch + std::fmt::Debug> Switch for AllowMissing<U> {
 }
 
 /// Builds a route from a switch.
-fn build_route_from_switch<T: Switch, U: Default>(switch: T) -> Route<U> {
+fn build_route_from_switch<SW: Switch, STATE: Default>(switch: SW) -> Route<STATE> {
     // URLs are recommended to not be over 255 characters,
     // although browsers frequently support up to about 2000.
     // Routes, being a subset of URLs should probably be smaller than 255 characters for the vast
     // majority of circumstances, preventing reallocation under most conditions.
     let mut buf = String::with_capacity(255);
-    let state = switch.build_route_section(&mut buf).unwrap_or_default();
+    let state: STATE = switch.build_route_section(&mut buf).unwrap_or_default();
     buf.shrink_to_fit();
 
     Route { route: buf, state }
 }
 
-impl<SW: Switch, T: Default> From<SW> for Route<T> {
+impl<SW: Switch, STATE: Default> From<SW> for Route<STATE> {
     fn from(switch: SW) -> Self {
         build_route_from_switch(switch)
     }

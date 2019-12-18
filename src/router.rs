@@ -162,13 +162,13 @@ impl<T: RouterState, SW: Switch + Clone> Debug for Props<T, SW> {
     }
 }
 
-impl<T, SW> Component for Router<SW, T>
+impl<STATE, SW> Component for Router<SW, STATE>
 where
-    T: RouterState,
+    STATE: RouterState,
     SW: Switch + Clone + 'static,
 {
-    type Message = Msg<T>;
-    type Properties = Props<T, SW>;
+    type Message = Msg<STATE>;
+    type Properties = Props<STATE, SW>;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let callback = link.callback(Msg::UpdateRoute);

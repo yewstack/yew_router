@@ -14,19 +14,19 @@ use stdweb::js;
 ///
 /// The `T` determines what route state can be stored in the route service.
 #[derive(Debug)]
-pub struct RouteService<T = ()> {
+pub struct RouteService<STATE = ()> {
     history: History,
     location: Location,
     event_listener: Option<EventListenerHandle>,
-    phantom_data: PhantomData<T>,
+    phantom_data: PhantomData<STATE>,
 }
 
-impl<T> Default for RouteService<T>
+impl<STATE> Default for RouteService<STATE>
 where
-    T: RouteState,
+    STATE: RouteState,
 {
     fn default() -> Self {
-        RouteService::<T>::new()
+        RouteService::<STATE>::new()
     }
 }
 
@@ -70,20 +70,20 @@ impl<T> RouteService<T> {
     }
 }
 
-impl<T> RouteService<T>
+impl<STATE> RouteService<STATE>
 where
-    T: RouteState,
+    STATE: RouteState,
 {
     /// Registers a callback to the route service.
     /// Callbacks will be called when the History API experiences a change such as
     /// popping a state off of its stack when the forward or back buttons are pressed.
-    pub fn register_callback(&mut self, callback: Callback<Route<T>>) {
+    pub fn register_callback(&mut self, callback: Callback<Route<STATE>>) {
         self.event_listener = Some(window().add_event_listener(move |event: PopStateEvent| {
             let state_value: Value = event.state();
             let state_string: String = String::try_from(state_value).unwrap_or_default();
-            let state: T = serde_json::from_str(&state_string).unwrap_or_else(|_| {
+            let state: STATE = serde_json::from_str(&state_string).unwrap_or_else(|_| {
                 log::error!("Could not deserialize state string");
-                T::default()
+                STATE::default()
             });
 
 
@@ -101,7 +101,7 @@ where
     /// and creates a history entry that can be navigated via the forward and back buttons.
     ///
     /// The route should be a relative path that starts with a `/`.
-    pub fn set_route(&mut self, route: &str, state: T) {
+    pub fn set_route(&mut self, route: &str, state: STATE) {
         let state_string: String = serde_json::to_string(&state).unwrap_or_else(|_| {
             log::error!("Could not serialize state string");
             "".to_string()
@@ -111,7 +111,7 @@ where
 
     /// Replaces the route with another one removing the most recent history event and
     /// creating another history event in its place.
-    pub fn replace_route(&mut self, route: &str, state: T) {
+    pub fn replace_route(&mut self, route: &str, state: STATE) {
         let state_string: String = serde_json::to_string(&state).unwrap_or_else(|_| {
             log::error!("Could not serialize state string");
             "".to_string()
@@ -120,14 +120,14 @@ where
     }
 
     /// Gets the concatenated path, query, and fragment.
-    pub fn get_route(&self) -> Route<T> {
+    pub fn get_route(&self) -> Route<STATE> {
         let route_string = Self::get_route_from_location(&self.location);
-        let state: T = get_state_string(&self.history)
+        let state: STATE = get_state_string(&self.history)
             .or_else(|| {
                 log::trace!("History state is empty");
                 None
             })
-            .and_then(|state_string| -> Option<Option<T>>{
+            .and_then(|state_string| -> Option<Option<STATE>>{
                 serde_json::from_str(&state_string)
                     .ok()
                     .or_else(|| {
