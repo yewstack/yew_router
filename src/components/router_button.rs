@@ -1,8 +1,5 @@
 //! A component wrapping a `<button>` tag that changes the route.
-use crate::{
-    agent::{RouteAgentDispatcher, RouteRequest},
-    route::Route,
-};
+use crate::{agent::{RouteAgentDispatcher, RouteRequest}, route::Route, Switch};
 use yew::prelude::*;
 
 use super::{Msg, Props};
@@ -11,15 +8,15 @@ use yew::virtual_dom::VNode;
 
 /// Changes the route when clicked.
 #[derive(Debug)]
-pub struct RouterButton<STATE: RouterState = ()> {
+pub struct RouterButton<SW: Switch + Clone + 'static, STATE: RouterState = ()> {
     link: ComponentLink<Self>,
     router: RouteAgentDispatcher<STATE>,
-    props: Props<STATE>,
+    props: Props<SW>,
 }
 
-impl<STATE: RouterState> Component for RouterButton<STATE> {
+impl<SW: Switch +  Clone + 'static, STATE: RouterState> Component for RouterButton<SW, STATE> {
     type Message = Msg;
-    type Properties = Props<STATE>;
+    type Properties = Props<SW>;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let router = RouteAgentDispatcher::new();
@@ -33,10 +30,7 @@ impl<STATE: RouterState> Component for RouterButton<STATE> {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::Clicked => {
-                let route = Route {
-                    route: self.props.link.clone(),
-                    state: self.props.state.clone(),
-                };
+                let route = Route::from(self.props.route.clone());
                 self.router.send(RouteRequest::ChangeRoute(route));
                 false
             }

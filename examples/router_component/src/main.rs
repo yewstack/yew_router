@@ -43,13 +43,13 @@ impl Component for Model {
         html! {
             <div>
                 <nav class="menu",>
-                    <RouterButton link="/a/"> {"Go to A"} </RouterButton>
-                    <RouterAnchor link="/b/#"> {"Go to B"} </RouterAnchor>
-                    <RouterButton link="/c"> {"Go to C"} </RouterButton>
-                    <RouterButton link="/a/c"> {"Go to A/C"} </RouterButton>
-                    <RouterButton link="/e/there"> {"Go to E (hello there)"} </RouterButton>
-                    <RouterButton link="/e/world"> {"Go to E (hello world)"} </RouterButton>
-                    <RouterButton link="/a_bad_path"> {"Go to bad path"} </RouterButton>
+                    <RouterButton<AppRoute> route=AppRoute::A(AllowMissing(None))> {"Go to A"} </RouterButton<AppRoute>>
+                    <RouterAnchor<AppRoute> route=AppRoute::B(BRoute::None)> {"Go to B"} </RouterAnchor<AppRoute>>
+                    <RouterButton<AppRoute> route=AppRoute::C> {"Go to C"} </RouterButton<AppRoute>>
+                    <RouterButton<AppRoute> route=AppRoute::A(AllowMissing(Some(ARoute)))> {"Go to A/C"} </RouterButton<AppRoute>>
+                    <RouterButton<AppRoute> route=AppRoute::E("there".to_string())> {"Go to E (hello there)"} </RouterButton<AppRoute>>
+                    <RouterButton<AppRoute> route=AppRoute::E("world".to_string())> {"Go to E (hello world)"} </RouterButton<AppRoute>>
+                    <RouterButton<AppRoute> route=AppRoute::PageNotFound(Permissive(Some("nope".to_string())))> {"Go to bad path"} </RouterButton<AppRoute>>
                 </nav>
                 <div>
                     <Router<AppRoute>
@@ -93,3 +93,4 @@ pub enum AppRoute {
 #[derive(Debug, Switch, PartialEq, Clone, Copy)]
 #[to = "/c"]
 pub struct ARoute;
+

@@ -10,17 +10,16 @@ use yew::{Children, Properties};
 
 #[allow(deprecated)]
 pub use self::{router_button::RouterButton, router_link::RouterAnchor, router_link::RouterLink};
-use crate::RouterState;
+use crate::{Switch};
 
 // TODO This should also be PartialEq and Clone. Its blocked on Children not supporting that.
-// TODO This should no longer take link & String, and instead take a route: T implementing Switch
+// TODO This should no longer take link & String, and instead take a route: SW implementing Switch
 /// Properties for `RouterButton` and `RouterLink`.
 #[derive(Properties, Default, Debug)]
-pub struct Props<STATE: RouterState> {
-    /// The route that will be set when the component is clicked.
-    pub link: String,
-    /// The state to set when changing the route.
-    pub state: STATE,
+pub struct Props<SW> where SW: Switch {
+    /// The Switched item representing the route.
+    #[props(required)]
+    pub route: SW,
     #[deprecated(note = "Use children field instead (nested html)")]
     /// The text to display.
     pub text: String,
