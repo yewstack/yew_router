@@ -24,9 +24,9 @@ pub use dispatcher::RouteAgentDispatcher;
 
 /// Internal Message used for the RouteAgent.
 #[derive(Debug)]
-pub enum Msg<T> {
+pub enum Msg<STATE> {
     /// Message for when the route is changed.
-    BrowserNavigationRouteChanged(Route<T>), // TODO make this a route?
+    BrowserNavigationRouteChanged(Route<STATE>), // TODO make this a route?
 }
 
 /// Input message type for interacting with the `RouteAgent'.
@@ -57,22 +57,22 @@ pub enum RouteRequest<T = ()> {
 ///
 /// If you use multiple agents with different types, then the Agents won't be able to communicate to
 /// each other and associated components may not work as intended.
-pub struct RouteAgent<T = ()>
+pub struct RouteAgent<STATE = ()>
 where
-    T: RouteState,
+    STATE: RouteState,
 {
     // In order to have the AgentLink<Self> below, apparently T must be constrained like this.
     // Unfortunately, this means that everything related to an agent requires this constraint.
-    link: AgentLink<RouteAgent<T>>,
+    link: AgentLink<RouteAgent<STATE>>,
     /// The service through which communication with the browser happens.
-    route_service: RouteService<T>,
+    route_service: RouteService<STATE>,
     /// A list of all entities connected to the router.
     /// When a route changes, either initiated by the browser or by the app,
     /// the route change will be broadcast to all listening entities.
     subscribers: HashSet<HandlerId>,
 }
 
-impl<T: RouteState> Debug for RouteAgent<T> {
+impl<STATE: RouteState> Debug for RouteAgent<STATE> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("RouteAgent")
             .field("link", &"-")
@@ -82,16 +82,16 @@ impl<T: RouteState> Debug for RouteAgent<T> {
     }
 }
 
-impl<T> Agent for RouteAgent<T>
+impl<STATE> Agent for RouteAgent<STATE>
 where
-    T: RouteState,
+    STATE: RouteState,
 {
-    type Input = RouteRequest<T>;
-    type Message = Msg<T>;
-    type Output = Route<T>;
+    type Input = RouteRequest<STATE>;
+    type Message = Msg<STATE>;
+    type Output = Route<STATE>;
     type Reach = Context;
 
-    fn create(link: AgentLink<RouteAgent<T>>) -> Self {
+    fn create(link: AgentLink<RouteAgent<STATE>>) -> Self {
         let callback = link.callback(Msg::BrowserNavigationRouteChanged);
         let mut route_service = RouteService::new();
         route_service.register_callback(callback);

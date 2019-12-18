@@ -10,13 +10,13 @@ use crate::RouteState;
 /// A wrapped dispatcher to the route agent.
 ///
 /// A component that owns and instance of this can send messages to the RouteAgent, but not receive them.
-pub struct RouteAgentDispatcher<T = ()>(Dispatcher<RouteAgent<T>>)
+pub struct RouteAgentDispatcher<STATE = ()>(Dispatcher<RouteAgent<STATE>>)
 where
-    T: RouteState;
+    STATE: RouteState;
 
-impl<T> RouteAgentDispatcher<T>
+impl<STATE> RouteAgentDispatcher<STATE>
 where
-    T: RouteState
+    STATE: RouteState
 {
     /// Creates a new bridge.
     pub fn new() -> Self {
@@ -25,23 +25,23 @@ where
     }
 }
 
-impl<T> Default for RouteAgentDispatcher<T>
+impl<STATE> Default for RouteAgentDispatcher<STATE>
 where
-    T: RouteState
+    STATE: RouteState
 {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T: RouteState> Debug for RouteAgentDispatcher<T> {
+impl<STATE: RouteState> Debug for RouteAgentDispatcher<STATE> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_tuple("RouteAgentDispatcher").finish()
     }
 }
 
-impl<T: RouteState> Deref for RouteAgentDispatcher<T> {
-    type Target = Dispatcher<RouteAgent<T>>;
+impl<STATE: RouteState> Deref for RouteAgentDispatcher<STATE> {
+    type Target = Dispatcher<RouteAgent<STATE>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0

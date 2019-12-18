@@ -16,11 +16,11 @@ use crate::RouterState;
 // TODO This should no longer take link & String, and instead take a route: T implementing Switch
 /// Properties for `RouterButton` and `RouterLink`.
 #[derive(Properties, Default, Debug)]
-pub struct Props<T: RouterState> {
+pub struct Props<STATE: RouterState> {
     /// The route that will be set when the component is clicked.
     pub link: String,
     /// The state to set when changing the route.
-    pub state: T,
+    pub state: STATE,
     #[deprecated(note = "Use children field instead (nested html)")]
     /// The text to display.
     pub text: String,

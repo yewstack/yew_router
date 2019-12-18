@@ -12,16 +12,16 @@ use yew::{
 /// A wrapped bridge to the route agent.
 ///
 /// A component that owns this can send and receive messages from the agent.
-pub struct RouteAgentBridge<T = ()>(Box<dyn Bridge<RouteAgent<T>>>)
+pub struct RouteAgentBridge<STATE = ()>(Box<dyn Bridge<RouteAgent<STATE>>>)
 where
-    T: RouteState;
+    STATE: RouteState;
 
-impl<T> RouteAgentBridge<T>
+impl<STATE> RouteAgentBridge<STATE>
 where
-    T: RouteState,
+    STATE: RouteState,
 {
     /// Creates a new bridge.
-    pub fn new(callback: Callback<Route<T>>) -> Self {
+    pub fn new(callback: Callback<Route<STATE>>) -> Self {
         let router_agent = RouteAgent::bridge(callback);
         RouteAgentBridge(router_agent)
     }
@@ -29,27 +29,27 @@ where
     /// Experimental, may be removed
     ///
     /// Directly spawn a new Router
-    pub fn spawn(callback: Callback<Route<T>>) -> Self {
+    pub fn spawn(callback: Callback<Route<STATE>>) -> Self {
         use yew::agent::Discoverer;
         let router_agent = Context::spawn_or_join(Some(callback));
         RouteAgentBridge(router_agent)
     }
 }
 
-impl<T: RouteState> Debug for RouteAgentBridge<T> {
+impl<STATE: RouteState> Debug for RouteAgentBridge<STATE> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_tuple("RouteAgentBridge").finish()
     }
 }
 
-impl<T: RouteState> Deref for RouteAgentBridge<T> {
-    type Target = Box<dyn Bridge<RouteAgent<T>>>;
+impl<STATE: RouteState> Deref for RouteAgentBridge<STATE> {
+    type Target = Box<dyn Bridge<RouteAgent<STATE>>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-impl<T: RouteState> DerefMut for RouteAgentBridge<T> {
+impl<STATE: RouteState> DerefMut for RouteAgentBridge<STATE> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
