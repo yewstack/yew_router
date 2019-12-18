@@ -10,7 +10,7 @@ use yew::{html, virtual_dom::VNode, Component, ComponentLink, Html, Properties, 
 
 /// Any state that can be managed by the `Router` must meet the criteria of this trait.
 pub trait RouterState: RouteState + PartialEq  {}
-impl<T> RouterState for T where T: RouteState + PartialEq {}
+impl<STATE> RouterState for STATE where STATE: RouteState + PartialEq {}
 
 /// Rendering control flow component.
 ///
@@ -54,15 +54,15 @@ impl<T> RouterState for T where T: RouteState + PartialEq {}
 /// ```
 // TODO, can M just be removed due to not having to explicitly deal with callbacks anymore? - Just get rid of M
 #[derive(Debug)]
-pub struct Router<SW: Switch + Clone + 'static, T: RouterState = ()> {
+pub struct Router<SW: Switch + Clone + 'static, STATE: RouterState = ()> {
     switch: Option<SW>,
-    props: Props<T, SW>,
-    router_agent: RouteAgentBridge<T>,
+    props: Props<STATE, SW>,
+    router_agent: RouteAgentBridge<STATE>,
 }
 
-impl<SW, T> Router<SW, T>
+impl<SW, STATE> Router<SW, STATE>
 where
-    T: RouterState,
+    STATE: RouterState,
     SW: Switch + Clone + 'static,
 {
     // TODO render fn name is overloaded now with that of the trait: Renderable<_> this should be changed. Maybe: display, show, switch, inner...
@@ -87,21 +87,21 @@ where
     /// });
     /// # }
     /// ```
-    pub fn render<F: RenderFn<Router<SW, T>, SW> + 'static>(f: F) -> Render<SW, T> {
+    pub fn render<F: RenderFn<Router<SW, STATE>, SW> + 'static>(f: F) -> Render<SW, STATE> {
         Render::new(f)
     }
 
     /// Wrap a redirect function so that it can be used by the Router.
-    pub fn redirect<F: RedirectFn<SW, T> + 'static>(f: F) -> Option<Redirect<SW, T>> {
+    pub fn redirect<F: RedirectFn<SW, STATE> + 'static>(f: F) -> Option<Redirect<SW, STATE>> {
         Some(Redirect::new(f))
     }
 }
 
 /// Message for Router.
 #[derive(Debug, Clone)]
-pub enum Msg<T> {
+pub enum Msg<STATE> {
     /// Updates the route
-    UpdateRoute(Route<T>),
+    UpdateRoute(Route<STATE>),
 }
 
 /// Render function that takes a switched route and converts it to HTML
@@ -109,16 +109,16 @@ pub trait RenderFn<CTX: Component, SW>: Fn(SW) -> Html {}
 impl<T, CTX: Component, SW> RenderFn<CTX, SW> for T where T: Fn(SW) -> Html {}
 /// Owned Render function.
 #[derive(Clone)]
-pub struct Render<SW: Switch + Clone + 'static, T: RouterState = ()>(
-    pub(crate) Rc<dyn RenderFn<Router<SW, T>, SW>>,
+pub struct Render<SW: Switch + Clone + 'static, STATE: RouterState = ()>(
+    pub(crate) Rc<dyn RenderFn<Router<SW, STATE>, SW>>,
 );
-impl<T: RouterState, SW: Switch + Clone> Render<SW, T> {
+impl<STATE: RouterState, SW: Switch + Clone> Render<SW, STATE> {
     /// New render function
-    fn new<F: RenderFn<Router<SW, T>, SW> + 'static>(f: F) -> Self {
+    fn new<F: RenderFn<Router<SW, STATE>, SW> + 'static>(f: F) -> Self {
         Render(Rc::new(f))
     }
 }
-impl<T: RouterState, SW: Switch + Clone> Debug for Render<SW, T> {
+impl<STATE: RouterState, SW: Switch + Clone> Debug for Render<SW, STATE> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("Render").finish()
     }
@@ -146,17 +146,17 @@ impl<STATE: RouterState, SW: Switch> Debug for Redirect<SW, STATE> {
 
 /// Properties for Router.
 #[derive(Properties, Clone)]
-pub struct Props<T: RouterState, SW: Switch + Clone + 'static> {
+pub struct Props<STATE: RouterState, SW: Switch + Clone + 'static> {
     /// Render function that takes a Switch and produces Html
     #[props(required)]
-    pub render: Render<SW, T>,
+    pub render: Render<SW, STATE>,
     /// Optional redirect function that will convert the route to a known switch variant if explicit matching fails.
     /// This should mostly be used to handle 404s and redirection.
     /// It is not strictly necessary as your Switch is capable of handling unknown routes using `#[to="/{*:any}"]`.
-    pub redirect: Option<Redirect<SW, T>>,
+    pub redirect: Option<Redirect<SW, STATE>>,
 }
 
-impl<T: RouterState, SW: Switch + Clone> Debug for Props<T, SW> {
+impl<STATE: RouterState, SW: Switch + Clone> Debug for Props<STATE, SW> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), FmtError> {
         f.debug_struct("Props").finish()
     }
