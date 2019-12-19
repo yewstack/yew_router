@@ -1,18 +1,26 @@
 //! Wrapper around route url string, and associated history state.
 #[cfg(feature = "service")]
-use stdweb::{unstable::TryFrom, Value};
-#[cfg(feature = "service")]
 use serde::de::DeserializeOwned;
+#[cfg(feature = "service")]
+use stdweb::{unstable::TryFrom, Value};
 
 use serde::{Deserialize, Serialize};
-use std::{fmt, ops::Deref};
-use std::fmt::Debug;
+use std::{
+    fmt::{self, Debug},
+    ops::Deref,
+};
 
 /// Any state that can be used in the router agent must meet the criteria of this trait.
 #[cfg(feature = "service")]
-pub trait RouteState: Serialize + DeserializeOwned + Debug + Clone + Default + TryFrom<Value> + 'static {}
+pub trait RouteState:
+    Serialize + DeserializeOwned + Debug + Clone + Default + TryFrom<Value> + 'static
+{
+}
 #[cfg(feature = "service")]
-impl<T> RouteState for T where T: Serialize + DeserializeOwned + Debug + Clone + Default + TryFrom<Value> + 'static {}
+impl<T> RouteState for T where
+    T: Serialize + DeserializeOwned + Debug + Clone + Default + TryFrom<Value> + 'static
+{
+}
 
 /// The representation of a route, segmented into different sections for easy access.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -36,7 +44,7 @@ impl Route<()> {
     }
 }
 
-impl <STATE: Default> Route<STATE> {
+impl<STATE: Default> Route<STATE> {
     /// Creates a new route out of a string, setting the state to its default value.
     pub fn new_default_state<T: AsRef<str>>(route: T) -> Self {
         Route {

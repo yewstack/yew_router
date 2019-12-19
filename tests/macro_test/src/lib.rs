@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use yew_router::{prelude::Route, Switch};
-    use yew_router::switch::Permissive;
+    use yew_router::{prelude::Route, switch::Permissive, Switch};
 
     #[test]
     fn single_enum_variant() {
@@ -474,10 +473,7 @@ mod tests {
 
                 let route = Route::new_no_state("/hello");
                 let switched = Test::switch(route).expect("Should produce item - test");
-                assert_eq!(
-                    switched,
-                    Test::Variant
-                );
+                assert_eq!(switched, Test::Variant);
 
                 let route = Route::new_no_state("/some/garbage#/hello");
                 let switched = FragmentAdapter::<Test>::switch(route).expect("Should produce item");

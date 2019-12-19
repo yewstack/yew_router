@@ -1,5 +1,9 @@
 //! A component wrapping an `<a>` tag that changes the route.
-use crate::{agent::{RouteAgentDispatcher, RouteRequest}, route::Route, Switch};
+use crate::{
+    agent::{RouteAgentDispatcher, RouteRequest},
+    route::Route,
+    Switch,
+};
 use yew::prelude::*;
 
 use super::{Msg, Props};
@@ -50,25 +54,25 @@ impl<SW: Switch + Clone + 'static, STATE: RouterState> Component for RouterAncho
 
     fn view(&self) -> VNode {
         use stdweb::web::event::IEvent;
-//        let target: &str = &self.props.link;
+        //        let target: &str = &self.props.link;
         let cb = |x| self.link.callback(x);
 
         html! {
-            <a
-                class=self.props.classes.clone(),
-                onclick=cb(|event: ClickEvent | {
-                    event.prevent_default();
-                    Msg::Clicked
-                }),
-                disabled=self.props.disabled,
-//                href=target,
-            >
-                {
-                    #[allow(deprecated)]
-                    &self.props.text
+                    <a
+                        class=self.props.classes.clone(),
+                        onclick=cb(|event: ClickEvent | {
+                            event.prevent_default();
+                            Msg::Clicked
+                        }),
+                        disabled=self.props.disabled,
+        //                href=target,
+                    >
+                        {
+                            #[allow(deprecated)]
+                            &self.props.text
+                        }
+                        {self.props.children.iter().collect::<VNode>()}
+                    </a>
                 }
-                {self.props.children.iter().collect::<VNode>()}
-            </a>
-        }
     }
 }

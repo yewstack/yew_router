@@ -1,11 +1,10 @@
 //! Dispatcher to RouteAgent.
-use crate::agent::{RouteAgent};
+use crate::{agent::RouteAgent, RouteState};
 use std::{
     fmt::{Debug, Error as FmtError, Formatter},
     ops::{Deref, DerefMut},
 };
 use yew::agent::{Dispatched, Dispatcher};
-use crate::RouteState;
 
 /// A wrapped dispatcher to the route agent.
 ///
@@ -16,7 +15,7 @@ where
 
 impl<STATE> RouteAgentDispatcher<STATE>
 where
-    STATE: RouteState
+    STATE: RouteState,
 {
     /// Creates a new bridge.
     pub fn new() -> Self {
@@ -27,7 +26,7 @@ where
 
 impl<STATE> Default for RouteAgentDispatcher<STATE>
 where
-    STATE: RouteState
+    STATE: RouteState,
 {
     fn default() -> Self {
         Self::new()

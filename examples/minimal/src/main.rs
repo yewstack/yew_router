@@ -73,7 +73,7 @@ impl Component for Model {
                     AppRoute::C => format!("/c"),
                 };
                 self.route_service.set_route(&route_string, ());
-                self.route = Route{
+                self.route = Route {
                     route: route_string,
                     state: (),
                 };

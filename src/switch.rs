@@ -1,5 +1,5 @@
 //! Parses routes into enums or structs.
-use crate::{route::Route};
+use crate::route::Route;
 use std::fmt::Write;
 
 /// Alias to Switch.
@@ -83,7 +83,7 @@ pub struct LeadingSlash<T>(pub T);
 impl<U: Switch> Switch for LeadingSlash<U> {
     fn from_route_part<STATE>(part: String, state: Option<STATE>) -> (Option<Self>, Option<STATE>) {
         if part.starts_with('/') {
-            let part =  part[1..].to_string();
+            let part = part[1..].to_string();
             let (inner, state) = U::from_route_part(part, state);
             (inner.map(LeadingSlash), state)
         } else {
@@ -183,10 +183,7 @@ impl<SW: Switch, STATE: Default> From<SW> for Route<STATE> {
 
 impl<T: std::str::FromStr + std::fmt::Display> Switch for T {
     fn from_route_part<U>(part: String, state: Option<U>) -> (Option<Self>, Option<U>) {
-        (
-            ::std::str::FromStr::from_str(&part).ok(),
-            state
-        )
+        (::std::str::FromStr::from_str(&part).ok(), state)
     }
 
     fn build_route_section<U>(self, route: &mut String) -> Option<U> {
@@ -208,10 +205,7 @@ mod test {
 
     #[test]
     fn can_get_string_from_empty_str() {
-        let (s, _state) = String::from_route_part::<()>(
-            "".to_string(),
-            Some(()),
-        );
+        let (s, _state) = String::from_route_part::<()>("".to_string(), Some(()));
         assert_eq!(s, Some("".to_string()))
     }
 
@@ -235,10 +229,8 @@ mod test {
 
     #[test]
     fn can_get_option_string_from_empty_str() {
-        let (s, _state): (Option<Permissive<String>>, Option<()>) = Permissive::from_route_part(
-            "".to_string(),
-            Some(()),
-        );
+        let (s, _state): (Option<Permissive<String>>, Option<()>) =
+            Permissive::from_route_part("".to_string(), Some(()));
         assert_eq!(s, Some(Permissive(Some("".to_string()))))
     }
 }

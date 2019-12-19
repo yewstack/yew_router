@@ -1,8 +1,8 @@
 //! Parser that consumes a string and produces the first representation of the matcher.
 use crate::{
     core::{
-        capture, exact, fragment_exact, get_and, get_end, get_hash, get_question,
-        get_slash, nothing, query,
+        capture, exact, fragment_exact, get_and, get_end, get_hash, get_question, get_slash,
+        nothing, query,
     },
     error::{get_reason, ParseError, ParserErrorReason, PrettyParseError},
     FieldNamingScheme,
@@ -391,7 +391,7 @@ fn parse_impl<'a>(
                 alt((fragment_exact, capture(field_naming_scheme), get_end))(i)
             }
             RouteParserToken::Exact(_) => alt((capture(field_naming_scheme), get_end))(i),
-            RouteParserToken::Capture(_)=> alt((fragment_exact, get_end))(i),
+            RouteParserToken::Capture(_) => alt((fragment_exact, get_end))(i),
             _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
                 expected: vec![],

@@ -1,5 +1,9 @@
 //! A component wrapping a `<button>` tag that changes the route.
-use crate::{agent::{RouteAgentDispatcher, RouteRequest}, route::Route, Switch};
+use crate::{
+    agent::{RouteAgentDispatcher, RouteRequest},
+    route::Route,
+    Switch,
+};
 use yew::prelude::*;
 
 use super::{Msg, Props};
@@ -14,7 +18,7 @@ pub struct RouterButton<SW: Switch + Clone + 'static, STATE: RouterState = ()> {
     props: Props<SW>,
 }
 
-impl<SW: Switch +  Clone + 'static, STATE: RouterState> Component for RouterButton<SW, STATE> {
+impl<SW: Switch + Clone + 'static, STATE: RouterState> Component for RouterButton<SW, STATE> {
     type Message = Msg;
     type Properties = Props<SW>;
 

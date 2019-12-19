@@ -1,6 +1,10 @@
 //! Router Component.
 
-use crate::{agent::{RouteAgentBridge, RouteRequest}, route::Route, Switch, RouteState};
+use crate::{
+    agent::{RouteAgentBridge, RouteRequest},
+    route::Route,
+    RouteState, Switch,
+};
 use std::{
     fmt::{self, Debug, Error as FmtError, Formatter},
     rc::Rc,
@@ -9,7 +13,7 @@ use yew::{html, virtual_dom::VNode, Component, ComponentLink, Html, Properties, 
 
 
 /// Any state that can be managed by the `Router` must meet the criteria of this trait.
-pub trait RouterState: RouteState + PartialEq  {}
+pub trait RouterState: RouteState + PartialEq {}
 impl<STATE> RouterState for STATE where STATE: RouteState + PartialEq {}
 
 /// Rendering control flow component.
@@ -130,7 +134,7 @@ pub trait RedirectFn<SW, STATE>: Fn(Route<STATE>) -> SW {}
 impl<T, SW, STATE> RedirectFn<SW, STATE> for T where T: Fn(Route<STATE>) -> SW {}
 /// Clonable Redirect function
 #[derive(Clone)]
-pub struct Redirect<SW: Switch + 'static, STATE:  RouterState>(
+pub struct Redirect<SW: Switch + 'static, STATE: RouterState>(
     pub(crate) Rc<dyn RedirectFn<SW, STATE>>,
 );
 impl<STATE: RouterState, SW: Switch + 'static> Redirect<SW, STATE> {

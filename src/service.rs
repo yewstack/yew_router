@@ -1,13 +1,17 @@
 //! Service that interfaces with the browser to handle routing.
 
-use stdweb::{web::{event::PopStateEvent, window, EventListenerHandle, History, IEventTarget, Location}, Value};
+use stdweb::{
+    web::{event::PopStateEvent, window, EventListenerHandle, History, IEventTarget, Location},
+    Value,
+};
 use yew::callback::Callback;
 
-use crate::route::{RouteState, Route};
+use crate::route::{Route, RouteState};
 use std::marker::PhantomData;
-use stdweb::unstable::TryFrom;
-use stdweb::unstable::TryInto;
-use stdweb::js;
+use stdweb::{
+    js,
+    unstable::{TryFrom, TryInto},
+};
 
 /// A service that facilitates manipulation of the browser's URL bar and responding to browser events
 /// when users press 'forward' or 'back'.
@@ -52,8 +56,6 @@ impl<T> RouteService<T> {
         format_route_string(&path, &query, &fragment)
     }
 
-
-
     /// Gets the path name of the current url.
     pub fn get_path(&self) -> String {
         self.location.pathname().unwrap()
@@ -93,7 +95,7 @@ where
             let route: String = Self::get_route_from_location(&location);
 
 
-            callback.emit(Route{route, state})
+            callback.emit(Route { route, state })
         }));
     }
 
@@ -139,7 +141,7 @@ where
             .unwrap_or_default();
         Route {
             route: route_string,
-            state
+            state,
         }
     }
 }
@@ -168,4 +170,3 @@ fn get_state(history: &History) -> Value {
 fn get_state_string(history: &History) -> Option<String> {
     get_state(history).try_into().ok()
 }
-

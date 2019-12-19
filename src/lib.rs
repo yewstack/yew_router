@@ -87,9 +87,9 @@ pub mod prelude {
     pub use super::matcher::Captures;
 
     #[cfg(feature = "service")]
-    pub use crate::service::RouteService;
-    #[cfg(feature = "service")]
     pub use crate::route::RouteState;
+    #[cfg(feature = "service")]
+    pub use crate::service::RouteService;
 
     #[cfg(feature = "agent")]
     pub use crate::agent::RouteAgent;
@@ -109,8 +109,10 @@ pub mod prelude {
     #[cfg(feature = "router")]
     pub use crate::router::RouterState;
 
-    pub use crate::route::Route;
-    pub use crate::switch::{Switch, Routable};
+    pub use crate::{
+        route::Route,
+        switch::{Routable, Switch},
+    };
     pub use yew_router_macro::Switch;
 }
 
