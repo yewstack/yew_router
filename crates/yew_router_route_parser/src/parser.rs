@@ -1,7 +1,7 @@
 //! Parser that consumes a string and produces the first representation of the matcher.
 use crate::{
     core::{
-        capture, capture_single, exact, fragment_exact, get_and, get_end, get_hash, get_question,
+        capture, exact, fragment_exact, get_and, get_end, get_hash, get_question,
         get_slash, nothing, query,
     },
     error::{get_reason, ParseError, ParserErrorReason, PrettyParseError},
