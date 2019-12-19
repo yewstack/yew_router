@@ -1,8 +1,5 @@
 //! A component wrapping an `<a>` tag that changes the route.
-use crate::{
-    agent::{RouteAgentDispatcher, RouteRequest},
-    route::Route,
-};
+use crate::{agent::{RouteAgentDispatcher, RouteRequest}, route::Route, Switch};
 use yew::prelude::*;
 
 use super::{Msg, Props};
@@ -17,15 +14,15 @@ pub type RouterLink<T> = RouterAnchor<T>;
 
 /// An anchor tag Component that when clicked, will navigate to the provided route.
 #[derive(Debug)]
-pub struct RouterAnchor<STATE: RouterState = ()> {
+pub struct RouterAnchor<SW: Switch + Clone + 'static, STATE: RouterState = ()> {
     link: ComponentLink<Self>,
     router: RouteAgentDispatcher<STATE>,
-    props: Props<STATE>,
+    props: Props<SW>,
 }
 
-impl<STATE: RouterState> Component for RouterAnchor<STATE> {
+impl<SW: Switch + Clone + 'static, STATE: RouterState> Component for RouterAnchor<SW, STATE> {
     type Message = Msg;
-    type Properties = Props<STATE>;
+    type Properties = Props<SW>;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let router = RouteAgentDispatcher::new();
@@ -39,10 +36,7 @@ impl<STATE: RouterState> Component for RouterAnchor<STATE> {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::Clicked => {
-                let route = Route {
-                    route: self.props.link.clone(),
-                    state: self.props.state.clone(),
-                };
+                let route = Route::from(self.props.route.clone());
                 self.router.send(RouteRequest::ChangeRoute(route));
                 false
             }
@@ -56,7 +50,7 @@ impl<STATE: RouterState> Component for RouterAnchor<STATE> {
 
     fn view(&self) -> VNode {
         use stdweb::web::event::IEvent;
-        let target: &str = &self.props.link;
+//        let target: &str = &self.props.link;
         let cb = |x| self.link.callback(x);
 
         html! {
@@ -67,7 +61,7 @@ impl<STATE: RouterState> Component for RouterAnchor<STATE> {
                     Msg::Clicked
                 }),
                 disabled=self.props.disabled,
-                href=target,
+//                href=target,
             >
                 {
                     #[allow(deprecated)]

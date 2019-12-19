@@ -1,6 +1,8 @@
 use crate::{c_component::CModel, ARoute};
 use yew::{prelude::*, virtual_dom::VNode, Properties};
 use yew_router::prelude::*;
+use yew_router::switch::AllowMissing;
+use crate::AppRoute;
 
 pub struct AModel {
     props: Props,
@@ -36,12 +38,12 @@ impl Component for AModel {
             <div>
                 { "I am the A component"}
                 <div>
-                    <RouterButton link="/a/c">
+                    <RouterButton<AppRoute> route=AppRoute::A(AllowMissing(Some(ARoute)))>
                         {"Go to a/c"}
                     </RouterButton>
-                    <RouterButton link="/a/d">
-                        {"Go to a/d (route does not exist)"}
-                    </RouterButton>
+//                    <RouterButton route="/a/d">
+//                        {"Go to a/d (route does not exist)"}
+//                    </RouterButton>
                 </div>
                 <div>
                 {
