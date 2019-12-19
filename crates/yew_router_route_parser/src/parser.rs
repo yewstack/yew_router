@@ -388,10 +388,10 @@ fn parse_impl<'a>(
         },
         ParserState::Fragment { prev_token } => match prev_token {
             RouteParserToken::FragmentBegin => {
-                alt((fragment_exact, capture_single(field_naming_scheme), get_end))(i)
+                alt((fragment_exact, capture(field_naming_scheme), get_end))(i)
             }
-            RouteParserToken::Exact(_) => alt((capture_single(field_naming_scheme), get_end))(i),
-            RouteParserToken::Capture(_) => alt((fragment_exact, get_end))(i),
+            RouteParserToken::Exact(_) => alt((capture(field_naming_scheme), get_end))(i),
+            RouteParserToken::Capture(_)=> alt((fragment_exact, get_end))(i),
             _ => Err(nom::Err::Failure(ParseError {
                 reason: Some(ParserErrorReason::InvalidState),
                 expected: vec![],
