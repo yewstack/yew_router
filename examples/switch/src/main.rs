@@ -1,5 +1,4 @@
-use yew_router::{route::Route, Switch};
-use yew_router::switch::Permissive;
+use yew_router::{route::Route, switch::Permissive, Switch};
 
 fn main() {
     let route = Route::new_no_state("/some/route");

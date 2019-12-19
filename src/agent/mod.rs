@@ -21,7 +21,6 @@ mod dispatcher;
 pub use dispatcher::RouteAgentDispatcher;
 
 
-
 /// Internal Message used for the RouteAgent.
 #[derive(Debug)]
 pub enum Msg<STATE> {
@@ -122,8 +121,7 @@ where
         match msg {
             RouteRequest::ReplaceRoute(route) => {
                 let route_string: String = route.to_string();
-                self.route_service
-                    .replace_route(&route_string, route.state);
+                self.route_service.replace_route(&route_string, route.state);
                 let route = self.route_service.get_route();
                 for sub in &self.subscribers {
                     self.link.respond(*sub, route.clone());
@@ -131,14 +129,12 @@ where
             }
             RouteRequest::ReplaceRouteNoBroadcast(route) => {
                 let route_string: String = route.to_string();
-                self.route_service
-                    .replace_route(&route_string, route.state);
+                self.route_service.replace_route(&route_string, route.state);
             }
             RouteRequest::ChangeRoute(route) => {
                 let route_string: String = route.to_string();
                 // set the route
-                self.route_service
-                    .set_route(&route_string, route.state);
+                self.route_service.set_route(&route_string, route.state);
                 // get the new route.
                 let route = self.route_service.get_route();
                 // broadcast it to all listening components
@@ -148,8 +144,7 @@ where
             }
             RouteRequest::ChangeRouteNoBroadcast(route) => {
                 let route_string: String = route.to_string();
-                self.route_service
-                    .set_route(&route_string, route.state);
+                self.route_service.set_route(&route_string, route.state);
             }
             RouteRequest::GetCurrentRoute => {
                 let route = self.route_service.get_route();

@@ -62,14 +62,18 @@ pub fn parse_str_and_optimize_tokens(
 /// In the process of converting the tokens, this function will condense multiple RouteParserTokens
 /// that represent literals into one Exact variant if multiple reducible tokens happen to occur in a row.
 pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
-    let mut new_tokens = vec![];
+    let mut new_tokens: Vec<MatcherToken> = vec![];
     let mut run: Vec<RouteParserToken> = vec![];
 
-    fn empty_run(run: &mut Vec<RouteParserToken>) -> MatcherToken {
+    fn empty_run(run: &mut Vec<RouteParserToken>) -> Option<MatcherToken> {
         let segment = run.iter().map(RouteParserToken::as_str).collect::<String>();
         run.clear();
 
-        MatcherToken::Exact(segment)
+        if !segment.is_empty() {
+            Some(MatcherToken::Exact(segment))
+        } else {
+            None
+        }
     }
 
     fn empty_run_with_query_cap_at_end(
@@ -95,7 +99,9 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
             | RouteParserToken::QuerySeparator
             | RouteParserToken::Exact(_) => run.push(*token),
             RouteParserToken::Capture(cap) => {
-                new_tokens.push(empty_run(&mut run));
+                if let Some(current_run) = empty_run(&mut run) {
+                    new_tokens.push(current_run);
+                }
                 new_tokens.push(MatcherToken::Capture(CaptureVariant::from(*cap)))
             }
             RouteParserToken::Query {
@@ -113,7 +119,9 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
                 }
             },
             RouteParserToken::End => {
-                new_tokens.push(empty_run(&mut run));
+                if let Some(current_run) = empty_run(&mut run) {
+                    new_tokens.push(current_run);
+                }
                 new_tokens.push(MatcherToken::End);
             }
             RouteParserToken::Nothing => {}
@@ -122,7 +130,9 @@ pub fn convert_tokens(tokens: &[RouteParserToken]) -> Vec<MatcherToken> {
 
     // Empty the run at the end.
     if !run.is_empty() {
-        new_tokens.push(empty_run(&mut run));
+        if let Some(current_run) = empty_run(&mut run) {
+            new_tokens.push(current_run);
+        }
     }
 
     new_tokens

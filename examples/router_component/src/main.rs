@@ -93,4 +93,3 @@ pub enum AppRoute {
 #[derive(Debug, Switch, PartialEq, Clone, Copy)]
 #[to = "/c"]
 pub struct ARoute;
-

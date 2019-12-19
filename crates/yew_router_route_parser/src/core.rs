@@ -184,14 +184,6 @@ pub fn capture<'a>(
     map(capture_impl(field_naming_scheme), RouteParserToken::Capture)
 }
 
-pub fn capture_single<'a>(
-    field_naming_scheme: FieldNamingScheme,
-) -> impl Fn(&'a str) -> IResult<&'a str, RouteParserToken<'a>, ParseError> {
-    map(
-        capture_single_impl(field_naming_scheme),
-        RouteParserToken::Capture,
-    )
-}
 
 fn capture_single_impl<'a>(
     field_naming_scheme: FieldNamingScheme,

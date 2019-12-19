@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use yew_router::{prelude::Route, Switch};
-    use yew_router::switch::Permissive;
+    use yew_router::{prelude::Route, switch::Permissive, Switch};
 
     #[test]
     fn single_enum_variant() {
@@ -452,6 +451,40 @@ mod tests {
                     ipsum: "dolor".to_string()
                 }
             )
+        }
+
+        mod fragment {
+            use super::*;
+
+            #[derive(Switch, Debug, Clone, PartialEq)]
+            #[to = "{*:path}#{*:route}"]
+            pub struct FragmentAdapter<W: Switch> {
+                path: String,
+                route: W,
+            }
+
+            #[test]
+            fn fragment_is_ignored() {
+                #[derive(Debug, Switch, Clone, PartialEq)]
+                pub enum Test {
+                    #[to = "/hello"]
+                    Variant,
+                }
+
+                let route = Route::new_no_state("/hello");
+                let switched = Test::switch(route).expect("Should produce item - test");
+                assert_eq!(switched, Test::Variant);
+
+                let route = Route::new_no_state("/some/garbage#/hello");
+                let switched = FragmentAdapter::<Test>::switch(route).expect("Should produce item");
+                assert_eq!(
+                    switched,
+                    FragmentAdapter {
+                        path: "/some/garbage".to_string(),
+                        route: Test::Variant
+                    }
+                )
+            }
         }
     }
 }

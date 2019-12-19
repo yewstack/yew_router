@@ -69,7 +69,7 @@ fn matcher_impl<'a, 'b: 'a, CAP: CaptureCollection<'b>>(
     settings: MatcherSettings,
     mut i: &'a str,
 ) -> IResult<&'a str, CAP> {
-    trace!("Attempting to match path: {:?} using: {:?}", i, tokens);
+    trace!("Attempting to match route: {:?} using: {:?}", i, tokens);
 
     let mut iter = tokens.iter().peekable();
 
