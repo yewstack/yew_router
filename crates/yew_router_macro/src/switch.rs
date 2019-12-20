@@ -5,20 +5,20 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{quote, ToTokens};
 use syn::{
-    export::TokenStream2, parse_macro_input, Data, DeriveInput, Fields, GenericParam, Generics,
-    Ident, Variant,
+    export::TokenStream2, parse_macro_input, Data, DeriveInput, Fields, Ident, Variant,
 };
 
 mod attribute;
 mod enum_impl;
 mod shadow;
 mod struct_impl;
+mod switch_impl;
 
 use self::attribute::AttrToken;
-use syn::punctuated::Punctuated;
 use yew_router_route_parser::FieldNamingScheme;
 use crate::switch::struct_impl::{StructInner};
-use crate::switch::enum_impl::{InnerEnum};
+use crate::switch::enum_impl::{EnumInner};
+use self::switch_impl::SwitchImpl;
 
 /// Holds data that is required to derive Switch for a struct or a single enum variant.
 pub struct SwitchItem {
@@ -53,7 +53,7 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                 fields: ds.fields,
             };
 
-            ImplSwitch {
+            SwitchImpl {
                 target_ident: &ident,
                 generics: &generics,
                 inner: StructInner {
@@ -91,10 +91,10 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                 .collect::<Vec<SwitchItem>>();
 
 
-            ImplSwitch {
+            SwitchImpl {
                 target_ident: &ident,
                 generics: &generics,
-                inner: InnerEnum {
+                inner: EnumInner {
                     from_route_part: enum_impl::FromRoutePart { switch_variants: &switch_variants, enum_ident: &ident },
                     build_route_section: enum_impl::BuildRouteSection {
                         switch_items: &switch_variants,
@@ -189,46 +189,4 @@ fn unnamed_field_index_item(index: usize) -> Ident {
     Ident::new(&format!("__field_{}", index), Span::call_site())
 }
 
-/// Creates the "impl <X,Y,Z> ::yew_router::Switch for TypeName<X,Y,Z> where etc.." line.
-pub struct ImplSwitch<'a, T: ToTokens> {
-    target_ident: &'a Ident,
-    generics: &'a Generics,
-    inner: T
-}
 
-impl <'a, T: ToTokens> ToTokens for ImplSwitch<'a, T> {
-    fn to_tokens(&self, tokens: &mut TokenStream2) {
-
-        let ident = self.target_ident;
-        let inner = &self.inner;
-
-        let line_tokens = if self.generics.params.is_empty() {
-            quote! {
-                impl ::yew_router::Switch for #ident {
-                    #inner
-                }
-            }
-        } else {
-            let params = &self.generics.params;
-            let param_idents = params
-                .iter()
-                .map(|p: &GenericParam| {
-                    match p {
-                        GenericParam::Type(ty) => ty.ident.clone(),
-//                    GenericParam::Lifetime(lt) => lt.lifetime, // TODO different type here, must be handled by collecting into a new enum and defining how to convert _that_ to tokens.
-                        _ => unimplemented!("Not all type parameter variants (lifetimes and consts) are supported in Switch")
-                    }
-                })
-                .collect::<Punctuated<_,syn::token::Comma>>();
-
-            let where_clause = &self.generics.where_clause;
-            quote! {
-                impl <#params> ::yew_router::Switch for #ident <#param_idents> #where_clause
-                {
-                    #inner
-                }
-            }
-        };
-        tokens.extend(line_tokens)
-    }
-}

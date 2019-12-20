@@ -10,14 +10,14 @@ mod build_route_section;
 mod from_route_part;
 
 
-pub struct InnerEnum<'a> {
+pub struct EnumInner<'a> {
     pub from_route_part: FromRoutePart<'a>,
     pub build_route_section: BuildRouteSection<'a>
 }
 
-impl <'a> ToTokens for InnerEnum<'a> {
+impl <'a> ToTokens for EnumInner<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let InnerEnum { from_route_part, build_route_section } = self;
+        let EnumInner { from_route_part, build_route_section } = self;
         tokens.extend(quote! {
             #from_route_part
             #build_route_section
