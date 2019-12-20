@@ -14,7 +14,19 @@
 END TEMPLATE-->
 
 ## ✨ **0.8.0** *(TBD)*
-
+- #### ⚡️ Features
+    - Use a default type parameter of `()` to specify state-related type parameters instead of the old macro-based solution. [[157](https://github.com/yewstack/yew_router/issues/157)]
+    - Remove need for `JsSerializable` bound on the state parameter used for storing extra data in the history API.[[185](https://github.com/yewstack/yew_router/issues/185)]
+    - RouterLink and RouterButton now support having children Html. This deprecates the `text` prop. [[192](https://github.com/yewstack/yew_router/issues/192)]
+    - Fragment routing is now easily implementable by using an adapter because parser rules for the routing syntax were relaxed. [[195](https://github.com/yewstack/yew_router/issues/195)] [[211](https://github.com/yewstack/yew_router/pull/211)]
+    - Support using this library only with the Switch derive, allowing it to run in non-web contexts. [[199](https://github.com/yewstack/yew_router/issues/199)]
+- #### 🚨 Breaking changes
+  - If you were using `default-features = false`,  you will have to now specify `features = ["service"]` to get the same behavior as before. [[199](https://github.com/yewstack/yew_router/issues/199)]
+  - `RouterAnchor` and `RouterButton` now have props that take a `route: SW where SW: Switch` prop instead of a `link: String` and they now have a mandatory type parameter that specifies this `SW`. [[207](https://github.com/yewstack/yew_router/issues/207)]
+  - `Route`'s state field now holds a `T` instead of an `Option<T>`. [[205](https://github.com/yewstack/yew_router/issues/205)]
+  - Using default type parameters to specify the state typ instead of the macro that generated a module (`unit_state`) means that any imports from that module should now be replaced with the path that the type normally has in the project. [[157](https://github.com/yewstack/yew_router/issues/157)]
+- #### Inconsequential
+  - Change state related type parameters from `T` to `STATE`. [[208](https://github.com/yewstack/yew_router/issues/208)]
 ## ✨ **0.7.0** *(2019-11-11)*
 
 - #### ⚡️ Features
