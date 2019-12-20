@@ -18,7 +18,7 @@ use self::attribute::AttrToken;
 use syn::punctuated::Punctuated;
 use yew_router_route_parser::FieldNamingScheme;
 use crate::switch::struct_impl::{StructInner};
-use crate::switch::enum_impl::EnumImpl;
+use crate::switch::enum_impl::{InnerEnum};
 
 /// Holds data that is required to derive Switch for a struct or a single enum variant.
 pub struct SwitchItem {
@@ -90,14 +90,19 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                 })
                 .collect::<Vec<SwitchItem>>();
 
-            let mut output = TokenStream2::new();
-            EnumImpl {
-                enum_ident: ident,
-                switch_variants,
-                generics
-            }.to_tokens(&mut output);
-            output.into()
-//            generate_enum_impl(ident, switch_variants, generics)
+
+            ImplSwitch {
+                target_ident: &ident,
+                generics: &generics,
+                inner: InnerEnum {
+                    from_route_part: enum_impl::FromRoutePart { switch_variants: &switch_variants, enum_ident: &ident },
+                    build_route_section: enum_impl::BuildRouteSection {
+                        switch_items: &switch_variants,
+                        enum_ident: &ident,
+                        match_item: &Ident::new("self", Span::call_site())
+                    }
+                }
+            }.to_token_stream().into()
         }
         Data::Union(_du) => panic!("Deriving FromCaptures not supported for Unions."),
     }
@@ -173,77 +178,7 @@ fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> Toke
     }
 }
 
-/// The serializer makes up the body of `build_route_section`.
-pub fn build_serializer_for_enum(
-    switch_items: &[SwitchItem],
-    enum_ident: &Ident,
-    match_item: &Ident,
-) -> TokenStream2 {
-    let variants = switch_items.iter().map(|switch_item: &SwitchItem| {
-        let SwitchItem {
-            matcher,
-            ident,
-            fields,
-        } = switch_item;
-        match fields {
-            Fields::Named(fields_named) => {
-                let field_names = fields_named
-                    .named
-                    .iter()
-                    .filter_map(|named| named.ident.as_ref());
-                let writers = matcher
-                    .iter()
-                    .map(|token| write_for_token(token, FieldType::Named));
-                quote! {
-                    #enum_ident::#ident{#(#field_names),*} => {
-                        #(#writers)*
-                    }
-                }
-            }
-            Fields::Unnamed(fields_unnamed) => {
-                let field_names = fields_unnamed
-                    .unnamed
-                    .iter()
-                    .enumerate()
-                    .map(|(index, _)| unnamed_field_index_item(index));
-                let mut item_count = 0;
-                let writers = matcher.iter().map(|token| {
-                    if let ShadowMatcherToken::Capture(_) = &token {
-                        let ts = write_for_token(token, FieldType::Unnamed { index: item_count });
-                        item_count += 1;
-                        ts
-                    } else {
-                        // Its either a literal, or something that will panic currently
-                        write_for_token(token, FieldType::Unit)
-                    }
-                });
-                quote! {
-                    #enum_ident::#ident(#(#field_names),*) => {
-                        #(#writers)*
-                    }
-                }
-            }
-            Fields::Unit => {
-                let writers = matcher
-                    .iter()
-                    .map(|token| write_for_token(token, FieldType::Unit));
-                quote! {
-                    #enum_ident::#ident => {
-                        #(#writers)*
-                    }
-                }
-            }
-        }
-    });
-    quote! {
-        use ::std::fmt::Write as __Write;
-        let mut state: Option<__T> = None;
-        match #match_item {
-            #(#variants)*,
-        }
-        return state;
-    }
-}
+
 
 
 
