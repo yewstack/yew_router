@@ -1,22 +1,24 @@
-use syn::export::{ToTokens, TokenStream2};
 use proc_macro2::Ident;
-use syn::{Generics, GenericParam};
-use syn::punctuated::Punctuated;
 use quote::quote;
+use syn::{
+    export::{ToTokens, TokenStream2},
+    punctuated::Punctuated,
+    GenericParam, Generics,
+};
 
+// Todo, consider removing the T here and replacing it with an enum.
 /// Creates the "impl <X,Y,Z> ::yew_router::Switch for TypeName<X,Y,Z> where etc.." line.
 ///
 /// Then populates the body of the implementation with the specified `T`.
 pub struct SwitchImpl<'a, T> {
     pub target_ident: &'a Ident,
     pub generics: &'a Generics,
-    pub inner: T
+    pub inner: T,
 }
 
 
-impl <'a, T: ToTokens> ToTokens for SwitchImpl<'a, T> {
+impl<'a, T: ToTokens> ToTokens for SwitchImpl<'a, T> {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
-
         let ident = self.target_ident;
         let inner = &self.inner;
 

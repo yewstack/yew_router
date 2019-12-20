@@ -1,14 +1,14 @@
 use syn::export::{ToTokens, TokenStream2};
-//use crate::switch::{SwitchItem, write_for_token, FieldType, unnamed_field_index_item};
-use proc_macro2::{Ident, TokenStream};
-use syn::{Fields, Field, Type};
-use quote::quote;
+// use crate::switch::{SwitchItem, write_for_token, FieldType, unnamed_field_index_item};
 use crate::switch::SwitchItem;
+use proc_macro2::{Ident, TokenStream};
+use quote::quote;
+use syn::{Field, Fields, Type};
 
 
-pub struct FromRoutePart<'a> (pub &'a SwitchItem);
+pub struct FromRoutePart<'a>(pub &'a SwitchItem);
 
-impl <'a> ToTokens for FromRoutePart<'a> {
+impl<'a> ToTokens for FromRoutePart<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let SwitchItem {
             matcher,

@@ -1,12 +1,8 @@
-use crate::switch::{
-    shadow::{ShadowCaptureVariant, ShadowMatcherToken},
-};
+use crate::switch::shadow::{ShadowCaptureVariant, ShadowMatcherToken};
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{quote, ToTokens};
-use syn::{
-    export::TokenStream2, parse_macro_input, Data, DeriveInput, Fields, Ident, Variant,
-};
+use syn::{export::TokenStream2, parse_macro_input, Data, DeriveInput, Fields, Ident, Variant};
 
 mod attribute;
 mod enum_impl;
@@ -14,11 +10,9 @@ mod shadow;
 mod struct_impl;
 mod switch_impl;
 
-use self::attribute::AttrToken;
+use self::{attribute::AttrToken, switch_impl::SwitchImpl};
+use crate::switch::{enum_impl::EnumInner, struct_impl::StructInner};
 use yew_router_route_parser::FieldNamingScheme;
-use crate::switch::struct_impl::{StructInner};
-use crate::switch::enum_impl::{EnumInner};
-use self::switch_impl::SwitchImpl;
 
 /// Holds data that is required to derive Switch for a struct or a single enum variant.
 pub struct SwitchItem {
@@ -60,11 +54,12 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                     from_route_part: struct_impl::FromRoutePart(&item),
                     build_route_section: struct_impl::BuildRouteSection {
                         switch_item: &item,
-                        item: &Ident::new("self", Span::call_site())
-                    }
-                }
-            }.to_token_stream().into()
-
+                        item: &Ident::new("self", Span::call_site()),
+                    },
+                },
+            }
+            .to_token_stream()
+            .into()
         }
         Data::Enum(de) => {
             let switch_variants = de
@@ -95,14 +90,19 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                 target_ident: &ident,
                 generics: &generics,
                 inner: EnumInner {
-                    from_route_part: enum_impl::FromRoutePart { switch_variants: &switch_variants, enum_ident: &ident },
+                    from_route_part: enum_impl::FromRoutePart {
+                        switch_variants: &switch_variants,
+                        enum_ident: &ident,
+                    },
                     build_route_section: enum_impl::BuildRouteSection {
                         switch_items: &switch_variants,
                         enum_ident: &ident,
-                        match_item: &Ident::new("self", Span::call_site())
-                    }
-                }
-            }.to_token_stream().into()
+                        match_item: &Ident::new("self", Span::call_site()),
+                    },
+                },
+            }
+            .to_token_stream()
+            .into()
         }
         Data::Union(_du) => panic!("Deriving FromCaptures not supported for Unions."),
     }
@@ -179,14 +179,9 @@ fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> Toke
 }
 
 
-
-
-
 /// Creates an ident used for destructuring unnamed fields.
 ///
 /// There needs to be a unified way to "mangle" the unnamed fields so they can be destructured,
 fn unnamed_field_index_item(index: usize) -> Ident {
     Ident::new(&format!("__field_{}", index), Span::call_site())
 }
-
-

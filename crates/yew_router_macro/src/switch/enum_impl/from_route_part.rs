@@ -1,16 +1,18 @@
-use syn::export::{ToTokens, TokenStream2};
-use proc_macro2::{TokenStream, Ident};
 use crate::switch::SwitchItem;
-use syn::{Fields, Type, Field};
+use proc_macro2::{Ident, TokenStream};
 use quote::quote;
+use syn::{
+    export::{ToTokens, TokenStream2},
+    Field, Fields, Type,
+};
 
 pub struct FromRoutePart<'a> {
     pub switch_variants: &'a [SwitchItem],
-    pub enum_ident: &'a Ident
+    pub enum_ident: &'a Ident,
 }
 
 
-impl <'a> ToTokens for FromRoutePart<'a> {
+impl<'a> ToTokens for FromRoutePart<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let variant_matchers = self.switch_variants.iter().map(|sv| {
             let SwitchItem {

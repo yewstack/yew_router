@@ -1,18 +1,21 @@
-use syn::export::{ToTokens, TokenStream2};
-use crate::switch::{SwitchItem, write_for_token, FieldType, unnamed_field_index_item};
+use crate::switch::{
+    shadow::ShadowMatcherToken, unnamed_field_index_item, write_for_token, FieldType, SwitchItem,
+};
 use proc_macro2::{Ident, TokenStream};
-use syn::Fields;
-use crate::switch::shadow::ShadowMatcherToken;
 use quote::quote;
+use syn::{
+    export::{ToTokens, TokenStream2},
+    Fields,
+};
 
 pub struct BuildRouteSection<'a> {
     pub switch_item: &'a SwitchItem,
-    pub item: &'a Ident
+    pub item: &'a Ident,
 }
 
-impl <'a> ToTokens for BuildRouteSection<'a> {
+impl<'a> ToTokens for BuildRouteSection<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let serializer = build_serializer_for_struct(self.switch_item, self.item );
+        let serializer = build_serializer_for_struct(self.switch_item, self.item);
         tokens.extend(quote! {
             fn build_route_section<__T>(self, mut buf: &mut ::std::string::String) -> ::std::option::Option<__T> {
                 #serializer
@@ -20,8 +23,6 @@ impl <'a> ToTokens for BuildRouteSection<'a> {
         })
     }
 }
-
-
 
 
 pub fn build_serializer_for_struct(switch_item: &SwitchItem, item: &Ident) -> TokenStream2 {
