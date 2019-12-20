@@ -1,52 +1,61 @@
-use crate::switch::{build_serializer_for_enum, impl_line, SwitchItem};
-use proc_macro::TokenStream;
+use crate::switch::{build_serializer_for_enum, SwitchItem, ImplSwitch};
 use proc_macro2::Span;
 use quote::quote;
 use syn::{export::TokenStream2, Field, Fields, Generics, Ident, Type};
-
-pub fn generate_enum_impl(
-    enum_ident: Ident,
-    switch_variants: Vec<SwitchItem>,
-    generics: Generics,
-) -> TokenStream {
-    let variant_matchers = switch_variants.iter().map(|sv| {
-        let SwitchItem {
-            matcher,
-            ident,
-            fields,
-        } = sv;
-        let build_from_captures = build_variant_from_captures(&enum_ident, ident, fields);
-        let matcher = super::build_matcher_from_tokens(&matcher);
-
-        quote! {
-            #matcher
-            #build_from_captures
-        }
-    });
-
-    let match_item = Ident::new("self", Span::call_site());
-    let serializer = build_serializer_for_enum(&switch_variants, &enum_ident, &match_item);
+use syn::export::ToTokens;
 
 
-    let impl_line = impl_line(&enum_ident, &generics);
-
-    let token_stream = quote! {
-        #impl_line
-        {
-            fn from_route_part<__T>(route: String, mut state: Option<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
-                let route_string = route;
-                #(#variant_matchers)*
-
-                return (::std::option::Option::None, state)
-            }
-
-            fn build_route_section<__T>(self, mut buf: &mut ::std::string::String) -> ::std::option::Option<__T> {
-                #serializer
-            }
-        }
-    };
-    TokenStream::from(token_stream)
+pub struct EnumImpl {
+    pub enum_ident: Ident,
+    pub switch_variants: Vec<SwitchItem>,
+    pub generics: Generics
 }
+
+impl ToTokens for EnumImpl {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+
+        let variant_matchers = self.switch_variants.iter().map(|sv| {
+            let SwitchItem {
+                matcher,
+                ident,
+                fields,
+            } = sv;
+            let build_from_captures = build_variant_from_captures(&self.enum_ident, ident, fields);
+            let matcher = super::build_matcher_from_tokens(&matcher);
+
+            quote! {
+                #matcher
+                #build_from_captures
+            }
+        });
+
+        let match_item = Ident::new("self", Span::call_site());
+        let serializer = build_serializer_for_enum(&self.switch_variants, &self.enum_ident, &match_item);
+
+        let impl_line = ImplSwitch {
+            target_ident: &self.enum_ident,
+            generics: &self.generics
+        };
+
+        let token_stream = quote! {
+            #impl_line
+            {
+                fn from_route_part<__T>(route: String, mut state: Option<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
+                    let route_string = route;
+                    #(#variant_matchers)*
+
+                    return (::std::option::Option::None, state)
+                }
+
+                fn build_route_section<__T>(self, mut buf: &mut ::std::string::String) -> ::std::option::Option<__T> {
+                    #serializer
+                }
+            }
+        };
+        tokens.extend(token_stream)
+    }
+}
+
 
 /// Once the 'captures' exists, attempt to populate the fields from the list of captures.
 fn build_variant_from_captures(

@@ -1,45 +1,56 @@
-use crate::switch::{impl_line, SwitchItem};
+use crate::switch::{SwitchItem, ImplSwitch};
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::{
-    export::{TokenStream, TokenStream2},
+    export::{TokenStream2},
     Field, Fields, Generics, Type,
 };
+use syn::export::ToTokens;
 
 
-pub fn generate_struct_impl(item: SwitchItem, generics: Generics) -> TokenStream {
-    let SwitchItem {
-        matcher,
-        ident,
-        fields,
-    } = &item;
-    let build_from_captures = build_struct_from_captures(&ident, &fields);
-    let matcher = super::build_matcher_from_tokens(&matcher);
+pub struct StructImpl {
+    pub item: SwitchItem,
+    pub generics: Generics
+}
 
-    let match_item = Ident::new("self", Span::call_site());
-    let serializer = super::build_serializer_for_struct(&item, &match_item);
+impl ToTokens for StructImpl {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        let SwitchItem {
+            matcher,
+            ident,
+            fields,
+        } = &self.item;
+        let build_from_captures = build_struct_from_captures(&ident, &fields);
+        let matcher = super::build_matcher_from_tokens(&matcher);
 
-    let impl_line = impl_line(ident, &generics);
+        let match_item = Ident::new("self", Span::call_site());
+        let serializer = super::build_serializer_for_struct(&self.item, &match_item);
 
-    let token_stream = quote! {
-        #impl_line
-        {
-            fn from_route_part<__T>(route: String, mut state: Option<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
+        let impl_line = ImplSwitch {
+            target_ident: &ident,
+            generics: &self.generics
+        };
 
-                #matcher
-                let route_string = route;
+        let token_stream = quote! {
+            #impl_line
+            {
+                fn from_route_part<__T>(route: String, mut state: Option<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
 
-                #build_from_captures
+                    #matcher
+                    let route_string = route;
 
-                return (::std::option::Option::None, state)
+                    #build_from_captures
+
+                    return (::std::option::Option::None, state)
+                }
+
+                fn build_route_section<__T>(self, mut buf: &mut ::std::string::String) -> ::std::option::Option<__T> {
+                    #serializer
+                }
             }
-
-            fn build_route_section<__T>(self, mut buf: &mut ::std::string::String) -> ::std::option::Option<__T> {
-                #serializer
-            }
-        }
-    };
-    TokenStream::from(token_stream)
+        };
+        tokens.extend(token_stream)
+    }
 }
 
 fn build_struct_from_captures(ident: &Ident, fields: &Fields) -> TokenStream2 {
