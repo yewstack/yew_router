@@ -17,7 +17,7 @@ mod struct_impl;
 use self::attribute::AttrToken;
 use syn::punctuated::Punctuated;
 use yew_router_route_parser::FieldNamingScheme;
-use crate::switch::struct_impl::StructImpl;
+use crate::switch::struct_impl::{StructInner};
 use crate::switch::enum_impl::EnumImpl;
 
 /// Holds data that is required to derive Switch for a struct or a single enum variant.
@@ -47,17 +47,24 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                 .flatten()
                 .collect::<Vec<_>>();
 
-            let mut output = TokenStream2::new();
+            let item = SwitchItem {
+                matcher,
+                ident: ident.clone(), // TODO make SwitchItem take references instead.
+                fields: ds.fields,
+            };
 
-            StructImpl {
-                item: SwitchItem {
-                    matcher,
-                    ident,
-                    fields: ds.fields,
-                },
-                generics
-            }.to_tokens(&mut output);
-            output.into()
+            ImplSwitch {
+                target_ident: &ident,
+                generics: &generics,
+                inner: StructInner {
+                    from_route_part: struct_impl::FromRoutePart(&item),
+                    build_route_section: struct_impl::BuildRouteSection {
+                        switch_item: &item,
+                        item: &Ident::new("self", Span::call_site())
+                    }
+                }
+            }.to_token_stream().into()
+
         }
         Data::Enum(de) => {
             let switch_variants = de
@@ -238,64 +245,7 @@ pub fn build_serializer_for_enum(
     }
 }
 
-pub fn build_serializer_for_struct(switch_item: &SwitchItem, item: &Ident) -> TokenStream2 {
-    let SwitchItem {
-        matcher,
-        ident,
-        fields,
-    } = switch_item;
-    let destructor_and_writers = match fields {
-        Fields::Named(fields_named) => {
-            let field_names = fields_named
-                .named
-                .iter()
-                .filter_map(|named| named.ident.as_ref());
-            let writers = matcher
-                .iter()
-                .map(|token| write_for_token(token, FieldType::Named));
-            quote! {
-                let #ident{#(#field_names),*} = #item;
-                #(#writers)*
-            }
-        }
-        Fields::Unnamed(fields_unnamed) => {
-            let field_names = fields_unnamed
-                .unnamed
-                .iter()
-                .enumerate()
-                .map(|(index, _)| unnamed_field_index_item(index));
-            let mut item_count = 0;
-            let writers = matcher.iter().map(|token| {
-                if let ShadowMatcherToken::Capture(_) = &token {
-                    let ts = write_for_token(token, FieldType::Unnamed { index: item_count });
-                    item_count += 1;
-                    ts
-                } else {
-                    // Its either a literal, or something that will panic currently
-                    write_for_token(token, FieldType::Unit)
-                }
-            });
-            quote! {
-                let #ident(#(#field_names),*) = #item;
-                #(#writers)*
-            }
-        }
-        Fields::Unit => {
-            let writers = matcher
-                .iter()
-                .map(|token| write_for_token(token, FieldType::Unit));
-            quote! {
-                #(#writers)*
-            }
-        }
-    };
-    quote! {
-        use ::std::fmt::Write as _;
-        let mut state: Option<__T> = None;
-        #destructor_and_writers
-        return state;
-    }
-}
+
 
 /// Creates an ident used for destructuring unnamed fields.
 ///
@@ -305,19 +255,23 @@ fn unnamed_field_index_item(index: usize) -> Ident {
 }
 
 /// Creates the "impl <X,Y,Z> ::yew_router::Switch for TypeName<X,Y,Z> where etc.." line.
-pub struct ImplSwitch<'a> {
+pub struct ImplSwitch<'a, T: ToTokens> {
     target_ident: &'a Ident,
-    generics: &'a Generics
+    generics: &'a Generics,
+    inner: T
 }
 
-impl <'a> ToTokens for ImplSwitch<'a> {
+impl <'a, T: ToTokens> ToTokens for ImplSwitch<'a, T> {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
 
         let ident = self.target_ident;
+        let inner = &self.inner;
 
         let line_tokens = if self.generics.params.is_empty() {
             quote! {
-                impl ::yew_router::Switch for #ident
+                impl ::yew_router::Switch for #ident {
+                    #inner
+                }
             }
         } else {
             let params = &self.generics.params;
@@ -335,33 +289,11 @@ impl <'a> ToTokens for ImplSwitch<'a> {
             let where_clause = &self.generics.where_clause;
             quote! {
                 impl <#params> ::yew_router::Switch for #ident <#param_idents> #where_clause
+                {
+                    #inner
+                }
             }
         };
         tokens.extend(line_tokens)
     }
 }
-
-//pub fn impl_line(ident: &Ident, generics: &Generics) -> TokenStream2 {
-//    if generics.params.is_empty() {
-//        quote! {
-//            impl ::yew_router::Switch for #ident
-//        }
-//    } else {
-//        let params = &generics.params;
-//        let param_idents = params
-//            .iter()
-//            .map(|p: &GenericParam| {
-//                match p {
-//                    GenericParam::Type(ty) => ty.ident.clone(),
-////                    GenericParam::Lifetime(lt) => lt.lifetime, // TODO different type here, must be handled by collecting into a new enum and defining how to convert _that_ to tokens.
-//                    _ => unimplemented!("Not all type parameter variants (lifetimes and consts) are supported in Switch")
-//                }
-//            })
-//            .collect::<Punctuated<_,syn::token::Comma>>();
-//
-//        let where_clause = &generics.where_clause;
-//        quote! {
-//            impl <#params> ::yew_router::Switch for #ident <#param_idents> #where_clause
-//        }
-//    }
-//}

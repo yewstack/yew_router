@@ -32,26 +32,25 @@ impl ToTokens for EnumImpl {
         let match_item = Ident::new("self", Span::call_site());
         let serializer = build_serializer_for_enum(&self.switch_variants, &self.enum_ident, &match_item);
 
-        let impl_line = ImplSwitch {
-            target_ident: &self.enum_ident,
-            generics: &self.generics
-        };
+        let inner = quote! {
+            fn from_route_part<__T>(route: String, mut state: Option<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
+                let route_string = route;
+                #(#variant_matchers)*
 
-        let token_stream = quote! {
-            #impl_line
-            {
-                fn from_route_part<__T>(route: String, mut state: Option<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
-                    let route_string = route;
-                    #(#variant_matchers)*
+                return (::std::option::Option::None, state)
+            }
 
-                    return (::std::option::Option::None, state)
-                }
-
-                fn build_route_section<__T>(self, mut buf: &mut ::std::string::String) -> ::std::option::Option<__T> {
-                    #serializer
-                }
+            fn build_route_section<__T>(self, mut buf: &mut ::std::string::String) -> ::std::option::Option<__T> {
+                #serializer
             }
         };
+
+        let token_stream = ImplSwitch {
+            target_ident: &self.enum_ident,
+            generics: &self.generics,
+            inner
+        }.to_token_stream();
+
         tokens.extend(token_stream)
     }
 }
