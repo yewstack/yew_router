@@ -5,11 +5,14 @@ use syn::punctuated::Punctuated;
 use quote::quote;
 
 /// Creates the "impl <X,Y,Z> ::yew_router::Switch for TypeName<X,Y,Z> where etc.." line.
-pub struct SwitchImpl<'a, T: ToTokens> {
+///
+/// Then populates the body of the implementation with the specified `T`.
+pub struct SwitchImpl<'a, T> {
     pub target_ident: &'a Ident,
     pub generics: &'a Generics,
     pub inner: T
 }
+
 
 impl <'a, T: ToTokens> ToTokens for SwitchImpl<'a, T> {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
