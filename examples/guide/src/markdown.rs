@@ -91,12 +91,6 @@ pub fn render_markdown(src: &str) -> Html {
 fn make_tag(t: Tag) -> VTag {
     match t {
         Tag::Paragraph => VTag::new("p"),
-        Tag::Rule => VTag::new("hr"),
-        Tag::Header(n) => {
-            assert!(n > 0);
-            assert!(n < 7);
-            VTag::new(format!("h{}", n))
-        }
         Tag::BlockQuote => {
             let mut el = VTag::new("blockquote");
             el.add_class("blockquote");
@@ -161,8 +155,11 @@ fn make_tag(t: Tag) -> VTag {
         }
 
         Tag::FootnoteDefinition(ref _footnote_id) => VTag::new("span"),
-        // This may not be correct
-        Tag::HtmlBlock => VTag::new("div"),
         Tag::Strikethrough => VTag::new("strike"),
+        Tag::Heading(n) => {
+            assert!(n > 0);
+            assert!(n < 7);
+            VTag::new(format!("h{}", n))
+        }
     }
 }

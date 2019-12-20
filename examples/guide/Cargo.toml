@@ -12,4 +12,4 @@ yew = {git = "https://github.com/yewstack/yew", branch = "master"}
 yew-router = {path = "../../"}
 #web_logger = "0.2"
 log = "0.4.8"
-pulldown-cmark = "0.5.3"
+pulldown-cmark = "0.6.1"
