@@ -93,10 +93,10 @@ impl Component for Model {
                 <div>
                 {
                     match AppRoute::switch(self.route.clone()) {
-                        Some(AppRoute::A(thing)) => html!{thing},
+                        Some(AppRoute::A(thing)) => VNode::from(thing.as_str()),
                         Some(AppRoute::B{anything, number}) => html!{<div> {anything} {number} </div>},
-                        Some(AppRoute::C) => html!{"C"},
-                        None => html!{"404"}
+                        Some(AppRoute::C) => VNode::from("C"),
+                        None => VNode::from("404")
                     }
                 }
                 </div>
