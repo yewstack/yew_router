@@ -77,3 +77,25 @@ impl AttrToken {
         }
     }
 }
+
+
+pub fn get_attr_strings(attributes: Vec<Attribute>) -> impl Iterator<Item=String> {
+    attributes
+        .into_iter()
+        .filter_map(|attr: Attribute| attr.parse_meta().ok())
+        .filter_map(|meta: Meta| match meta {
+            Meta::NameValue(mnv) => mnv
+                .path
+                .clone()
+                .get_ident()
+                .into_iter()
+                .map(|ident| ident.to_string())
+                .next(),
+            Meta::Path(path) => path
+                .get_ident()
+                .into_iter()
+                .map(|ident| ident.to_string())
+                .next(),
+            Meta::List(_) => None
+        })
+}

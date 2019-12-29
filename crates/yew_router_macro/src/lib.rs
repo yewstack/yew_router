@@ -76,7 +76,7 @@ mod switch;
 /// }
 /// ```
 /// Check out the examples directory in the repository to see some more usages of the routing syntax.
-#[proc_macro_derive(Switch, attributes(to, rest, end))]
+#[proc_macro_derive(Switch, attributes(to, rest, end, state))]
 pub fn switch(tokens: TokenStream) -> TokenStream {
     crate::switch::switch_impl(tokens)
 }
@@ -93,5 +93,10 @@ pub fn rest(_: TokenStream, _: TokenStream) -> TokenStream {
 
 #[proc_macro_attribute]
 pub fn end(_: TokenStream, _: TokenStream) -> TokenStream {
+    TokenStream::new()
+}
+
+#[proc_macro_attribute]
+pub fn state(_: TokenStream, _: TokenStream) -> TokenStream {
     TokenStream::new()
 }

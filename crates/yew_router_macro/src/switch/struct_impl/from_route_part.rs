@@ -4,6 +4,7 @@ use crate::switch::SwitchItem;
 use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{Field, Fields, Type};
+use crate::switch::attribute::get_attr_strings;
 
 
 pub struct FromRoutePart<'a>(pub &'a SwitchItem);
@@ -38,42 +39,16 @@ impl<'a> ToTokens for FromRoutePart<'a> {
 fn build_struct_from_captures(ident: &Ident, fields: &Fields) -> TokenStream2 {
     match fields {
         Fields::Named(named_fields) => {
-            let fields: Vec<TokenStream2> = named_fields
+            let fields: Vec<NamedField> = named_fields
                 .named
                 .iter()
                 .filter_map(|field: &Field| {
                     let field_ty: &Type = &field.ty;
-                    field.ident.as_ref().map(|i| {
-                        let key = i.to_string();
-                        (i, key, field_ty)
+                    let is_state = get_attr_strings(field.attrs.clone()).any(|s| s.as_str() == "state");
+                    field.ident.as_ref().map(|field_name| {
+                        let key = field_name.to_string();
+                        NamedField{field_name, key, field_ty, is_state}
                     })
-                })
-                .map(|(field_name, key, field_ty): (&Ident, String, &Type)| {
-                    quote! {
-                        #field_name: {
-                            let (v, s) = match captures.remove(#key) {
-                                ::std::option::Option::Some(value) => {
-                                    <#field_ty as ::yew_router::Switch>::from_route_part(
-                                        value,
-                                        state,
-                                    )
-                                }
-                                ::std::option::Option::None => {
-                                    (
-                                        <#field_ty as ::yew_router::Switch>::key_not_available(),
-                                        state,
-                                    )
-                                }
-                            };
-                            match v {
-                                ::std::option::Option::Some(val) => {
-                                    state = s; // Set state for the next var.
-                                    val
-                                },
-                                ::std::option::Option::None => return (::std::option::Option::None, s) // Failed
-                            }
-                        }
-                    }
                 })
                 .collect();
 
@@ -142,6 +117,57 @@ fn build_struct_from_captures(ident: &Ident, fields: &Fields) -> TokenStream2 {
                     state
                 };
             }
+        }
+    }
+}
+
+
+pub struct NamedField<'a> {
+    field_name: &'a Ident,
+    key: String,
+    field_ty: &'a Type,
+    is_state: bool
+}
+
+impl <'a> ToTokens for NamedField<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let NamedField {
+            field_name, key, field_ty, is_state
+        } = self;
+        // If the named field is marked as state, then just take the state,
+        // otherwise try to match the key in the captures group
+        if *is_state {
+            tokens.extend(quote!{
+                #field_name: {
+                    state.take().expect("Can't take twice")
+                }
+            })
+        } else {
+            tokens.extend(quote! {
+                #field_name: {
+                    let (v, s) = match captures.remove(#key) {
+                        ::std::option::Option::Some(value) => {
+                            <#field_ty as ::yew_router::Switch>::from_route_part(
+                                value,
+                                state,
+                            )
+                        }
+                        ::std::option::Option::None => {
+                            (
+                                <#field_ty as ::yew_router::Switch>::key_not_available(),
+                                state,
+                            )
+                        }
+                    };
+                    match v {
+                        ::std::option::Option::Some(val) => {
+                            state = s; // Set state for the next var.
+                            val
+                        },
+                        ::std::option::Option::None => return (::std::option::Option::None, s) // Failed
+                    }
+                }
+            })
         }
     }
 }

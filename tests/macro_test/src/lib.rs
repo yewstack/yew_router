@@ -453,6 +453,28 @@ mod tests {
             )
         }
 
+
+        #[test]
+        fn state_minimal() {
+            #[derive(Debug, Switch, Clone, PartialEq)]
+            #[to = "/hello"]
+            pub struct Test {
+                #[state]
+                blob: String
+            }
+            let route = Route {
+                route: "/hello".to_string(),
+                state: "lorem ipsum".to_string()
+            };
+            let switched = Test::switch(route).expect("should produce item");
+            assert_eq!(
+                switched,
+                Test {
+                    blob: "lorem ipsum".to_string()
+                }
+            )
+        }
+
         mod fragment {
             use super::*;
 
