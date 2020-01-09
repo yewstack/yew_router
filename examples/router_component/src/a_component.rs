@@ -6,7 +6,7 @@ pub struct AModel {
     props: Props,
 }
 
-#[derive(PartialEq, Properties)]
+#[derive(Clone, PartialEq, Properties)]
 pub struct Props {
     #[props(required)]
     pub route: Option<ARoute>,
@@ -36,12 +36,11 @@ impl Component for AModel {
                     <div>
                         { "I am the A component"}
                         <div>
-                            <RouterButton<AppRoute> route=AppRoute::A(AllowMissing(Some(ARoute)))>
-                                {"Go to a/c"}
-                            </RouterButton>
-        //                    <RouterButton route="/a/d">
-        //                        {"Go to a/d (route does not exist)"}
-        //                    </RouterButton>
+                            <RouterButton<AppRoute>
+                                route=AppRoute::A(AllowMissing(Some(ARoute)))
+                            />
+//                                {"Go to a/c"}
+//                            </RouterButton<AppRoute>>
                         </div>
                         <div>
                         {

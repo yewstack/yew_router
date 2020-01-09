@@ -2,7 +2,7 @@ use yew::{prelude::*, virtual_dom::VNode, Properties};
 
 pub struct CModel;
 
-#[derive(PartialEq, Properties)]
+#[derive(Clone, PartialEq, Properties)]
 pub struct Props {}
 
 pub enum Msg {}
