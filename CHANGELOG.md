@@ -13,7 +13,17 @@
 
 END TEMPLATE-->
 
-## ✨ **0.8.0** *(TBD)*
+
+## ✨ **0.9.0** *(TBD)*
+
+- #### ⚡️ Features
+  - Sample
+- #### 🛠 Fixes
+  - Sample
+- #### 🚨 Breaking changes
+  - Sample
+
+## ✨ **0.8.0** *(2020-1-9)*
 - #### ⚡️ Features
     - Use a default type parameter of `()` to specify state-related type parameters instead of the old macro-based solution. [[157](https://github.com/yewstack/yew_router/issues/157)]
     - Remove need for `JsSerializable` bound on the state parameter used for storing extra data in the history API.[[185](https://github.com/yewstack/yew_router/issues/185)]
