@@ -2,7 +2,7 @@ use yew::{prelude::*, virtual_dom::VNode};
 
 pub struct Page;
 
-#[derive(Properties)]
+#[derive(Properties, Clone)]
 pub struct PageProps {
     #[props(required)]
     pub uri: String,
