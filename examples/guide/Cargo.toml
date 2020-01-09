@@ -7,8 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-#yew = "0.10.0"
-yew = {git = "https://github.com/yewstack/yew", branch = "master"}
+yew = "0.11.0"
+#yew = {git = "https://github.com/yewstack/yew", branch = "master"}
 yew-router = {path = "../../"}
 #web_logger = "0.2"
 log = "0.4.8"
