@@ -15,7 +15,7 @@ use crate::Switch;
 // TODO This should also be PartialEq and Clone. Its blocked on Children not supporting that.
 // TODO This should no longer take link & String, and instead take a route: SW implementing Switch
 /// Properties for `RouterButton` and `RouterLink`.
-#[derive(Properties, Default, Debug, Clone)]
+#[derive(Properties, Clone, Default, Debug)]
 pub struct Props<SW>
 where
     SW: Switch + Clone,
