@@ -41,6 +41,8 @@ serde_json = "1.0.44"
 [target.'cfg(all(target_arch = "wasm32", not(target_os="wasi"), not(cargo_web)))'.dependencies]
 wasm-bindgen = "0.2.58"
 
+[dev-dependencies]
+static_assertions = "1.1.0"
 
 
 [workspace]

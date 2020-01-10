@@ -40,3 +40,31 @@ pub enum Msg {
     /// Tell the router to navigate the application to the Component's pre-defined route.
     Clicked,
 }
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn button_usize_is_component() {
+        static_assertions::assert_impl_one!(RouterButton<usize>: yew::Component);
+    }
+
+    #[test]
+    fn anchor_usize_is_component() {
+        static_assertions::assert_impl_one!(RouterAnchor<usize>: yew::Component);
+    }
+
+    #[test]
+    fn button_string_is_component() {
+        static_assertions::assert_impl_one!(RouterButton<String>: yew::Component);
+    }
+
+    #[test]
+    fn anchor_string_is_component() {
+        static_assertions::assert_impl_one!(RouterAnchor<String>: yew::Component);
+    }
+
+
+}
