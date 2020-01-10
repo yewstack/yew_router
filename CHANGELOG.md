@@ -22,6 +22,12 @@ END TEMPLATE-->
   - Sample
 - #### 🚨 Breaking changes
   - Sample
+  
+  
+## ✨ **0.8.1** *(2020-1-10)*
+
+- #### 🛠 Fixes
+  - Fixed a dependency issue with `wasm-bindgen` that would cause builds to fail when building for the `wasm32-unknown-unknown` target.
 
 ## ✨ **0.8.0** *(2020-1-9)*
 - #### ⚡️ Features
