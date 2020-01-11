@@ -1,6 +1,6 @@
 [package]
 name = "yew-router-macro"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 edition = "2018"
 license = "MIT/Apache-2.0"
@@ -14,8 +14,8 @@ proc-macro = true
 [dependencies]
 syn = "1.0.2"
 quote = "1.0.1"
-yew-router-route-parser = {path = "../yew_router_route_parser", version = "0.8.0"}
+yew-router-route-parser = {path = "../yew_router_route_parser", version = "0.9.0"}
 proc-macro2 = "1.0.1"
 
 [dev-dependencies]
-yew-router = {path = "../..", version = "0.8.1"}
+yew-router = {path = "../..", version = "0.9.0"}
