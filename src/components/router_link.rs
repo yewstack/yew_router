@@ -54,7 +54,8 @@ impl<SW: Switch + Clone + 'static, STATE: RouterState> Component for RouterAncho
 
     fn view(&self) -> VNode {
         use stdweb::web::event::IEvent;
-        //        let target: &str = &self.props.link;
+        let route: Route<STATE> = Route::from(self.props.route.clone());
+        let target: &str = route.as_str();
         let cb = |x| self.link.callback(x);
 
         html! {
@@ -65,7 +66,7 @@ impl<SW: Switch + Clone + 'static, STATE: RouterState> Component for RouterAncho
                             Msg::Clicked
                         }),
                         disabled=self.props.disabled,
-        //                href=target,
+                        href=target,
                     >
                         {
                             #[allow(deprecated)]
