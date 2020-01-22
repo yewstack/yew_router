@@ -52,5 +52,6 @@ members = [
     "examples/switch",
     "examples/minimal",
     "examples/servers/warp",
+    "examples/servers/actix",
     "tests/macro_test"
 ]
