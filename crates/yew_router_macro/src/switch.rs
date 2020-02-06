@@ -1,8 +1,7 @@
 use crate::switch::shadow::{ShadowCaptureVariant, ShadowMatcherToken};
-use proc_macro::TokenStream;
-use proc_macro2::Span;
+use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
-use syn::{export::TokenStream2, parse_macro_input, Data, DeriveInput, Fields, Ident, Variant};
+use syn::{export::TokenStream2, Data, DeriveInput, Fields, Ident, Variant};
 
 mod attribute;
 mod enum_impl;
@@ -21,20 +20,18 @@ pub struct SwitchItem {
     pub fields: Fields,
 }
 
-pub fn switch_impl(input: TokenStream) -> TokenStream {
-    let input: DeriveInput = parse_macro_input!(input as DeriveInput);
-
+pub fn switch_impl(input: DeriveInput) -> syn::Result<TokenStream> {
     let ident: Ident = input.ident;
     let generics = input.generics;
 
-    match input.data {
+    Ok(match input.data {
         Data::Struct(ds) => {
             let field_naming_scheme = match ds.fields {
                 Fields::Unnamed(_) => FieldNamingScheme::Unnamed,
                 Fields::Unit => FieldNamingScheme::Unit,
                 Fields::Named(_) => FieldNamingScheme::Named,
             };
-            let matcher = AttrToken::convert_attributes_to_tokens(input.attrs)
+            let matcher = AttrToken::convert_attributes_to_tokens(input.attrs)?
                 .into_iter()
                 .enumerate()
                 .map(|(index, at)| at.into_shadow_matcher_tokens(index, field_naming_scheme))
@@ -59,7 +56,6 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                 },
             }
             .to_token_stream()
-            .into()
         }
         Data::Enum(de) => {
             let switch_variants = de
@@ -71,19 +67,19 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                         Fields::Unit => FieldNamingScheme::Unit,
                         Fields::Named(_) => yew_router_route_parser::FieldNamingScheme::Named,
                     };
-                    let matcher = AttrToken::convert_attributes_to_tokens(variant.attrs)
+                    let matcher = AttrToken::convert_attributes_to_tokens(variant.attrs)?
                         .into_iter()
                         .enumerate()
                         .map(|(index, at)| at.into_shadow_matcher_tokens(index, field_type))
                         .flatten()
                         .collect::<Vec<_>>();
-                    SwitchItem {
+                    Ok(SwitchItem {
                         matcher,
                         ident: variant.ident,
                         fields: variant.fields,
-                    }
+                    })
                 })
-                .collect::<Vec<SwitchItem>>();
+                .collect::<syn::Result<Vec<_>>>()?;
 
 
             SwitchImpl {
@@ -102,10 +98,9 @@ pub fn switch_impl(input: TokenStream) -> TokenStream {
                 },
             }
             .to_token_stream()
-            .into()
         }
         Data::Union(_du) => panic!("Deriving FromCaptures not supported for Unions."),
-    }
+    })
 }
 
 trait Flatten<T> {

@@ -1,5 +1,6 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
+use syn::{parse_macro_input, DeriveInput};
 
 mod switch;
 
@@ -78,7 +79,11 @@ mod switch;
 /// Check out the examples directory in the repository to see some more usages of the routing syntax.
 #[proc_macro_derive(Switch, attributes(to, rest, end))]
 pub fn switch(tokens: TokenStream) -> TokenStream {
-    crate::switch::switch_impl(tokens)
+    let input: DeriveInput = parse_macro_input!(tokens as DeriveInput);
+
+    crate::switch::switch_impl(input)
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
 }
 
 #[proc_macro_attribute]
