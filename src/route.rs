@@ -1,8 +1,13 @@
 //! Wrapper around route url string, and associated history state.
+use cfg_if::cfg_if;
 #[cfg(feature = "service")]
 use serde::de::DeserializeOwned;
-#[cfg(feature = "service")]
-use stdweb::{unstable::TryFrom, Value};
+
+cfg_if! {
+    if #[cfg(feature = "std_web")] {
+        use stdweb::{unstable::TryFrom, Value};
+    }
+}
 
 use serde::{Deserialize, Serialize};
 use std::{
@@ -11,16 +16,22 @@ use std::{
 };
 
 /// Any state that can be used in the router agent must meet the criteria of this trait.
-#[cfg(feature = "service")]
+#[cfg(all(feature = "service", feature = "std_web"))]
 pub trait RouteState:
     Serialize + DeserializeOwned + Debug + Clone + Default + TryFrom<Value> + 'static
 {
 }
-#[cfg(feature = "service")]
+#[cfg(all(feature = "service", feature = "std_web"))]
 impl<T> RouteState for T where
     T: Serialize + DeserializeOwned + Debug + Clone + Default + TryFrom<Value> + 'static
 {
 }
+
+/// Any state that can be used in the router agent must meet the criteria of this trait.
+#[cfg(all(feature = "service", feature = "web_sys"))]
+pub trait RouteState: Serialize + DeserializeOwned + Debug + Clone + Default + 'static {}
+#[cfg(all(feature = "service", feature = "web_sys"))]
+impl<T> RouteState for T where T: Serialize + DeserializeOwned + Debug + Clone + Default + 'static {}
 
 /// The representation of a route, segmented into different sections for easy access.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -30,7 +41,6 @@ pub struct Route<STATE = ()> {
     /// The state stored in the history api
     pub state: STATE,
 }
-
 
 impl Route<()> {
     /// Creates a new route with no state out of a string.
