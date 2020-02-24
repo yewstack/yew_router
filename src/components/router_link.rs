@@ -8,13 +8,7 @@ use yew::prelude::*;
 
 use super::{Msg, Props};
 use crate::RouterState;
-use cfg_if::cfg_if;
 use yew::virtual_dom::VNode;
-
-#[cfg(feature = "web_sys")]
-use gloo::events::{EventListener, EventListenerOptions};
-#[cfg(feature = "web_sys")]
-use web_sys::HtmlLinkElement;
 
 /// An anchor tag Component that when clicked, will navigate to the provided route.
 ///
@@ -28,10 +22,6 @@ pub struct RouterAnchor<SW: Switch + Clone + 'static, STATE: RouterState = ()> {
     link: ComponentLink<Self>,
     router: RouteAgentDispatcher<STATE>,
     props: Props<SW>,
-    #[cfg(feature = "web_sys")]
-    a_ref: NodeRef,
-    #[cfg(feature = "web_sys")]
-    a_listener: Option<EventListener>,
 }
 
 impl<SW: Switch + Clone + 'static, STATE: RouterState> Component for RouterAnchor<SW, STATE> {
@@ -44,28 +34,7 @@ impl<SW: Switch + Clone + 'static, STATE: RouterState> Component for RouterAncho
             link,
             router,
             props,
-            #[cfg(feature = "web_sys")]
-            a_ref: NodeRef::default(),
-            #[cfg(feature = "web_sys")]
-            a_listener: None,
         }
-    }
-
-    #[cfg(feature = "web_sys")]
-    fn mounted(&mut self) -> ShouldRender {
-        if let Some(link) = self.a_ref.try_into::<HtmlLinkElement>() {
-            let options = EventListenerOptions::enable_prevent_default();
-            let callback = self.link.callback(|_| Msg::Clicked);
-
-            let listener = EventListener::new_with_options(&link, "click", options, move |event| {
-                event.stop_propagation();
-                event.prevent_default();
-                callback.emit(());
-            });
-            self.a_listener = Some(listener);
-        }
-
-        false
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
@@ -89,44 +58,30 @@ impl<SW: Switch + Clone + 'static, STATE: RouterState> Component for RouterAncho
 
         let route: Route<STATE> = Route::from(self.props.route.clone());
         let target: &str = route.as_str();
+        #[cfg(feature = "std_web")]
+        let cb = self.link.callback(|event: ClickEvent| {
+            event.prevent_default();
+            Msg::Clicked
+        });
+        #[cfg(feature = "web_sys")]
+        let cb = self.link.callback(|event: MouseEvent| {
+            event.prevent_default();
+            Msg::Clicked
+        });
 
-        cfg_if! {
-            if #[cfg(feature = "std_web")] {
-                let cb = |x| self.link.callback(x);
-
-                html! {
-                    <a
-                        class=self.props.classes.clone(),
-                        onclick=cb(|event: ClickEvent| {
-                            event.prevent_default();
-                            Msg::Clicked
-                        }),
-                        disabled=self.props.disabled,
-                        href=target,
-                    >
-                        {
-                            #[allow(deprecated)]
-                            &self.props.text
-                        }
-                        {self.props.children.iter().collect::<VNode>()}
-                    </a>
+        html! {
+            <a
+                class=self.props.classes.clone(),
+                onclick=cb,
+                disabled=self.props.disabled,
+                href=target,
+            >
+                {
+                    #[allow(deprecated)]
+                    &self.props.text
                 }
-            } else if #[cfg(feature = "web_sys")] {
-                html! {
-                    <a
-                        ref=self.a_ref.clone(),
-                        class=self.props.classes.clone(),
-                        disabled=self.props.disabled,
-                        href=target,
-                    >
-                        {
-                            #[allow(deprecated)]
-                            &self.props.text
-                        }
-                        {self.props.children.iter().collect::<VNode>()}
-                    </a>
-                }
-            }
+                {self.props.children.iter().collect::<VNode>()}
+            </a>
         }
     }
 }
