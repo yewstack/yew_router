@@ -51,7 +51,6 @@ impl Component for Model {
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         let mut route_service: RouteService<()> = RouteService::new();
         let route = route_service.get_route();
-        let route = Route::from(route);
         let callback = link.callback(Msg::RouteChanged);
         route_service.register_callback(callback);
 
@@ -70,7 +69,7 @@ impl Component for Model {
                 let route_string = match route {
                     AppRoute::A(s) => format!("/a/{}", s),
                     AppRoute::B { anything, number } => format!("/b/{}/{}", anything, number),
-                    AppRoute::C => format!("/c"),
+                    AppRoute::C => "/c".to_string(),
                 };
                 self.route_service.set_route(&route_string, ());
                 self.route = Route {

@@ -64,7 +64,7 @@ impl Component for Guide {
                 .next();
             log::debug!("active uri: {:?}", active_markdown_uri);
 
-            let mut list_items = self.props.children.iter().map(|child| {
+            let list_items = self.props.children.iter().map(|child| {
                 let x = render_page_list_item(child.props, route);
                 if let yew::virtual_dom::VNode::VTag(x) = &x {
                     log::debug!("{:?}", x.attributes);

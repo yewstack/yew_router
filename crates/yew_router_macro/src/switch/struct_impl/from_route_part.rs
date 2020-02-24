@@ -20,17 +20,16 @@ impl<'a> ToTokens for FromRoutePart<'a> {
         let build_from_captures = build_struct_from_captures(ident, fields);
 
         tokens.extend(quote! {
-
-            fn from_route_part<__T>(route: String, mut state: Option<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
-
+            fn from_route_part<__T>(
+                route: String, mut state: Option<__T>
+            ) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
                 #matcher
                 let route_string = route;
 
                 #build_from_captures
 
-                return (::std::option::Option::None, state)
+                (::std::option::Option::None, state)
             }
-
         })
     }
 }

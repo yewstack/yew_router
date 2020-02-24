@@ -95,6 +95,7 @@ pub fn build_serializer_for_enum(
         match #match_item {
             #(#variants)*,
         }
-        return state;
+
+        state
     }
 }

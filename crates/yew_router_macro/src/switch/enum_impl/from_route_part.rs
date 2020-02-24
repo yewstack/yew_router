@@ -34,7 +34,7 @@ impl<'a> ToTokens for FromRoutePart<'a> {
                 let route_string = route;
                 #(#variant_matchers)*
 
-                    return (::std::option::Option::None, state)
+                return (::std::option::Option::None, state)
             }
         });
     }

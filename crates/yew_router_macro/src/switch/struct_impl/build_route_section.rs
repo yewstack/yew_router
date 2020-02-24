@@ -80,6 +80,7 @@ pub fn build_serializer_for_struct(switch_item: &SwitchItem, item: &Ident) -> To
         use ::std::fmt::Write as _;
         let mut state: Option<__T> = None;
         #destructor_and_writers
-        return state;
+
+        state
     }
 }

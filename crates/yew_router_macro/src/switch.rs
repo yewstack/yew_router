@@ -153,7 +153,7 @@ fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> Toke
                 | ShadowCaptureVariant::NumberedNamed { name, .. } => {
                     let name = Ident::new(&name, Span::call_site());
                     quote! {
-                        state = state.or(#name.build_route_section(buf));
+                        state = state.or_else(|| #name.build_route_section(buf));
                     }
                 }
                 ShadowCaptureVariant::Unnamed
@@ -165,7 +165,7 @@ fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> Toke
             FieldType::Unnamed { index } => {
                 let name = unnamed_field_index_item(index);
                 quote! {
-                    state = state.or(#name.build_route_section(&mut buf));
+                    state = state.or_else(|| #name.build_route_section(&mut buf));
                 }
             }
         },

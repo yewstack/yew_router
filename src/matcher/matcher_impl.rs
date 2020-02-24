@@ -124,7 +124,7 @@ fn capture_named<'a, 'b: 'a, CAP: CaptureCollection<'b>>(
         Ok(ii)
     } else {
         let (ii, captured) = map(valid_capture_characters, String::from)(i)?;
-        matches.insert2(capture_key, captured.to_string());
+        matches.insert2(capture_key, captured);
         Ok(ii)
     }
 }
@@ -147,7 +147,7 @@ fn capture_many_named<'a, 'b, CAP: CaptureCollection<'b>>(
         Ok(i) // Match even if nothing is left
     } else {
         let (ii, c) = map(valid_many_capture_characters, String::from)(i)?;
-        matches.insert2(&capture_key, c.to_string());
+        matches.insert2(&capture_key, c);
         Ok(ii)
     }
 }
