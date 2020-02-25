@@ -17,7 +17,7 @@ END TEMPLATE-->
 ## ✨ **0.10.0** *(TBD)*
 
 - #### ⚡️ Features
-  - Sample
+  - WebSys support (coming)
 - #### 🛠 Fixes
   - Sample
 - #### 🚨 Breaking changes
