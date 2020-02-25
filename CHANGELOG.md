@@ -14,7 +14,7 @@
 END TEMPLATE-->
 
 
-## ✨ **0.9.0** *(TBD)*
+## ✨ **0.10.0** *(TBD)*
 
 - #### ⚡️ Features
   - Sample
@@ -22,6 +22,13 @@ END TEMPLATE-->
   - Sample
 - #### 🚨 Breaking changes
   - Sample
+
+## ✨ **0.9.0** *2020-2-25*
+- #### ⚡️ Features
+  - Improved error handling in macro. [[233](https://github.com/yewstack/yew_router/pull/233)] @jplatte
+- #### 🛠 Fixes
+  - Fix RouterAnchor href [[228](https://github.com/yewstack/yew_router/pull/228)] @jetli
+  - Undo non-passive state for prevent_default [[240](https://github.com/yewstack/yew_router/pull/240)] @jetli
   
   
 ## ✨ **0.8.1** *(2020-1-10)*
@@ -43,6 +50,7 @@ END TEMPLATE-->
   - Using default type parameters to specify the state typ instead of the macro that generated a module (`unit_state`) means that any imports from that module should now be replaced with the path that the type normally has in the project. [[157](https://github.com/yewstack/yew_router/issues/157)]
 - #### Inconsequential
   - Change state related type parameters from `T` to `STATE`. [[208](https://github.com/yewstack/yew_router/issues/208)]
+  
 ## ✨ **0.7.0** *(2019-11-11)*
 
 - #### ⚡️ Features

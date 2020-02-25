@@ -12,7 +12,7 @@ repository = "https://github.com/yewstack/yew_router"
 
 
 [features]
-default = ["core", "unit_alias"]
+default = ["core", "unit_alias", "std_web"]
 
 core = ["router", "components"] # Most everything
 
@@ -24,32 +24,31 @@ components = ["agent" ] # The button and anchor
 agent = ["service"] # The RouteAgent
 service = ["yew"] # The RouteService
 
-std_web = ["yew/std_web", "stdweb"]
-web_sys = ["yew/web_sys", "gloo", "js-sys", "web-sys", "wasm-bindgen"]
+std_web = [
+#    "yew/std_web",
+    "stdweb"
+]
+#web_sys = ["yew/web_sys", "gloo", "js-sys", "web-sys", "wasm-bindgen"]
 
 
 [dependencies]
 log = "0.4.8"
-serde = {version = "1.0.103", features = ["derive"]}
-#yew = {version = "0.11.0", optional = true}
-yew = {git = "https://github.com/yewstack/yew", branch = "web-sys", optional = true, features = ["services", "agent"]}
+serde = { version = "1.0.104", features = ["derive"] }
+yew = { version = "0.12.0", features = ["services", "agent"], optional = true }
+#yew = {git = "https://github.com/yewstack/yew", branch = "web-sys", optional = true, features = ["services", "agent"]}
 yew-router-route-parser = {path = "crates/yew_router_route_parser", version = "0.9.0"}
 yew-router-macro = {path = "crates/yew_router_macro", version = "0.9.0"}
-nom = "5.0.1"
+nom = "5.1.1"
 uuid = "0.8.1"
-serde_json = "1.0.44"
-cfg-if = "0.1"
-cfg-match = "0.2"
+serde_json = "1.0.48"
+cfg-if = "0.1.10"
+cfg-match = "0.2.1"
 
-stdweb = {version = "0.4.20", optional = true}
+stdweb = { version = "0.4.20", optional = true }
 
-gloo = { version = "0.2", optional = true }
-js-sys = { version = "0.3", optional = true }
+gloo = { version = "0.2.0", optional = true }
+js-sys = { version = "0.3.35", optional = true }
 wasm-bindgen = { version = "0.2.58", optional = true }
-
-# Compat with building yew with wasm-pack support.
-[target.'cfg(all(target_arch = "wasm32", not(target_os="wasi"), not(cargo_web)))'.dependencies]
-wasm-bindgen = "0.2.58"
 
 [dependencies.web-sys]
 version = "0.3"
@@ -62,6 +61,10 @@ features = [
     'MouseEvent',
     'HtmlLinkElement'
 ]
+
+# Compat with building yew with wasm-pack support.
+[target.'cfg(all(target_arch = "wasm32", not(target_os="wasi"), not(cargo_web)))'.dependencies]
+wasm-bindgen = "0.2.58"
 
 [workspace]
 members = [
