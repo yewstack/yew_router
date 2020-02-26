@@ -1,11 +1,11 @@
+use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use syn::export::TokenStream2;
 use yew_router_route_parser::{CaptureVariant, MatcherToken};
 
 impl ToTokens for ShadowMatcherToken {
-    fn to_tokens(&self, ts: &mut TokenStream2) {
+    fn to_tokens(&self, ts: &mut TokenStream) {
         use ShadowMatcherToken as SOT;
-        let t: TokenStream2 = match self {
+        let t: TokenStream = match self {
             SOT::Exact(s) => quote! {
                 ::yew_router::matcher::MatcherToken::Exact(#s.to_string())
             },
@@ -47,7 +47,7 @@ pub enum ShadowCaptureVariant {
 }
 
 impl ToTokens for ShadowCaptureVariant {
-    fn to_tokens(&self, ts: &mut TokenStream2) {
+    fn to_tokens(&self, ts: &mut TokenStream) {
         let t = match self {
             ShadowCaptureVariant::Named(name) => {
                 quote! {::yew_router::matcher::CaptureVariant::Named(#name.to_string())}

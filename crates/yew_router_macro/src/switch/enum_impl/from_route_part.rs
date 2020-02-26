@@ -1,10 +1,7 @@
 use crate::switch::SwitchItem;
-use proc_macro2::{Ident, TokenStream};
-use quote::quote;
-use syn::{
-    export::{ToTokens, TokenStream2},
-    Field, Fields, Type,
-};
+use proc_macro2::{Ident, Span, TokenStream};
+use quote::{quote, ToTokens};
+use syn::{Field, Fields, Type};
 
 pub struct FromRoutePart<'a> {
     pub switch_variants: &'a [SwitchItem],
@@ -34,7 +31,7 @@ impl<'a> ToTokens for FromRoutePart<'a> {
                 let route_string = route;
                 #(#variant_matchers)*
 
-                return (::std::option::Option::None, state)
+                (::std::option::Option::None, state)
             }
         });
     }
@@ -45,10 +42,10 @@ fn build_variant_from_captures(
     enum_ident: &Ident,
     variant_ident: &Ident,
     fields: &Fields,
-) -> TokenStream2 {
+) -> TokenStream {
     match fields {
         Fields::Named(named_fields) => {
-            let fields: Vec<TokenStream2> = named_fields
+            let (field_declarations, fields): (Vec<_>, Vec<_>) = named_fields
                 .named
                 .iter()
                 .filter_map(|field: &Field| {
@@ -59,8 +56,8 @@ fn build_variant_from_captures(
                     })
                 })
                 .map(|(field_name, key, field_ty): (&Ident, String, &Type)| {
-                    quote! {
-                        #field_name: {
+                    let field_decl = quote! {
+                        let #field_name = {
                             let (v, s) = match captures.remove(#key) {
                                 ::std::option::Option::Some(value) => {
                                     <#field_ty as ::yew_router::Switch>::from_route_part(
@@ -82,22 +79,29 @@ fn build_variant_from_captures(
                                 },
                                 ::std::option::Option::None => return (None, s) // Failed
                             }
-                        }
-                    }
+                        };
+                    };
+
+                    (field_decl, field_name)
                 })
-                .collect();
+                .unzip();
 
             quote! {
-                let mut state = if let ::std::option::Option::Some(mut captures) = matcher.capture_route_into_map(&route_string).ok().map(|x| x.1) {
+                let mut state = if let ::std::option::Option::Some(mut captures) = matcher
+                    .capture_route_into_map(&route_string)
+                    .ok()
+                    .map(|x| x.1)
+                {
                     let create_item = || {
-                         (
-                            ::std::option::Option::Some(
-                                #enum_ident::#variant_ident {
-                                    #(#fields),*
-                                }
-                            ),
-                            state
-                        )
+                        #(#field_declarations)*
+
+                        let val = ::std::option::Option::Some(
+                            #enum_ident::#variant_ident {
+                                #(#fields),*
+                            }
+                        );
+
+                        (val, state)
                     };
                     let (val, state) = create_item();
 
@@ -111,40 +115,54 @@ fn build_variant_from_captures(
             }
         }
         Fields::Unnamed(unnamed_fields) => {
-            let fields = unnamed_fields.unnamed.iter().map(|f: &Field| {
-                let field_ty = &f.ty;
-                quote! {
-                    {
-                        let (v, s) = match drain.next() {
-                            ::std::option::Option::Some(value) => {
-                                <#field_ty as ::yew_router::Switch>::from_route_part(
-                                    value,
-                                    state,
-                                )
-                            },
-                            ::std::option::Option::None => {
-                                (
-                                    <#field_ty as ::yew_router::Switch>::key_not_available(),
-                                    state,
-                                )
+            let (field_declarations, fields): (Vec<_>, Vec<_>) = unnamed_fields
+                .unnamed
+                .iter()
+                .enumerate()
+                .map(|(idx, f)| {
+                    let field_ty = &f.ty;
+                    let field_var_name = Ident::new(&format!("field_{}", idx), Span::call_site());
+                    let field_decl = quote! {
+                        let #field_var_name = {
+                            let (v, s) = match drain.next() {
+                                ::std::option::Option::Some(value) => {
+                                    <#field_ty as ::yew_router::Switch>::from_route_part(
+                                        value,
+                                        state,
+                                    )
+                                },
+                                ::std::option::Option::None => {
+                                    (
+                                        <#field_ty as ::yew_router::Switch>::key_not_available(),
+                                        state,
+                                    )
+                                }
+                            };
+                            match v {
+                                ::std::option::Option::Some(val) => {
+                                    state = s; // Set state for the next var.
+                                    val
+                                },
+                                ::std::option::Option::None => return (None, s) // Failed
                             }
                         };
-                        match v {
-                            ::std::option::Option::Some(val) => {
-                                state = s; // Set state for the next var.
-                                val
-                            },
-                            ::std::option::Option::None => return (None, s) // Failed
-                        }
-                    }
-                }
-            });
+                    };
+
+                    (field_decl, field_var_name)
+                })
+                .unzip();
 
             quote! {
-                let mut state = if let ::std::option::Option::Some(mut captures) = matcher.capture_route_into_vec(&route_string).ok().map(|x| x.1) {
+                let mut state = if let ::std::option::Option::Some(mut captures) = matcher
+                    .capture_route_into_vec(&route_string)
+                    .ok()
+                    .map(|x| x.1)
+                {
                     let mut drain = captures.drain(..);
                     let create_item = || {
-                         (
+                        #(#field_declarations)*
+
+                        (
                             ::std::option::Option::Some(
                                 #enum_ident::#variant_ident(
                                     #(#fields),*

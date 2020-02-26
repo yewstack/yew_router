@@ -1,7 +1,7 @@
 use crate::switch::shadow::{ShadowCaptureVariant, ShadowMatcherToken};
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
-use syn::{export::TokenStream2, Data, DeriveInput, Fields, Ident, Variant};
+use syn::{Data, DeriveInput, Fields, Ident, Variant};
 
 mod attribute;
 mod enum_impl;
@@ -119,7 +119,7 @@ impl<T> Flatten<T> for Option<Option<T>> {
     }
 }
 
-fn build_matcher_from_tokens(tokens: &[ShadowMatcherToken]) -> TokenStream2 {
+fn build_matcher_from_tokens(tokens: &[ShadowMatcherToken]) -> TokenStream {
     quote! {
         let settings = ::yew_router::matcher::MatcherSettings {
             case_insensitive: true,
@@ -139,7 +139,7 @@ pub(crate) enum FieldType {
 }
 
 /// This assumes that the variant/struct has been destructured.
-fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> TokenStream2 {
+fn write_for_token(token: &ShadowMatcherToken, naming_scheme: FieldType) -> TokenStream {
     match token {
         ShadowMatcherToken::Exact(lit) => {
             quote! {

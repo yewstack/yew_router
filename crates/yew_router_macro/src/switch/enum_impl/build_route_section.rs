@@ -2,11 +2,8 @@ use crate::switch::{
     shadow::ShadowMatcherToken, unnamed_field_index_item, write_for_token, FieldType, SwitchItem,
 };
 use proc_macro2::{Ident, TokenStream};
-use quote::quote;
-use syn::{
-    export::{ToTokens, TokenStream2},
-    Fields,
-};
+use quote::{quote, ToTokens};
+use syn::Fields;
 
 pub struct BuildRouteSection<'a> {
     pub switch_items: &'a [SwitchItem],
@@ -32,7 +29,7 @@ pub fn build_serializer_for_enum(
     switch_items: &[SwitchItem],
     enum_ident: &Ident,
     match_item: &Ident,
-) -> TokenStream2 {
+) -> TokenStream {
     let variants = switch_items.iter().map(|switch_item: &SwitchItem| {
         let SwitchItem {
             matcher,
