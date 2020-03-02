@@ -86,7 +86,7 @@ impl MarkdownWindow {
                     _ => Msg::MarkdownFetchFailed,
                 }
             });
-            self.fetch_task = Some(self.fetch_service.fetch(request, callback));
+            self.fetch_task = self.fetch_service.fetch(request, callback).ok();
         }
     }
 }
