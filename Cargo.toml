@@ -12,7 +12,7 @@ repository = "https://github.com/yewstack/yew_router"
 
 
 [features]
-default = ["core", "unit_alias", "std_web"]
+default = ["core", "unit_alias"]
 
 core = ["router", "components"] # Most everything
 
@@ -28,14 +28,20 @@ std_web = [
     "yew/std_web",
     "stdweb"
 ]
-web_sys = ["yew/web_sys", "gloo", "js-sys", "web-sys", "wasm-bindgen"]
+web_sys = [
+    "yew/web_sys",
+    "gloo",
+    "js-sys",
+    "web-sys",
+    "wasm-bindgen"
+]
 
 
 [dependencies]
 log = "0.4.8"
 serde = { version = "1.0.104", features = ["derive"] }
-#yew = { version = "0.12.0", features = ["services", "agent"], optional = true }
-yew = {git = "https://github.com/yewstack/yew", branch = "web-sys", optional = true, features = ["services", "agent"]}
+yew = { version = "0.13.0", features = ["services", "agent"], optional = true }
+#yew = {git = "https://github.com/yewstack/yew", branch = "web-sys", optional = true, features = ["services", "agent"]}
 yew-router-route-parser = {path = "crates/yew_router_route_parser", version = "0.10.0"}
 yew-router-macro = {path = "crates/yew_router_macro", version = "0.10.0"}
 nom = "5.1.1"

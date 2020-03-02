@@ -152,11 +152,11 @@ impl<STATE: RouterState, SW: Switch> Debug for Redirect<SW, STATE> {
 #[derive(Properties, Clone)]
 pub struct Props<STATE: RouterState, SW: Switch + Clone + 'static> {
     /// Render function that takes a Switch and produces Html
-    #[props(required)]
     pub render: Render<SW, STATE>,
     /// Optional redirect function that will convert the route to a known switch variant if explicit matching fails.
     /// This should mostly be used to handle 404s and redirection.
     /// It is not strictly necessary as your Switch is capable of handling unknown routes using `#[to="/{*:any}"]`.
+    #[prop_or_default]
     pub redirect: Option<Redirect<SW, STATE>>,
 }
 
