@@ -14,14 +14,20 @@
 END TEMPLATE-->
 
 
-## ✨ **0.10.0** *(TBD)*
+## ✨ **0.11.0** *(TBD)*
 
 - #### ⚡️ Features
-  - Sample
+  - WebSys support (coming)
 - #### 🛠 Fixes
   - Sample
 - #### 🚨 Breaking changes
   - Sample
+  
+  
+## ✨ **0.10.0** *2020-3-2*
+
+- Bumped version of Yew from v0.12.0 to v0.13.0
+- This brings support for web_sys, which necessitates specifying either "web_sys" or "std_web" as a feature. (Thanks @tarkah)
 
 ## ✨ **0.9.0** *2020-2-25*
 - #### ⚡️ Features

@@ -21,16 +21,19 @@ where
     SW: Switch + Clone,
 {
     /// The Switched item representing the route.
-    #[props(required)]
     pub route: SW,
     #[deprecated(note = "Use children field instead (nested html)")]
     /// The text to display.
+    #[prop_or_default]
     pub text: String,
     /// Html inside the component.
+    #[prop_or_default]
     pub children: Children,
     /// Disable the component.
+    #[prop_or_default]
     pub disabled: bool,
     /// Classes to be added to component.
+    #[prop_or_default]
     pub classes: String,
 }
 

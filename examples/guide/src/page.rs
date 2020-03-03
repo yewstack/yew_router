@@ -4,11 +4,8 @@ pub struct Page;
 
 #[derive(Properties, Clone)]
 pub struct PageProps {
-    #[props(required)]
     pub uri: String,
-    #[props(required)]
     pub page_url: String,
-    #[props(required)]
     pub title: String,
 }
 

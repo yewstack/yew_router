@@ -8,7 +8,6 @@ pub struct AModel {
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct Props {
-    #[props(required)]
     pub route: Option<ARoute>,
 }
 
