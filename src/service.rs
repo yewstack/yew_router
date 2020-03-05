@@ -185,15 +185,15 @@ where
                 log::trace!("History state is empty");
                 None
             })
-            .and_then(|state_string| -> Option<Option<STATE>>{
+            .and_then(|state_string| -> Option<STATE> {
                 serde_json::from_str(&state_string)
                     .ok()
                     .or_else(|| {
                         log::error!("Could not deserialize state string");
                         None
                     })
+                    .and_then(std::convert::identity) // flatten
             })
-            .and_then(std::convert::identity) // flatten
             .unwrap_or_default();
         Route {
             route: route_string,
