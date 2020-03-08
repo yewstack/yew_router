@@ -2,11 +2,8 @@ use crate::switch::{
     shadow::ShadowMatcherToken, unnamed_field_index_item, write_for_token, FieldType, SwitchItem,
 };
 use proc_macro2::{Ident, TokenStream};
-use quote::quote;
-use syn::{
-    export::{ToTokens, TokenStream2},
-    Fields,
-};
+use quote::{quote, ToTokens};
+use syn::Fields;
 
 pub struct BuildRouteSection<'a> {
     pub switch_item: &'a SwitchItem,
@@ -25,7 +22,7 @@ impl<'a> ToTokens for BuildRouteSection<'a> {
 }
 
 
-pub fn build_serializer_for_struct(switch_item: &SwitchItem, item: &Ident) -> TokenStream2 {
+pub fn build_serializer_for_struct(switch_item: &SwitchItem, item: &Ident) -> TokenStream {
     let SwitchItem {
         matcher,
         ident,
@@ -80,6 +77,7 @@ pub fn build_serializer_for_struct(switch_item: &SwitchItem, item: &Ident) -> To
         use ::std::fmt::Write as _;
         let mut state: Option<__T> = None;
         #destructor_and_writers
-        return state;
+
+        state
     }
 }

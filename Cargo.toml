@@ -1,6 +1,6 @@
 [package]
 name = "yew-router"
-version = "0.8.0"
+version = "0.10.0"
 authors = ["Henry Zimmerman <zimhen7@gmail.com>", "Sascha Grunert <mail@saschagrunert.de>"]
 edition = "2018"
 license = "MIT/Apache-2.0"
@@ -22,23 +22,57 @@ unit_alias = []
 router = ["agent"] # The Router component
 components = ["agent" ] # The button and anchor
 agent = ["service"] # The RouteAgent
-service = ["stdweb", "yew"] # The RouteService
+service = ["yew"] # The RouteService
+
+std_web = [
+    "yew/std_web",
+    "stdweb"
+]
+web_sys = [
+    "yew/web_sys",
+    "gloo",
+    "js-sys",
+    "web-sys",
+    "wasm-bindgen"
+]
 
 
 [dependencies]
 log = "0.4.8"
-serde = {version = "1.0.103", features = ["derive"]}
-#yew = "0.10.0"
-yew = {git = "https://github.com/yewstack/yew", branch = "master", optional = true}
-stdweb = {version = "0.4.20", optional = true}
+serde = { version = "1.0.104", features = ["derive"] }
+yew = { version = "0.13.0", features = ["services", "agent"], optional = true }
+#yew = {git = "https://github.com/yewstack/yew", branch = "web-sys", optional = true, features = ["services", "agent"]}
+yew-router-route-parser = {path = "crates/yew_router_route_parser", version = "0.10.0"}
+yew-router-macro = {path = "crates/yew_router_macro", version = "0.10.0"}
+nom = "5.1.1"
+serde_json = "1.0.48"
+cfg-if = "0.1.10"
+cfg-match = "0.2.1"
 
-yew-router-route-parser = {path = "crates/yew_router_route_parser", version = "0.8.0"}
-yew-router-macro = {path = "crates/yew_router_macro", version = "0.8.0"}
-nom = "5.0.1"
+stdweb = { version = "0.4.20", optional = true }
+
+gloo = { version = "0.2.0", optional = true }
+js-sys = { version = "0.3.35", optional = true }
+wasm-bindgen = { version = "0.2.58", optional = true }
+
+[dependencies.web-sys]
+version = "0.3"
+optional = true
+features = [
+    'History',
+    'Location',
+    'Window',
+    'PopStateEvent',
+    'MouseEvent',
+    'HtmlLinkElement'
+]
+
+# Compat with building yew with wasm-pack support.
+[target.'cfg(all(target_arch = "wasm32", not(target_os="wasi"), not(cargo_web)))'.dependencies]
+wasm-bindgen = "0.2.58"
+
+[dev-dependencies]
 uuid = "0.8.1"
-serde_json = "1.0.44"
-
-
 
 [workspace]
 members = [
@@ -49,5 +83,6 @@ members = [
     "examples/switch",
     "examples/minimal",
     "examples/servers/warp",
+    "examples/servers/actix",
     "tests/macro_test"
 ]

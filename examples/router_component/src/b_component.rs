@@ -10,11 +10,9 @@ pub struct BModel {
     update_subpath: Callback<InputData>,
 }
 
-#[derive(PartialEq, Properties)]
+#[derive(Clone, PartialEq, Properties)]
 pub struct Props {
-    #[props(required)]
     pub number: Option<usize>,
-    #[props(required)]
     pub sub_path: Option<String>,
 }
 

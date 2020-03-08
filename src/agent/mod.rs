@@ -148,7 +148,7 @@ where
             }
             RouteRequest::GetCurrentRoute => {
                 let route = self.route_service.get_route();
-                self.link.respond(who, route.clone());
+                self.link.respond(who, route);
             }
         }
     }

@@ -11,7 +11,7 @@ pub struct Guide {
     props: GuideProps,
 }
 
-#[derive(Properties)]
+#[derive(Properties, Clone)]
 pub struct GuideProps {
     children: ChildrenWithProps<Page>,
 }
@@ -64,7 +64,7 @@ impl Component for Guide {
                 .next();
             log::debug!("active uri: {:?}", active_markdown_uri);
 
-            let mut list_items = self.props.children.iter().map(|child| {
+            let list_items = self.props.children.iter().map(|child| {
                 let x = render_page_list_item(child.props, route);
                 if let yew::virtual_dom::VNode::VTag(x) = &x {
                     log::debug!("{:?}", x.attributes);
@@ -100,13 +100,13 @@ fn render_page_list_item(props: PageProps, route: &Route) -> Html {
         log::debug!("Found an active");
         return html! {
             <li style="padding-left: 4px; padding-right: 4px; padding-top: 6px; padding-bottom: 6px; background-color: lightgray;">
-                <RouterAnchor<String> route=props.page_url.clone()> {&props.title} </RouterLink>
+                <RouterAnchor<String> route=props.page_url.clone()> {&props.title} </RouterAnchor<String>>
             </li>
         };
     } else {
         return html! {
             <li style="padding-left: 4px; padding-right: 4px; padding-top: 6px; padding-bottom: 6px; background-color: white;">
-                <RouterAnchor<String> route=props.page_url.clone()> {&props.title} </RouterLink>
+                <RouterAnchor<String> route=props.page_url.clone()> {&props.title} </RouterAnchor<String>>
             </li>
         };
     }

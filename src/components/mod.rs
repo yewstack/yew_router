@@ -15,22 +15,25 @@ use crate::Switch;
 // TODO This should also be PartialEq and Clone. Its blocked on Children not supporting that.
 // TODO This should no longer take link & String, and instead take a route: SW implementing Switch
 /// Properties for `RouterButton` and `RouterLink`.
-#[derive(Properties, Default, Debug)]
+#[derive(Properties, Clone, Default, Debug)]
 pub struct Props<SW>
 where
-    SW: Switch,
+    SW: Switch + Clone,
 {
     /// The Switched item representing the route.
-    #[props(required)]
     pub route: SW,
     #[deprecated(note = "Use children field instead (nested html)")]
     /// The text to display.
+    #[prop_or_default]
     pub text: String,
     /// Html inside the component.
+    #[prop_or_default]
     pub children: Children,
     /// Disable the component.
+    #[prop_or_default]
     pub disabled: bool,
     /// Classes to be added to component.
+    #[prop_or_default]
     pub classes: String,
 }
 

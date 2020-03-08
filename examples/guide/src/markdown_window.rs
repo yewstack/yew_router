@@ -17,7 +17,7 @@ pub struct MarkdownWindow {
     link: ComponentLink<Self>,
 }
 
-#[derive(Properties, Debug)]
+#[derive(Properties, Debug, Clone)]
 pub struct MdProps {
     pub uri: Option<String>,
 }
@@ -86,7 +86,7 @@ impl MarkdownWindow {
                     _ => Msg::MarkdownFetchFailed,
                 }
             });
-            self.fetch_task = Some(self.fetch_service.fetch(request, callback));
+            self.fetch_task = self.fetch_service.fetch(request, callback).ok();
         }
     }
 }

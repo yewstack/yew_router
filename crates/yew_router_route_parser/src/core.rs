@@ -127,7 +127,7 @@ fn escaped_item_impl(i: &str) -> IResult<&str, &str> {
 
 /// Matches "".
 pub fn nothing(i: &str) -> IResult<&str, RouteParserToken, ParseError> {
-    if i.len() == 0 {
+    if i.is_empty() {
         Ok((i, RouteParserToken::Nothing))
     } else {
         Err(nom::Err::Error(ParseError {

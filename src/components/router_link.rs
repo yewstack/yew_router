@@ -53,26 +53,35 @@ impl<SW: Switch + Clone + 'static, STATE: RouterState> Component for RouterAncho
     }
 
     fn view(&self) -> VNode {
+        #[cfg(feature = "std_web")]
         use stdweb::web::event::IEvent;
-        //        let target: &str = &self.props.link;
-        let cb = |x| self.link.callback(x);
+
+        let route: Route<STATE> = Route::from(self.props.route.clone());
+        let target: &str = route.as_str();
+        #[cfg(feature = "std_web")]
+        let cb = self.link.callback(|event: ClickEvent| {
+            event.prevent_default();
+            Msg::Clicked
+        });
+        #[cfg(feature = "web_sys")]
+        let cb = self.link.callback(|event: MouseEvent| {
+            event.prevent_default();
+            Msg::Clicked
+        });
 
         html! {
-                    <a
-                        class=self.props.classes.clone(),
-                        onclick=cb(|event: ClickEvent | {
-                            event.prevent_default();
-                            Msg::Clicked
-                        }),
-                        disabled=self.props.disabled,
-        //                href=target,
-                    >
-                        {
-                            #[allow(deprecated)]
-                            &self.props.text
-                        }
-                        {self.props.children.iter().collect::<VNode>()}
-                    </a>
+            <a
+                class=self.props.classes.clone(),
+                onclick=cb,
+                disabled=self.props.disabled,
+                href=target,
+            >
+                {
+                    #[allow(deprecated)]
+                    &self.props.text
                 }
+                {self.props.children.iter().collect::<VNode>()}
+            </a>
+        }
     }
 }

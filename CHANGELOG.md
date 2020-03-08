@@ -13,7 +13,36 @@
 
 END TEMPLATE-->
 
-## ✨ **0.8.0** *(TBD)*
+
+## ✨ **0.11.0** *(TBD)*
+
+- #### ⚡️ Features
+  - WebSys support (coming)
+- #### 🛠 Fixes
+  - Sample
+- #### 🚨 Breaking changes
+  - Sample
+  
+  
+## ✨ **0.10.0** *2020-3-2*
+
+- Bumped version of Yew from v0.12.0 to v0.13.0
+- This brings support for web_sys, which necessitates specifying either "web_sys" or "std_web" as a feature. (Thanks @tarkah)
+
+## ✨ **0.9.0** *2020-2-25*
+- #### ⚡️ Features
+  - Improved error handling in macro. [[233](https://github.com/yewstack/yew_router/pull/233)] @jplatte
+- #### 🛠 Fixes
+  - Fix RouterAnchor href [[228](https://github.com/yewstack/yew_router/pull/228)] @jetli
+  - Undo non-passive state for prevent_default [[240](https://github.com/yewstack/yew_router/pull/240)] @jetli
+  
+  
+## ✨ **0.8.1** *(2020-1-10)*
+
+- #### 🛠 Fixes
+  - Fixed a dependency issue with `wasm-bindgen` that would cause builds to fail when building for the `wasm32-unknown-unknown` target.
+
+## ✨ **0.8.0** *(2020-1-9)*
 - #### ⚡️ Features
     - Use a default type parameter of `()` to specify state-related type parameters instead of the old macro-based solution. [[157](https://github.com/yewstack/yew_router/issues/157)]
     - Remove need for `JsSerializable` bound on the state parameter used for storing extra data in the history API.[[185](https://github.com/yewstack/yew_router/issues/185)]
@@ -27,6 +56,7 @@ END TEMPLATE-->
   - Using default type parameters to specify the state typ instead of the macro that generated a module (`unit_state`) means that any imports from that module should now be replaced with the path that the type normally has in the project. [[157](https://github.com/yewstack/yew_router/issues/157)]
 - #### Inconsequential
   - Change state related type parameters from `T` to `STATE`. [[208](https://github.com/yewstack/yew_router/issues/208)]
+  
 ## ✨ **0.7.0** *(2019-11-11)*
 
 - #### ⚡️ Features

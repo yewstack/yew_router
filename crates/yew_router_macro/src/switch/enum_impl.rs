@@ -1,6 +1,5 @@
 use proc_macro2::TokenStream;
-use quote::quote;
-use syn::export::ToTokens;
+use quote::{quote, ToTokens};
 
 
 pub use self::{build_route_section::BuildRouteSection, from_route_part::FromRoutePart};

@@ -1,5 +1,5 @@
 use crate::switch::shadow::{ShadowCaptureVariant, ShadowMatcherToken};
-use syn::{Attribute, Lit, Meta, MetaNameValue};
+use syn::{spanned::Spanned, Attribute, Lit, Meta, MetaNameValue};
 use yew_router_route_parser::FieldNamingScheme;
 
 pub enum AttrToken {
@@ -9,45 +9,54 @@ pub enum AttrToken {
 }
 
 impl AttrToken {
-    pub fn convert_attributes_to_tokens(attributes: Vec<Attribute>) -> Vec<Self> {
-        fn get_meta_name_value_str(mnv: &MetaNameValue) -> Option<String> {
+    pub fn convert_attributes_to_tokens(attributes: Vec<Attribute>) -> syn::Result<Vec<Self>> {
+        fn get_meta_name_value_str(mnv: &MetaNameValue) -> syn::Result<String> {
             match &mnv.lit {
-                Lit::Str(s) => Some(s.value()),
-                _ => None,
+                Lit::Str(s) => Ok(s.value()),
+                lit => Err(syn::Error::new_spanned(lit, "expected a string literal")),
             }
         }
 
         attributes
             .iter()
             .filter_map(|attr: &Attribute| attr.parse_meta().ok())
-            .filter_map(|meta: Meta| match meta {
-                Meta::NameValue(mnv) => mnv
-                    .path
-                    .clone()
-                    .get_ident()
-                    .into_iter()
-                    .filter_map(|ident| match ident.to_string().as_str() {
-                        "to" => Some(AttrToken::To(
-                            get_meta_name_value_str(&mnv)
-                                .expect("Value provided after `to` must be a String"),
-                        )),
-                        "rest" => Some(AttrToken::Rest(Some(
-                            get_meta_name_value_str(&mnv)
-                                .expect("Value provided after `rest` must be a String"),
-                        ))),
-                        _ => None,
-                    })
-                    .next(),
-                Meta::Path(path) => path
-                    .get_ident()
-                    .into_iter()
-                    .filter_map(|ident| match ident.to_string().as_str() {
-                        "end" => Some(AttrToken::End),
-                        "rest" => Some(AttrToken::Rest(None)),
-                        _ => None,
-                    })
-                    .next(),
-                _ => None,
+            .filter_map(|meta: Meta| {
+                let meta_span = meta.span();
+                match meta {
+                    Meta::NameValue(mnv) => {
+                        mnv.path
+                            .get_ident()
+                            .and_then(|ident| match ident.to_string().as_str() {
+                                "to" => Some(get_meta_name_value_str(&mnv).map(AttrToken::To)),
+                                "rest" => Some(
+                                    get_meta_name_value_str(&mnv).map(|s| AttrToken::Rest(Some(s))),
+                                ),
+                                _ => None,
+                            })
+                    }
+                    Meta::Path(path) => {
+                        path.get_ident()
+                            .and_then(|ident| match ident.to_string().as_str() {
+                                "end" => Some(Ok(AttrToken::End)),
+                                "rest" => Some(Ok(AttrToken::Rest(None))),
+                                _ => None,
+                            })
+                    }
+                    Meta::List(list) => {
+                        list.path
+                            .get_ident()
+                            .and_then(|ident| match ident.to_string().as_str() {
+                                id @ "to" | id @ "rest" => Some(Err(syn::Error::new(
+                                    meta_span,
+                                    &format!(
+                                        "This syntax is not supported, did you mean `#[{} = ...]`?",
+                                        id
+                                    ),
+                                ))),
+                                _ => None,
+                            })
+                    }
+                }
             })
             .collect()
     }

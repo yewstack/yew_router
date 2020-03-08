@@ -1,8 +1,7 @@
-use syn::export::{ToTokens, TokenStream2};
 // use crate::switch::{SwitchItem, write_for_token, FieldType, unnamed_field_index_item};
 use crate::switch::SwitchItem;
-use proc_macro2::{Ident, TokenStream};
-use quote::quote;
+use proc_macro2::{Ident, Span, TokenStream};
+use quote::{quote, ToTokens};
 use syn::{Field, Fields, Type};
 use crate::switch::attribute::get_attr_strings;
 
@@ -21,22 +20,21 @@ impl<'a> ToTokens for FromRoutePart<'a> {
         let build_from_captures = build_struct_from_captures(ident, fields);
 
         tokens.extend(quote! {
-
-            fn from_route_part<__T>(route: String, mut state: Option<__T>) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
-
+            fn from_route_part<__T>(
+                route: String, mut state: Option<__T>
+            ) -> (::std::option::Option<Self>, ::std::option::Option<__T>) {
                 #matcher
                 let route_string = route;
 
                 #build_from_captures
 
-                return (::std::option::Option::None, state)
+                (::std::option::Option::None, state)
             }
-
         })
     }
 }
 
-fn build_struct_from_captures(ident: &Ident, fields: &Fields) -> TokenStream2 {
+fn build_struct_from_captures(ident: &Ident, fields: &Fields) -> TokenStream {
     match fields {
         Fields::Named(named_fields) => {
             let fields: Vec<NamedField> = named_fields
