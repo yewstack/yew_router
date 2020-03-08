@@ -11,4 +11,3 @@ repository = "https://github.com/yewstack/yew_router"
 
 [dependencies]
 nom = "5.0.0"
-log = "0.4.8"
