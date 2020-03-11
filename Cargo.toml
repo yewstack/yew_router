@@ -74,6 +74,9 @@ wasm-bindgen = "0.2.58"
 [dev-dependencies]
 uuid = "0.8.1"
 
+[package.metadata.docs.rs]
+features = ["web_sys", "core", "unit_alias"]
+
 [workspace]
 members = [
     "crates/yew_router_route_parser",
