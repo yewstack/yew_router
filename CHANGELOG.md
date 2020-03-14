@@ -13,15 +13,20 @@
 
 END TEMPLATE-->
 
-
-## ✨ **0.11.0** *(TBD)*
+## ✨ **0.12.0** *(TBD)*
 
 - #### ⚡️ Features
-  - WebSys support (coming)
+  - x
 - #### 🛠 Fixes
-  - Sample
+  - x
 - #### 🚨 Breaking changes
-  - Sample
+  - x
+
+## ✨ **0.11.0** *2020-3-14*
+
+- #### 🛠 Fixes
+  - Fixed docs.rs document generation [[254](https://github.com/yewstack/yew_router/pull/254)] (Thanks @jetli)
+  - Fixed clippy for web_sys target [[249](https://github.com/yewstack/yew_router/pull/249)] (Thanks @jetli)
   
   
 ## ✨ **0.10.0** *2020-3-2*
