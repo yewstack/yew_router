@@ -1,3 +1,9 @@
+# Deprecated 
+This project has been incorporated into the [Yew](https://github.com/yewstack/yew) repository, and can specifically be found [here](https://github.com/yewstack/yew/tree/master/yew-router).
+You should address all questions or improvements there instead of here.
+This repository will be archived in the near future.
+
+
 # yew-router
 A routing library for the [Yew](https://github.com/yewstack/yew) frontend framework.
 
