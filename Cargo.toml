@@ -40,7 +40,7 @@ web_sys = [
 [dependencies]
 log = "0.4.8"
 serde = { version = "1.0.104", features = ["derive"] }
-yew = { version = "0.14.0", features = ["services", "agent"], optional = true }
+yew = { version = "0.15.0", features = ["services", "agent"], optional = true }
 #yew = {git = "https://github.com/yewstack/yew", branch = "web-sys", optional = true, features = ["services", "agent"]}
 yew-router-route-parser = {path = "crates/yew_router_route_parser", version = "0.11.0"}
 yew-router-macro = {path = "crates/yew_router_macro", version = "0.11.0"}

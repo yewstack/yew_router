@@ -6,7 +6,7 @@ authors = ["Henry Zimmerman <zimhen7@gmail.com>"]
 edition="2018"
 
 [dependencies]
-yew = {version="0.14.0", features = ["std_web"]}
+yew = {version="0.15.0", features = ["std_web"]}
 #yew = {git = "https://github.com/yewstack/yew", branch = "web-sys", features = ["std_web"]}
 yew-router = {path = "../../", features = ["std_web"]}
 web_logger = "0.2"
